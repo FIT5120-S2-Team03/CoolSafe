@@ -5,6 +5,7 @@ export function useWeatherData() {
   const [current, setCurrent] = useState(null)
   const [hourly, setHourly] = useState(null)
   const [daily, setDaily] = useState(null)
+  const [locationName, setLocationName] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
   const [gpsBlocked, setGpsBlocked] = useState(false)
@@ -13,11 +14,17 @@ export function useWeatherData() {
     setLoading(true)
     setError(false)
     try {
-      const url =
+      const weatherUrl =
         `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}` +
         `&current=temperature_2m,apparent_temperature&hourly=apparent_temperature` +
         `&daily=temperature_2m_max,apparent_temperature_max&timezone=Australia%2FMelbourne&forecast_days=2`
-      const data = await (await fetch(url)).json()
+      const [data, geo] = await Promise.all([
+        fetch(weatherUrl).then((r) => r.json()),
+        fetch(
+          `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,
+          { headers: { 'Accept-Language': 'en' } }
+        ).then((r) => r.json()).catch(() => null),
+      ])
       setCurrent({
         temp: data.current.temperature_2m,
         apparentTemp: data.current.apparent_temperature,
@@ -27,6 +34,10 @@ export function useWeatherData() {
         todayMax: data.daily.temperature_2m_max[0],
         tomorrowMax: data.daily.temperature_2m_max[1],
       })
+      const addr = geo?.address
+      setLocationName(
+        addr?.suburb ?? addr?.town ?? addr?.city_district ?? addr?.city ?? null
+      )
       setCoords({ lat, lng })
     } catch {
       setError(true)
@@ -67,6 +78,7 @@ export function useWeatherData() {
     current,
     hourly,
     daily,
+    locationName,
     loading,
     error,
     gpsBlocked,

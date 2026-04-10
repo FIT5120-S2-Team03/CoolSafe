@@ -41,11 +41,11 @@ function getSafeWindowLabel(times, temps) {
 }
 
 function SkeletonCard() {
-  return <div className="grow min-w-[72px] h-[88px] bg-[#f3f3f6] rounded-[4px] animate-pulse" />
+  return <div className="flex-none w-[64px] h-[88px] bg-[#f3f3f6] rounded-[4px] animate-pulse" />
 }
 
 export default function HourlyForecastStrip({ hourly }) {
-  const wrapClass = 'bg-white rounded-[8px] p-[17px] w-full'
+  const wrapClass = 'bg-white rounded-[8px] p-[17px] w-full overflow-hidden'
   const wrapStyle = { border: '1px solid rgba(195,198,214,0.3)' }
 
   if (!hourly) {
@@ -64,9 +64,11 @@ export default function HourlyForecastStrip({ hourly }) {
   const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
   const currentHourStr = `${todayStr}T${String(now.getHours()).padStart(2, '0')}:00`
 
+  // Current hour + next 24 hours
   const todaySlots = hourly.time
     .map((t, i) => ({ t, temp: hourly.apparent_temperature[i] }))
-    .filter((s) => s.t.startsWith(todayStr) && s.t >= currentHourStr)
+    .filter((s) => s.t >= currentHourStr)
+    .slice(0, 25)
 
   if (!todaySlots.length) {
     return (
@@ -94,8 +96,8 @@ export default function HourlyForecastStrip({ hourly }) {
       </div>
 
       <div
-        className="flex overflow-x-auto [&::-webkit-scrollbar]:hidden"
-        style={{ scrollbarWidth: 'none' }}
+        className="flex flex-nowrap [&::-webkit-scrollbar]:hidden"
+        style={{ overflowX: 'auto', flexWrap: 'nowrap', scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
         {todaySlots.map(({ t, temp }) => {
           const risk = getRiskLevel(temp)
@@ -111,7 +113,7 @@ export default function HourlyForecastStrip({ hourly }) {
           return (
             <div
               key={t}
-              className="grow min-w-[72px] h-[88px] flex flex-col items-center justify-center rounded-[4px]"
+              className="flex-none w-[64px] h-[88px] flex flex-col items-center justify-center rounded-[4px]"
               style={bgStyle}
             >
               <span className="font-['Public_Sans'] text-[14px] text-[#64748b] mb-1">

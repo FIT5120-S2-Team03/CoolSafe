@@ -26,13 +26,13 @@ const ADVICE = {
 }
 
 export default function HeatRiskBanner({ onCoordsReady }) {
-  const { current, hourly, daily, loading, error, gpsBlocked, fetchByPostcode, lat, lng } =
+  const { current, hourly, daily, locationName, loading, error, gpsBlocked, fetchByPostcode, lat, lng } =
     useWeatherData()
   const [postcode, setPostcode] = useState('')
 
   useEffect(() => {
     if (lat != null && lng != null) {
-      onCoordsReady?.(lat, lng, current, hourly, daily)
+      onCoordsReady?.(lat, lng, current, hourly, daily, locationName)
     }
   }, [lat, lng, current, hourly, daily])
 

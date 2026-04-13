@@ -12,7 +12,6 @@ import HourlyForecastStrip from '../components/home/HourlyForecastStrip'
 import TomorrowAlertCard from '../components/home/TomorrowAlertCard'
 import StatusCard from '../components/home/StatusCard'
 import HeatSafetyScore from '../components/home/HeatSafetyScore'
-import DoThisAvoid from '../components/home/DoThisAvoid'
 import MedicationsSection from '../components/home/MedicationsSection'
 import { getRiskLevel } from '../utils/riskLevel'
 
@@ -27,15 +26,15 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f9f9fc]">
+    <div className="min-h-screen bg-[#fefdf5]">
       <Navbar />
       <div className="pt-[68px]">
         <HeatRiskBanner onCoordsReady={handleCoordsReady} />
 
-        <div className="max-w-[1232px] mx-auto px-5 py-10">
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-10">
+        <div className="max-w-[1600px] mx-auto px-4 py-6 w-full">
+          <div className="grid grid-cols-1 lg:grid-cols-[7fr_3fr] gap-5 w-full">
             {/* Left column */}
-            <div className="min-w-0 flex flex-col gap-6">
+            <div className="min-w-0 flex flex-col gap-4">
               <HourlyForecastStrip hourly={weatherData?.hourly ?? null} />
               <TomorrowAlertCard daily={weatherData?.daily ?? null} />
 
@@ -44,33 +43,37 @@ export default function HomePage() {
                   apparentTemp={weatherData.current.apparentTemp}
                   hour={currentHour}
                   selectedMedications={selectedMedications}
+                  riskLevel={getRiskLevel(weatherData.current.apparentTemp).level}
                 />
               )}
 
               {/* Cooling locations CTA */}
               <button
                 onClick={() => navigate('/map')}
-                className="bg-[#0056d2] rounded-lg p-10 w-full flex justify-between items-center cursor-pointer"
+                className="relative rounded-lg w-full flex justify-between items-center cursor-pointer overflow-hidden"
+                style={{
+                  padding: '52px 40px',
+                  backgroundImage: `linear-gradient(to right, rgba(0,86,210,0.82) 0%, rgba(0,86,210,0.55) 50%, rgba(0,120,255,0.18) 100%), url(https://images.unsplash.com/photo-1462556791646-c201b8241a94?q=80&w=2665&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D)`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                }}
               >
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-2 items-start">
                   <span className="font-['Public_Sans'] font-bold text-[14px] text-white uppercase tracking-[1.4px] opacity-80">
                     Cooling Locations
                   </span>
-                  <span className="font-['Public_Sans'] font-black text-[36px] text-white leading-tight">
+                  <span className="font-['Public_Sans'] font-black text-[36px] text-white leading-tight text-left">
                     Find Cool Spaces Near Me
                   </span>
                 </div>
                 <span className="text-white text-[40px]">→</span>
               </button>
 
-              {weatherData && (
-                <DoThisAvoid riskLevel={getRiskLevel(weatherData.current.apparentTemp).level} />
-              )}
-
               <MedicationsSection
                 selectedMedications={selectedMedications}
                 onMedicationsChange={setSelectedMedications}
               />
+
             </div>
 
             {/* Right column: status card */}

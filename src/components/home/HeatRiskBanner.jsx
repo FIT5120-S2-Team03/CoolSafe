@@ -5,6 +5,24 @@
 import { useState, useEffect } from 'react'
 import { useWeatherData } from '../../hooks/useWeatherData'
 import { getRiskLevel } from '../../utils/riskLevel'
+import { TYPOGRAPHY } from '../../styles/typography'
+
+const BANNER_IMAGES = {
+  Low:      'https://images.unsplash.com/photo-1585003387496-7ef0cc60267d?q=80&w=1287&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+  Moderate: 'https://images.unsplash.com/photo-1514810771018-276192729582?q=80&w=2670&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+  High:     'https://images.unsplash.com/photo-1627716092978-629cc2fb2858?q=80&w=1288&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+  Extreme:  'https://images.unsplash.com/photo-1627716092978-629cc2fb2858?q=80&w=1288&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+}
+
+const SOLID_COLORS = {
+  Low:      '#16a34a',
+  Moderate: '#d97706',
+  High:     '#ea580c',
+  Extreme:  '#dc2626',
+}
+
+/** Segments per half of the seamless loop; wide screens need many repeats to fill the bar */
+const MARQUEE_SEGMENTS_PER_HALF = 28
 
 const ADVICE = {
   Low: {
@@ -101,38 +119,96 @@ export default function HeatRiskBanner({ onCoordsReady }) {
   const feelsLike = current?.apparentTemp
   const { level, label, bannerBg } = getRiskLevel(temp)
   const { line1, line2 } = ADVICE[level]
+  const imageUrl = BANNER_IMAGES[level]
+  const solidColor = SOLID_COLORS[level]
+
+  const renderMarqueeHalf = (keyPrefix) =>
+    Array.from({ length: MARQUEE_SEGMENTS_PER_HALF }, (_, i) => (
+    <span
+      key={`${keyPrefix}-${i}`}
+      className="inline-flex shrink-0 items-center whitespace-nowrap pr-12"
+      style={{
+        fontFamily: "'Public Sans', sans-serif",
+        fontWeight: 600,
+        fontSize: '18px',
+        color: 'rgba(15, 23, 42, 0.92)',
+        letterSpacing: '0.02em',
+      }}
+    >
+      {line1}
+      <span className="mx-5 text-slate-600/80" aria-hidden>
+        •
+      </span>
+      {line2}
+      <span className="mx-5 text-slate-600/80" aria-hidden>
+        •
+      </span>
+    </span>
+  ))
 
   return (
-    <div
-      className="relative w-full overflow-hidden flex items-center justify-center"
-      style={{ height: '531px', backgroundColor: bannerBg }}
-    >
-      {/* Decorative warning triangle */}
-      <svg
-        viewBox="0 0 367 317"
-        fill="none"
-        className="absolute pointer-events-none"
-        style={{ top: '-80px', right: '-80px', width: '367px', height: '317px', opacity: 0.1 }}
+    <>
+      <div
+        className="overflow-hidden border-b border-white/25"
+        style={{
+          width: '100vw',
+          marginLeft: 'calc(50% - 50vw)',
+          padding: '14px 0',
+          background: 'rgba(255, 255, 255, 0.5)',
+          backdropFilter: 'blur(10px)',
+          WebkitBackdropFilter: 'blur(10px)',
+        }}
       >
-        <path d="M183.5 10L357 307H10L183.5 10Z" stroke="white" strokeWidth="20" />
-        <text x="183" y="230" textAnchor="middle" fontSize="120" fill="white">!</text>
-      </svg>
+        <style>{`
+          .marquee-track {
+            display: flex;
+            width: max-content;
+            flex-shrink: 0;
+            animation: marquee 200s linear infinite;
+          }
+          .marquee-track:hover {
+            animation-play-state: paused;
+          }
+          .marquee-half {
+            display: flex;
+            flex-shrink: 0;
+            align-items: center;
+          }
+          @keyframes marquee {
+            0%   { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+          }
+        `}</style>
+        <div className="marquee-track">
+          <div className="marquee-half">{renderMarqueeHalf('a')}</div>
+          <div className="marquee-half" aria-hidden>
+            {renderMarqueeHalf('b')}
+          </div>
+        </div>
+      </div>
 
-      <div className="relative flex flex-col items-center gap-6 px-6 text-center">
+      <div
+        className="relative w-full overflow-hidden flex items-center justify-center"
+        style={{
+          height: '531px',
+          backgroundImage: `url(${imageUrl})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center right',
+        }}
+      >
+
+<div className="relative flex flex-col items-center gap-6 px-6 text-center" style={{ zIndex: 10 }}>
         {/* Alert badge */}
         <div
           className="flex items-center gap-2 rounded-[12px] px-[25px] py-[9px]"
           style={{
-            background: 'rgba(255,255,255,0.1)',
-            border: '1px solid rgba(255,255,255,0.2)',
-            backdropFilter: 'blur(2px)',
+            background: 'rgba(255,255,255,0.3)',
+            border: '1px solid rgba(255,255,255,0.14)',
+            backdropFilter: 'blur(4px)',
           }}
         >
           <span className="text-[20px]">⚠</span>
-          <span
-            className="font-['Public_Sans'] text-white uppercase"
-            style={{ fontWeight: 800, fontSize: '20px', letterSpacing: '4px' }}
-          >
+          <span className={`${TYPOGRAPHY.bannerBadge} text-white`}>
             {label}
           </span>
         </div>
@@ -140,8 +216,8 @@ export default function HeatRiskBanner({ onCoordsReady }) {
         {/* Temperature */}
         <div className="flex flex-col items-center gap-2">
           <p
-            className="font-['Public_Sans'] text-white"
-            style={{ fontWeight: 900, fontSize: '96px', letterSpacing: '-4.8px', lineHeight: 1 }}
+            className="font-['Public_Sans'] font-black text-white"
+            style={{ fontSize: '96px', letterSpacing: '-4.8px', lineHeight: 1 }}
           >
             HEAT IS {Math.round(temp)}°C
           </p>
@@ -157,20 +233,18 @@ export default function HeatRiskBanner({ onCoordsReady }) {
 
         {/* Advice */}
         <div className="flex flex-col gap-1">
-          <p
-            className="font-['Public_Sans'] text-[30px] text-white"
-            style={{ fontWeight: 500 }}
-          >
+          <p className={`${TYPOGRAPHY.bannerSubtitle} text-white`}>
             {line1}
           </p>
           <p
-            className="font-['Public_Sans'] text-[30px] text-white underline"
-            style={{ fontWeight: 900, textDecorationColor: 'rgba(255,255,255,0.4)' }}
+            className={`${TYPOGRAPHY.bannerSubtitle} text-white underline`}
+            style={{ textDecorationColor: 'rgba(255,255,255,0.4)' }}
           >
             {line2}
           </p>
         </div>
       </div>
     </div>
+    </>
   )
 }

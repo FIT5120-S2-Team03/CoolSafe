@@ -4,6 +4,8 @@
  * @module DoThisAvoid
  */
 
+import { TYPOGRAPHY } from '../../styles/typography'
+
 const CONTENT = {
   Low: {
     doThis: [
@@ -88,19 +90,13 @@ export default function DoThisAvoid({ riskLevel }) {
       >
         <div className="flex items-center gap-3" style={{ marginBottom: 24 }}>
           <span style={{ fontSize: 30 }}>✅</span>
-          <span
-            className="uppercase"
-            style={{ fontFamily: 'Public Sans', fontWeight: 900, fontSize: 30, color: '#006e2f' }}
-          >
+          <span className={`${TYPOGRAPHY.h1} uppercase text-[#006e2f]`}>
             Do This
           </span>
         </div>
         <ul className="flex flex-col" style={{ gap: 16, listStyle: 'none', padding: 0, margin: 0 }}>
           {content.doThis.map((item) => (
-            <li
-              key={item}
-              style={{ fontFamily: 'Public Sans', fontWeight: 700, fontSize: 20, color: '#1e293b' }}
-            >
+            <li key={item} className={TYPOGRAPHY.body}>
               {item}
             </li>
           ))}
@@ -119,19 +115,13 @@ export default function DoThisAvoid({ riskLevel }) {
       >
         <div className="flex items-center gap-3" style={{ marginBottom: 24 }}>
           <span style={{ fontSize: 30 }}>❌</span>
-          <span
-            className="uppercase"
-            style={{ fontFamily: 'Public Sans', fontWeight: 900, fontSize: 30, color: '#ea580c' }}
-          >
+          <span className={`${TYPOGRAPHY.h1} uppercase text-[#ea580c]`}>
             Avoid
           </span>
         </div>
         <ul className="flex flex-col" style={{ gap: 16, listStyle: 'none', padding: 0, margin: 0 }}>
           {content.avoid.map((item) => (
-            <li
-              key={item}
-              style={{ fontFamily: 'Public Sans', fontWeight: 700, fontSize: 20, color: '#1e293b' }}
-            >
+            <li key={item} className={TYPOGRAPHY.body}>
               {item}
             </li>
           ))}

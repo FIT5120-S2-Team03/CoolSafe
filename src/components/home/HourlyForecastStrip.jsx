@@ -4,6 +4,7 @@
  * to go out" recommendation window based on safe (<28°C) temperature slots.
  */
 import { getRiskLevel } from '../../utils/riskLevel'
+import { TYPOGRAPHY } from '../../styles/typography'
 
 function fmtH(h) {
   if (h === 0) return '12AM'
@@ -45,7 +46,7 @@ function SkeletonCard() {
 }
 
 export default function HourlyForecastStrip({ hourly }) {
-  const wrapClass = 'bg-white rounded-[8px] p-[17px] w-full overflow-hidden'
+  const wrapClass = 'bg-white rounded-[8px] p-[24px] w-full overflow-hidden'
   const wrapStyle = { border: '1px solid rgba(195,198,214,0.3)' }
 
   if (!hourly) {
@@ -85,11 +86,11 @@ export default function HourlyForecastStrip({ hourly }) {
   return (
     <div className={wrapClass} style={wrapStyle}>
       <div className="mb-3">
-        <p className="font-['Public_Sans'] font-bold text-[16px] text-[#1a1c1e]">
+        <p className={TYPOGRAPHY.h3}>
           🕐 Best Time to Go Out Today
         </p>
         {safeWindowLabel && (
-          <p className="font-['Public_Sans'] text-[14px] text-[#0d9488]" style={{ fontWeight: 500 }}>
+          <p className={`${TYPOGRAPHY.subtitle} text-[#0d9488]`}>
             {safeWindowLabel}
           </p>
         )}
@@ -113,13 +114,13 @@ export default function HourlyForecastStrip({ hourly }) {
           return (
             <div
               key={t}
-              className="flex-none w-[64px] h-[88px] flex flex-col items-center justify-center rounded-[4px]"
+              className="flex-none w-[72px] h-[110px] flex flex-col items-center justify-center rounded-[4px]"
               style={bgStyle}
             >
-              <span className="font-['Public_Sans'] text-[14px] text-[#64748b] mb-1">
+              <span className={`${TYPOGRAPHY.dataSmall} text-[#64748b] mb-1`}>
                 {formatHour(t)}
               </span>
-              <span className="font-['Public_Sans'] font-bold text-[18px] text-[#1a1c1e] mb-2">
+              <span className={`${TYPOGRAPHY.dataSmall} font-bold text-[#1a1c1e] mb-2`}>
                 {Math.round(temp)}°
               </span>
               <div

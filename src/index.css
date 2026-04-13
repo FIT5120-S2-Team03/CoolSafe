@@ -1,1 +1,17 @@
 @import "tailwindcss";
+
+body {
+  background-color: #fefdf5;
+}
+
+@keyframes section-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(0, 86, 210, 0); }
+  30%  { box-shadow: 0 0 0 6px rgba(0, 86, 210, 0.18); }
+  70%  { box-shadow: 0 0 0 6px rgba(0, 86, 210, 0.10); }
+  100% { box-shadow: 0 0 0 0 rgba(0, 86, 210, 0); }
+}
+
+.section-highlight {
+  animation: section-pulse 1s ease-out forwards;
+  border-radius: 8px;
+}

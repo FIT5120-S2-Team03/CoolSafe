@@ -4,6 +4,7 @@
  * @module MedicationsSection
  */
 import { MED_ADVICE } from '../../utils/scoreCalculator'
+import { TYPOGRAPHY } from '../../styles/typography'
 
 const MEDICATION_ROWS = [
   ['Blood pressure medication', 'Diuretics / water tablets'],
@@ -43,14 +44,10 @@ export default function MedicationsSection({ selectedMedications, onMedicationsC
         padding: 33,
       }}
     >
-      <h2
-        style={{ fontFamily: 'Public Sans', fontWeight: 900, fontSize: 24, color: '#0056d2', marginBottom: 8 }}
-      >
+      <h2 className={`${TYPOGRAPHY.h2} text-[#0056d2]`} style={{ marginBottom: 8 }}>
         💊 Your Medications & Heat Safety
       </h2>
-      <p
-        style={{ fontFamily: 'Lexend', fontSize: 16, color: '#475569', marginBottom: 24 }}
-      >
+      <p className={TYPOGRAPHY.body} style={{ marginBottom: 24 }}>
         Some medications affect how your body handles heat. Select any you take to get personalised advice.
       </p>
 
@@ -95,13 +92,8 @@ export default function MedicationsSection({ selectedMedications, onMedicationsC
                 {selected ? '✓' : ''}
               </span>
               <span
-                style={{
-                  fontFamily: 'Inter',
-                  fontWeight: 600,
-                  fontSize: 16,
-                  color: selected ? 'white' : '#1a1c1e',
-                  textAlign: 'left',
-                }}
+                className={TYPOGRAPHY.dataMedium}
+                style={{ color: selected ? 'white' : '#1a1c1e', textAlign: 'left' }}
               >
                 {med}
               </span>
@@ -129,9 +121,7 @@ export default function MedicationsSection({ selectedMedications, onMedicationsC
         >
           <div className="flex items-center gap-2" style={{ marginBottom: 16 }}>
             <span style={{ fontSize: 18 }}>⚠️</span>
-            <span
-              style={{ fontFamily: 'Public Sans', fontWeight: 700, fontSize: 16, color: '#1a1c1e' }}
-            >
+            <span className={TYPOGRAPHY.h3}>
               Heat Safety Advice for Your Medications
             </span>
           </div>
@@ -149,9 +139,7 @@ export default function MedicationsSection({ selectedMedications, onMedicationsC
                     marginTop: 8,
                   }}
                 />
-                <p
-                  style={{ fontFamily: 'Lexend', fontSize: 16, color: '#334155', lineHeight: 1.6, margin: 0 }}
-                >
+                <p className={TYPOGRAPHY.body} style={{ margin: 0 }}>
                   <strong>{med}: </strong>
                   {MED_ADVICE[med]}
                 </p>
@@ -162,7 +150,7 @@ export default function MedicationsSection({ selectedMedications, onMedicationsC
           <div
             style={{ borderTop: '1px solid rgba(195,198,214,0.3)', marginTop: 20, paddingTop: 16 }}
           >
-            <p style={{ fontFamily: 'Lexend', fontSize: 13, color: '#64748b', margin: 0 }}>
+            <p className={TYPOGRAPHY.bodySmall} style={{ margin: 0 }}>
               This is general information only. Always follow your doctor's advice.
             </p>
           </div>

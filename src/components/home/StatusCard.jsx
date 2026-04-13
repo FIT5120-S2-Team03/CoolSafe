@@ -3,8 +3,11 @@
  * one for the map thumbnail linking to the Map page.
  */
 import { useNavigate } from 'react-router-dom'
+import { MapContainer, TileLayer } from 'react-leaflet'
+import 'leaflet/dist/leaflet.css'
 import { useAirQuality } from '../../hooks/useAirQuality'
 import { getRiskLevel, getAqiInfo } from '../../utils/riskLevel'
+import { TYPOGRAPHY } from '../../styles/typography'
 
 const cardStyle = {
   border: '1px solid rgba(195,198,214,0.3)',
@@ -17,7 +20,7 @@ function Row({ label, children }) {
       className="flex items-center justify-between py-4"
       style={{ borderBottom: '1px solid rgba(195,198,214,0.3)' }}
     >
-      <span className="font-['Lexend'] text-[16px] text-[#64748b]">{label}</span>
+      <span className={TYPOGRAPHY.subtitle}>{label}</span>
       <span>{children}</span>
     </div>
   )
@@ -55,13 +58,10 @@ export default function StatusCard({ lat, lng, currentTemp, todayMax, locationNa
           style={{ borderBottom: '1px solid rgba(195,198,214,0.3)' }}
         >
           <div>
-            <span
-              className="font-['Lexend'] text-[11px] text-[#64748b] uppercase"
-              style={{ letterSpacing: '0.1em' }}
-            >
+            <span className={TYPOGRAPHY.label}>
               Status
             </span>
-            <p className="font-['Public_Sans'] font-black text-[28px] text-[#1a1c1e] leading-tight mt-1">
+            <p className={`${TYPOGRAPHY.h2} mt-1`}>
               {hasData ? `${risk.level} Heat` : '—'}
             </p>
           </div>
@@ -69,14 +69,14 @@ export default function StatusCard({ lat, lng, currentTemp, todayMax, locationNa
         </div>
 
         <Row label="Max Forecast">
-          <span className="font-['Inter'] font-semibold text-[20px] text-[#1a1c1e]">
+          <span className={TYPOGRAPHY.dataMedium}>
             {todayMax != null ? `${Math.round(todayMax)}°C` : '—'}
           </span>
         </Row>
 
         <Row label="Warning">
           <span
-            className="font-['Inter'] font-semibold text-[16px]"
+            className={TYPOGRAPHY.dataMedium}
             style={{ color: hasData ? warningColor : '#64748b' }}
           >
             {hasData ? `LEVEL ${risk.warningLevel}` : '—'}
@@ -86,13 +86,13 @@ export default function StatusCard({ lat, lng, currentTemp, todayMax, locationNa
         <Row label="Air Quality">
           {aqiInfo ? (
             <span
-              className="font-['Inter'] font-semibold text-[16px]"
+              className={TYPOGRAPHY.dataMedium}
               style={{ color: aqiInfo.color }}
             >
               {aqi} ({aqiInfo.label})
             </span>
           ) : (
-            <span className="font-['Inter'] font-semibold text-[16px] text-[#64748b]">
+            <span className={`${TYPOGRAPHY.dataMedium} text-[#64748b]`}>
               Unavailable
             </span>
           )}
@@ -103,18 +103,32 @@ export default function StatusCard({ lat, lng, currentTemp, todayMax, locationNa
       <div className="bg-white rounded-[12px] p-4" style={cardStyle}>
         <div className="flex items-center gap-2 mb-3">
           <span style={{ fontSize: 18 }}>📍</span>
-          <span className="font-['Public_Sans'] font-bold text-[16px] text-[#1a1c1e]">
+          <span className={TYPOGRAPHY.h3}>
             {locationName ?? 'Locating…'}
           </span>
         </div>
 
         <div
           className="relative rounded-[8px] overflow-hidden cursor-pointer"
-          style={{ height: '220px', background: '#c8d6d6' }}
+          style={{ height: '160px' }}
           onClick={() => navigate('/map')}
         >
+          <MapContainer
+            key={`map-${lat}-${lng}`}
+            center={lat != null && lng != null ? [lat, lng] : [-37.8136, 144.9631]}
+            zoom={lat != null && lng != null ? 14 : 12}
+            style={{ width: '100%', height: '160px' }}
+            zoomControl={false}
+            dragging={false}
+            scrollWheelZoom={false}
+            doubleClickZoom={false}
+            attributionControl={false}
+          >
+            <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" />
+          </MapContainer>
           <button
-            className="absolute bottom-2 right-2 bg-white rounded text-[#0056d2] text-[12px] px-3 py-1 font-['Public_Sans'] font-bold"
+            className="absolute bottom-2 right-2 bg-white rounded text-[#0056d2] text-[12px] px-2 py-1 font-['Public_Sans'] font-bold"
+            style={{ zIndex: 1000 }}
             onClick={(e) => {
               e.stopPropagation()
               navigate('/map')

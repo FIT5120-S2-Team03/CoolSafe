@@ -123,12 +123,41 @@ export default function HeatRiskBanner({ onCoordsReady }) {
   const solidColor = SOLID_COLORS[level]
 
   function highlightDangerous(text) {
-    const parts = text.split(/( ?dangerous ?)/gi)
-    return parts.map((part, i) =>
-      /dangerous/i.test(part)
-        ? <span key={i} style={{ color: '#dc2626' }}>{part}</span>
-        : part
-    )
+    if (typeof text !== 'string' || text.length === 0) return text
+
+    const out = []
+    const re = /\bdangerous\b/gi
+    let last = 0
+    let m
+    let key = 0
+
+    while ((m = re.exec(text)) !== null) {
+      const idx = m.index
+      const match = m[0]
+
+      let before = text.slice(last, idx)
+      const hadTrailingSpace = /\s$/.test(before)
+      if (hadTrailingSpace) before = before.replace(/\s+$/, '')
+      if (before) out.push(before)
+
+      // In a flex container, trailing text-node spaces can be dropped.
+      // Insert NBSP explicitly around the highlighted word.
+      out.push(
+        <span key={`danger-${key++}`}>
+          {'\u00A0'}
+          <span style={{ color: '#dc2626' }}>{match}</span>
+          {'\u00A0'}
+        </span>
+      )
+
+      last = idx + match.length
+      // Skip any whitespace already present after the word to avoid double spacing.
+      while (last < text.length && /\s/.test(text[last])) last += 1
+    }
+
+    const tail = text.slice(last)
+    if (tail) out.push(tail)
+    return out
   }
 
   const renderMarqueeHalf = (keyPrefix) =>

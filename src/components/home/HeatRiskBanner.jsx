@@ -11,7 +11,7 @@ const BANNER_IMAGES = {
   Low:      'https://images.unsplash.com/photo-1585003387496-7ef0cc60267d?q=80&w=1287&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
   Moderate: 'https://images.unsplash.com/photo-1514810771018-276192729582?q=80&w=2670&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
   High:     'https://images.unsplash.com/photo-1627716092978-629cc2fb2858?q=80&w=1288&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-  Extreme:  'https://images.unsplash.com/photo-1627716092978-629cc2fb2858?q=80&w=1288&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+  Extreme:  'https://images.unsplash.com/photo-1504386106331-3e4e71712b38?q=80&w=3432&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
 }
 
 const SOLID_COLORS = {
@@ -122,6 +122,15 @@ export default function HeatRiskBanner({ onCoordsReady }) {
   const imageUrl = BANNER_IMAGES[level]
   const solidColor = SOLID_COLORS[level]
 
+  function highlightDangerous(text) {
+    const parts = text.split(/( ?dangerous ?)/gi)
+    return parts.map((part, i) =>
+      /dangerous/i.test(part)
+        ? <span key={i} style={{ color: '#dc2626' }}>{part}</span>
+        : part
+    )
+  }
+
   const renderMarqueeHalf = (keyPrefix) =>
     Array.from({ length: MARQUEE_SEGMENTS_PER_HALF }, (_, i) => (
     <span
@@ -135,11 +144,11 @@ export default function HeatRiskBanner({ onCoordsReady }) {
         letterSpacing: '0.02em',
       }}
     >
-      {line1}
+      {highlightDangerous(line1)}
       <span className="mx-5 text-slate-600/80" aria-hidden>
         •
       </span>
-      {line2}
+      {highlightDangerous(line2)}
       <span className="mx-5 text-slate-600/80" aria-hidden>
         •
       </span>
@@ -196,6 +205,7 @@ export default function HeatRiskBanner({ onCoordsReady }) {
           backgroundPosition: 'center right',
         }}
       >
+        <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.3)', zIndex: 1 }} />
 
 <div className="relative flex flex-col items-center gap-6 px-6 text-center" style={{ zIndex: 10 }}>
         {/* Alert badge */}

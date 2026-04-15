@@ -13,6 +13,18 @@ CoolSafe is a real-time heat safety web application designed for elderly Melbour
 ---
 
 
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Frontend | React (Vite), Tailwind CSS, Leaflet.js |
+| Backend | Python Flask, APScheduler |
+| Database | PostgreSQL |
+| Deployment | Netlify (frontend), Render (backend + DB) |
+| Geospatial | Shapely, Tree Canopies 2021 dataset |
+
+---
+
 ## Open Data Sources
 
 | Dataset | Source | Used For |
@@ -22,6 +34,7 @@ CoolSafe is a real-time heat safety web application designed for elderly Melbour
 | Heat Vulnerability Index | [Data VIC — Metropolitan Melbourne HVI 2018](https://discover.data.vic.gov.au) | Suburb risk layer |
 | Urban Tree Canopy | [City of Melbourne Open Data](https://data.melbourne.vic.gov.au) | Coolest route calculation |
 
+---
 
 
 ## Getting Started
@@ -34,6 +47,13 @@ CoolSafe is a real-time heat safety web application designed for elderly Melbour
 
 ### Frontend
 
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+---
 
 ## Team Members
 

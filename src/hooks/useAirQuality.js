@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import mockWeather from '../data/mockWeather.json'
 
 export function useAirQuality({ lat, lng }) {
   const [aqi, setAqi] = useState(null)
@@ -6,6 +7,11 @@ export function useAirQuality({ lat, lng }) {
   const [error, setError] = useState(false)
 
   useEffect(() => {
+    if (mockWeather.enabled) {
+      setAqi(mockWeather.aqi.value)
+      setLoading(false)
+      return
+    }
     if (lat == null || lng == null) return
     setLoading(true)
     setError(false)

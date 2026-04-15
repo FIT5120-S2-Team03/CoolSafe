@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import mockWeather from '../data/mockWeather.json'
 
 export function useWeatherData() {
   const [coords, setCoords] = useState(null)
@@ -47,6 +48,37 @@ export function useWeatherData() {
   }
 
   useEffect(() => {
+    if (mockWeather.enabled) {
+      const today = new Date()
+      const dateStr = today.toISOString().split('T')[0]
+      const tomorrow = new Date(today)
+      tomorrow.setDate(tomorrow.getDate() + 1)
+      const tomorrowStr = tomorrow.toISOString().split('T')[0]
+      const currentHour = today.getHours()
+      const temps = mockWeather.hourly.apparent_temperature
+      const mockHourly = {
+        time: temps.map((_, i) =>
+          i < 24
+            ? `${dateStr}T${String(i).padStart(2, '0')}:00`
+            : `${tomorrowStr}T${String(i - 24).padStart(2, '0')}:00`
+        ),
+        apparent_temperature: temps,
+      }
+      const hourlyApparent = mockWeather.hourly.apparent_temperature[currentHour]
+      setCurrent({
+        temp: hourlyApparent,
+        apparentTemp: hourlyApparent,
+      })
+      setHourly(mockHourly)
+      setDaily({
+        todayMax: mockWeather.daily.apparent_temperature_max[0],
+        tomorrowMax: mockWeather.daily.apparent_temperature_max[1],
+      })
+      setLocationName('Melbourne')
+      setCoords({ lat: -37.8136, lng: 144.9631 })
+      setLoading(false)
+      return
+    }
     navigator.geolocation.getCurrentPosition(
       (pos) => fetchWeather(pos.coords.latitude, pos.coords.longitude),
       () => {

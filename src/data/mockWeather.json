@@ -1,5 +1,5 @@
 {
-  "enabled": true,
+  "enabled": false,
   "current": {
     "apparent_temperature": 42,
     "temperature_2m": 41

@@ -1,5 +1,9 @@
 {
+<<<<<<< HEAD
   "enabled": false,
+=======
+  "enabled": true,
+>>>>>>> dev
   "current": {
     "apparent_temperature": 42,
     "temperature_2m": 41

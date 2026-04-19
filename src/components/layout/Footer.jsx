@@ -27,7 +27,7 @@ export default function Footer() {
         <div className="flex gap-[48px]">
           <div>
             <p
-              className="font-['Public_Sans'] text-[14px] text-[#0f172a] uppercase mb-4"
+              className="font-['Public_Sans'] text-[16px] text-[#0f172a] uppercase mb-4"
               style={{ fontWeight: 900, letterSpacing: '1.4px' }}
             >
               Resources
@@ -50,7 +50,7 @@ export default function Footer() {
 
           <div>
             <p
-              className="font-['Public_Sans'] text-[14px] text-[#0f172a] uppercase mb-4"
+              className="font-['Public_Sans'] text-[16px] text-[#0f172a] uppercase mb-4"
               style={{ fontWeight: 900, letterSpacing: '1.4px' }}
             >
               Support

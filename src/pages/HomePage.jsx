@@ -47,6 +47,11 @@ export default function HomePage() {
                 />
               )}
 
+              <MedicationsSection
+                selectedMedications={selectedMedications}
+                onMedicationsChange={setSelectedMedications}
+              />
+
               {/* Cooling locations CTA */}
               <button
                 onClick={() => navigate('/map')}
@@ -59,20 +64,15 @@ export default function HomePage() {
                 }}
               >
                 <div className="flex flex-col gap-2 items-start">
-                  <span className="font-['Public_Sans'] font-bold text-[14px] text-white uppercase tracking-[1.4px] opacity-80">
+                  <span className="font-['Public_Sans'] font-bold text-[16px] text-white uppercase tracking-[1.4px] opacity-80">
                     Cooling Locations
                   </span>
-                  <span className="font-['Public_Sans'] font-black text-[36px] text-white leading-tight text-left">
+                  <span className="font-['Public_Sans'] font-black text-[30px] text-white leading-tight text-left">
                     Find Cool Spaces Near Me
                   </span>
                 </div>
-                <span className="text-white text-[40px]">→</span>
+                <span className="text-white text-[42px]">→</span>
               </button>
-
-              <MedicationsSection
-                selectedMedications={selectedMedications}
-                onMedicationsChange={setSelectedMedications}
-              />
 
             </div>
 

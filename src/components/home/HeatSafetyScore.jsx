@@ -5,7 +5,7 @@
  */
 import { useEffect, useRef, useState } from 'react'
 import { calculateHeatSafetyScore } from '../../utils/scoreCalculator'
-import { TYPOGRAPHY } from '../../styles/typography'
+import { TYPOGRAPHY, FONT_SIZE } from '../../styles/typography'
 
 const RADIUS = 54
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS
@@ -129,7 +129,7 @@ export default function HeatSafetyScore({ apparentTemp, hour, selectedMedication
               <text
                 x="70" y="70" textAnchor="middle" dominantBaseline="central"
                 fill={riskLabel.color}
-                style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: 40, transition: 'fill 0.3s' }}
+                style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: 42, transition: 'fill 0.3s' }}
               >
                 {score}
               </text>
@@ -168,7 +168,7 @@ export default function HeatSafetyScore({ apparentTemp, hour, selectedMedication
             <div className="flex items-center justify-between" style={{ marginBottom: 10 }}>
               <span className={TYPOGRAPHY.h3}>What This Means For You</span>
               {hasMeds && (
-                <span style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: 11, color: '#166534', background: '#dcfce7', borderRadius: 9999, padding: '2px 8px' }}>
+                <span style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: FONT_SIZE.small, color: '#166534', background: '#dcfce7', borderRadius: 9999, padding: '2px 8px' }}>
                   PERSONALISED
                 </span>
               )}
@@ -192,6 +192,34 @@ export default function HeatSafetyScore({ apparentTemp, hour, selectedMedication
             </div>
           </div>
         </div>
+
+        {/* ── Medication CTA ── */}
+        {!hasMeds && (
+          <div style={{ marginTop: 20 }}>
+          <div
+            onClick={() => {
+              const el = document.getElementById('medications-section')
+              if (!el) return
+              const top = el.getBoundingClientRect().top + window.scrollY - 80
+              window.scrollTo({ top, behavior: 'smooth' })
+              setTimeout(() => {
+                el.classList.add('section-highlight')
+                el.addEventListener('animationend', () => el.classList.remove('section-highlight'), { once: true })
+              }, 500)
+            }}
+            className="flex items-center justify-between cursor-pointer group hover:bg-[#dbeafe] transition-colors"
+            style={{ background: '#eff6ff', padding: '12px 16px', borderRadius: 8 }}
+          >
+            <span
+              style={{ fontFamily: 'Lexend', fontWeight: 500, fontSize: FONT_SIZE.small, color: '#0056d2' }}
+              className="group-hover:!text-[#003d99] transition-colors"
+            >
+              💊 <span style={{ textDecoration: 'underline' }}>Add your medications to get more personalised advice</span>
+            </span>
+            <span style={{ color: '#0056d2', fontSize: FONT_SIZE.body, fontWeight: 600 }}>›</span>
+          </div>
+          </div>
+        )}
 
         {/* ── Action plan section ── */}
         <div style={{ borderTop: '1px solid rgba(195,198,214,0.3)', marginTop: 24, paddingTop: 20 }}>
@@ -227,34 +255,6 @@ export default function HeatSafetyScore({ apparentTemp, hour, selectedMedication
             </div>
           </div>
         </div>
-
-        {/* ── Medication CTA ── */}
-        {!hasMeds && (
-          <div style={{ borderTop: '1px solid rgba(195,198,214,0.3)', marginTop: 20, paddingTop: 16 }}>
-          <div
-            onClick={() => {
-              const el = document.getElementById('medications-section')
-              if (!el) return
-              const top = el.getBoundingClientRect().top + window.scrollY - 80
-              window.scrollTo({ top, behavior: 'smooth' })
-              setTimeout(() => {
-                el.classList.add('section-highlight')
-                el.addEventListener('animationend', () => el.classList.remove('section-highlight'), { once: true })
-              }, 500)
-            }}
-            className="flex items-center justify-between cursor-pointer group hover:bg-[#dbeafe] transition-colors"
-            style={{ background: '#eff6ff', padding: '12px 16px', borderRadius: 8 }}
-          >
-            <span
-              style={{ fontFamily: 'Lexend', fontWeight: 500, fontSize: 14, color: '#0056d2' }}
-              className="group-hover:!text-[#003d99] transition-colors"
-            >
-              💊 Add your medications to get more personalised advice
-            </span>
-            <span style={{ color: '#0056d2', fontSize: 16, fontWeight: 600 }}>›</span>
-          </div>
-          </div>
-        )}
       </div>
     </div>
   )

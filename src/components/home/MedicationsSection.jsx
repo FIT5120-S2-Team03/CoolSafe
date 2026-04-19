@@ -85,7 +85,7 @@ export default function MedicationsSection({ selectedMedications, onMedicationsC
                   justifyContent: 'center',
                   flexShrink: 0,
                   color: 'white',
-                  fontSize: 9,
+                  fontSize: 11,
                   fontWeight: 700,
                 }}
               >

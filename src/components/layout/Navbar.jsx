@@ -7,9 +7,9 @@ export default function Navbar() {
   const { pathname } = useLocation()
 
   const activeClass =
-    "font-['Public_Sans'] font-bold text-[18px] text-[#0056d2] border-b-[4px] border-[#0056d2] pb-[8px]"
+    "font-['Public_Sans'] font-bold text-[22px] text-[#0056d2] border-b-[4px] border-[#0056d2] pb-[8px]"
   const inactiveClass =
-    "font-['Public_Sans'] font-bold text-[18px] text-[#475569]"
+    "font-['Public_Sans'] font-bold text-[22px] text-[#475569]"
 
   return (
     <header
@@ -22,7 +22,7 @@ export default function Navbar() {
     >
       <div className="relative flex items-center w-full px-6">
         <span
-          className="font-['Public_Sans'] text-[24px] text-[#0056d2]"
+          className="font-['Public_Sans'] text-[30px] text-[#0056d2]"
           style={{ fontWeight: 900, letterSpacing: '-0.6px' }}
         >
           CoolSafe
@@ -32,7 +32,7 @@ export default function Navbar() {
             Home
           </Link>
           <Link to="/map" className={pathname === '/map' ? activeClass : inactiveClass}>
-            Map
+            Find Cool Spaces
           </Link>
         </nav>
       </div>

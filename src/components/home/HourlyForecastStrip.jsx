@@ -4,7 +4,7 @@
  * to go out" recommendation window based on safe (<28°C) temperature slots.
  */
 import { getRiskLevel } from '../../utils/riskLevel'
-import { TYPOGRAPHY } from '../../styles/typography'
+import { TYPOGRAPHY, FONT_SIZE } from '../../styles/typography'
 
 function fmtH(h) {
   if (h === 0) return '12AM'
@@ -74,7 +74,7 @@ export default function HourlyForecastStrip({ hourly }) {
   if (!todaySlots.length) {
     return (
       <div className={wrapClass} style={wrapStyle}>
-        <p className="font-['Lexend'] text-[16px] text-[#64748b] text-center">
+        <p className="font-['Lexend'] text-[18px] text-[#64748b] text-center">
           Forecast unavailable
         </p>
       </div>
@@ -106,7 +106,7 @@ export default function HourlyForecastStrip({ hourly }) {
           const isHot = risk.warningLevel >= 3
 
           const bgStyle = isCurrent
-            ? { background: '#f0fdfa', border: '1px solid #99f6e4' }
+            ? { background: '#EFF6FF', border: '1px solid #BFDBFE' }
             : isHot
             ? { background: 'rgba(254,242,242,0.5)' }
             : {}
@@ -114,9 +114,18 @@ export default function HourlyForecastStrip({ hourly }) {
           return (
             <div
               key={t}
-              className="flex-none w-[72px] h-[110px] flex flex-col items-center justify-center rounded-[4px]"
-              style={bgStyle}
+              className="flex-none w-[72px] flex flex-col items-center rounded-[4px]"
+              style={{ paddingTop: isCurrent ? '0' : '18px', paddingBottom: '8px' }}
             >
+              {isCurrent && (
+                <span style={{ fontFamily: 'Lexend', fontWeight: 500, fontSize: FONT_SIZE.small, color: '#3B82F6', marginBottom: '2px', display: 'block', textAlign: 'center' }}>
+                  ▼ Now
+                </span>
+              )}
+              <div
+                className="w-full flex flex-col items-center justify-center rounded-[4px]"
+                style={{ ...bgStyle, height: '92px' }}
+              >
               <span className={`${TYPOGRAPHY.dataSmall} text-[#64748b] mb-1`}>
                 {formatHour(t)}
               </span>
@@ -127,6 +136,7 @@ export default function HourlyForecastStrip({ hourly }) {
                 className="rounded-full"
                 style={{ width: '10px', height: '10px', background: risk.dot }}
               />
+              </div>
             </div>
           )
         })}

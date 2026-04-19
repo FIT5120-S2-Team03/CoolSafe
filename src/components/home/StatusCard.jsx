@@ -127,7 +127,7 @@ export default function StatusCard({ lat, lng, currentTemp, todayMax, locationNa
             <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" />
           </MapContainer>
           <button
-            className="absolute bottom-2 right-2 bg-white rounded text-[#0056d2] text-[12px] px-2 py-1 font-['Public_Sans'] font-bold"
+            className="absolute bottom-2 right-2 bg-white rounded text-[#0056d2] text-[16px] px-2 py-1 font-['Public_Sans'] font-bold"
             style={{ zIndex: 1000 }}
             onClick={(e) => {
               e.stopPropagation()

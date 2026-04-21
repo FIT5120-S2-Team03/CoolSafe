@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import PasswordGate from './PasswordGate'
 
 import HomePageDev from './underdevelopment/pages/HomePage'
 import MapPageDev from './underdevelopment/pages/MapPage'
@@ -10,14 +11,38 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<HomePageDev />} />
-        <Route path="/map" element={<MapPageDev />} />
+        <Route path="/" element={
+          <PasswordGate storageKey="auth_dev">
+            <HomePageDev />
+          </PasswordGate>
+        } />
+        <Route path="/map" element={
+          <PasswordGate storageKey="auth_dev">
+            <MapPageDev />
+          </PasswordGate>
+        } />
 
-        <Route path="/underdevelopment" element={<HomePageDev />} />
-        <Route path="/underdevelopment/map" element={<MapPageDev />} />
+        <Route path="/underdevelopment" element={
+          <PasswordGate storageKey="auth_dev">
+            <HomePageDev />
+          </PasswordGate>
+        } />
+        <Route path="/underdevelopment/map" element={
+          <PasswordGate storageKey="auth_dev">
+            <MapPageDev />
+          </PasswordGate>
+        } />
 
-        <Route path="/version1" element={<HomePageV1 />} />
-        <Route path="/version1/map" element={<MapPageV1 />} />
+        <Route path="/version1" element={
+          <PasswordGate storageKey="auth_v1">
+            <HomePageV1 />
+          </PasswordGate>
+        } />
+        <Route path="/version1/map" element={
+          <PasswordGate storageKey="auth_v1">
+            <MapPageV1 />
+          </PasswordGate>
+        } />
       </Routes>
     </BrowserRouter>
   )

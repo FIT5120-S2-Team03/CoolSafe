@@ -1,0 +1,143 @@
+/**
+ * Right-column sidebar: two separate cards — one for heat status info,
+ * one for the map thumbnail linking to the Map page.
+ */
+import { useNavigate } from 'react-router-dom'
+import { MapContainer, TileLayer } from 'react-leaflet'
+import 'leaflet/dist/leaflet.css'
+import { useAirQuality } from '../../hooks/useAirQuality'
+import { getRiskLevel, getAqiInfo } from '../../utils/riskLevel'
+import { TYPOGRAPHY } from '../../styles/typography'
+
+const cardStyle = {
+  border: '1px solid rgba(195,198,214,0.3)',
+  boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+}
+
+function Row({ label, children }) {
+  return (
+    <div
+      className="flex items-center justify-between py-4"
+      style={{ borderBottom: '1px solid rgba(195,198,214,0.3)' }}
+    >
+      <span className={TYPOGRAPHY.subtitle}>{label}</span>
+      <span>{children}</span>
+    </div>
+  )
+}
+
+export default function StatusCard({ lat, lng, currentTemp, todayMax, locationName }) {
+  const navigate = useNavigate()
+  const { aqi } = useAirQuality({ lat, lng })
+
+  const hasData = currentTemp != null
+  const risk = hasData ? getRiskLevel(currentTemp) : null
+  const aqiInfo = aqi != null ? getAqiInfo(aqi) : null
+
+  const statusEmoji =
+    risk?.level === 'High' || risk?.level === 'Extreme'
+      ? '☀️'
+      : risk?.level === 'Moderate'
+      ? '🌤'
+      : '🌥'
+
+  const warningColor =
+    risk?.warningLevel >= 3
+      ? '#dc2626'
+      : risk?.warningLevel === 2
+      ? '#f59e0b'
+      : '#22c55e'
+
+  return (
+    <div className="flex flex-col gap-6">
+      {/* Status card */}
+      <div className="bg-white rounded-[12px] p-6" style={cardStyle}>
+        {/* Header */}
+        <div
+          className="flex items-start justify-between pb-4"
+          style={{ borderBottom: '1px solid rgba(195,198,214,0.3)' }}
+        >
+          <div>
+            <span className={TYPOGRAPHY.label}>
+              Status
+            </span>
+            <p className={`${TYPOGRAPHY.h2} mt-1`}>
+              {hasData ? `${risk.level} Heat` : '—'}
+            </p>
+          </div>
+          {hasData && <span style={{ fontSize: 40 }}>{statusEmoji}</span>}
+        </div>
+
+        <Row label="Max Forecast">
+          <span className={TYPOGRAPHY.dataMedium}>
+            {todayMax != null ? `${Math.round(todayMax)}°C` : '—'}
+          </span>
+        </Row>
+
+        <Row label="Warning">
+          <span
+            className={TYPOGRAPHY.dataMedium}
+            style={{ color: hasData ? warningColor : '#64748b' }}
+          >
+            {hasData ? `LEVEL ${risk.warningLevel}` : '—'}
+          </span>
+        </Row>
+
+        <Row label="Air Quality">
+          {aqiInfo ? (
+            <span
+              className={TYPOGRAPHY.dataMedium}
+              style={{ color: aqiInfo.color }}
+            >
+              {aqi} ({aqiInfo.label})
+            </span>
+          ) : (
+            <span className={`${TYPOGRAPHY.dataMedium} text-[#64748b]`}>
+              Unavailable
+            </span>
+          )}
+        </Row>
+      </div>
+
+      {/* Map card */}
+      <div className="bg-white rounded-[12px] p-4" style={cardStyle}>
+        <div className="flex items-center gap-2 mb-3">
+          <span style={{ fontSize: 18 }}>📍</span>
+          <span className={TYPOGRAPHY.h3}>
+            {locationName ?? 'Locating…'}
+          </span>
+        </div>
+
+        <div
+          className="relative rounded-[8px] overflow-hidden cursor-pointer"
+          style={{ height: '160px' }}
+          onClick={() => navigate('/map')}
+        >
+          <MapContainer
+            key={`map-${lat}-${lng}`}
+            center={lat != null && lng != null ? [lat, lng] : [-37.8136, 144.9631]}
+            zoom={lat != null && lng != null ? 14 : 12}
+            style={{ width: '100%', height: '160px' }}
+            zoomControl={false}
+            dragging={false}
+            scrollWheelZoom={false}
+            doubleClickZoom={false}
+            attributionControl={false}
+          >
+            <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" />
+          </MapContainer>
+          <button
+            className="absolute bottom-2 right-2 bg-white rounded text-[#0056d2] text-[16px] px-2 py-1 font-['Public_Sans'] font-bold"
+            style={{ zIndex: 1000 }}
+            onClick={(e) => {
+              e.stopPropagation()
+              navigate('/map')
+            }}
+          >
+            EXPAND ↗
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}

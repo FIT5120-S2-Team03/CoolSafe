@@ -7,12 +7,15 @@
  *   selectedCategory {string} — 'All' or a specific category name to filter pins
  */
 
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import L from 'leaflet'
-import { MapContainer, TileLayer, CircleMarker, Marker, Popup } from 'react-leaflet'
+import { MapContainer, TileLayer, CircleMarker, Marker, Popup, useMap } from 'react-leaflet'
+import { useNavigate } from 'react-router-dom'
 import useCoolSpaces from '../../hooks/useCoolSpaces'
 import useFountains from '../../hooks/useFountains'
 import { CATEGORY_COLORS } from '../../utils/categoryMapping'
+import { MOCK_OPENING_HOURS } from '../../data/mockVenues'
+import { getWalkingMinutes } from '../../utils/haversine'
 
 const locationPinIcon = L.divIcon({
   className: '',
@@ -28,9 +31,236 @@ const locationPinIcon = L.divIcon({
 
 const MELBOURNE = [-37.8136, 144.9631]
 
-export default function CoolSpacesMap({ selectedCategory }) {
+function getOpenStatus(venueName) {
+  const schedule = MOCK_OPENING_HOURS[venueName]
+  if (!schedule) return { status: 'unavailable' }
+
+  const today = new Date().toLocaleDateString('en-AU', { weekday: 'long' })
+  const hours = schedule[today]
+  if (!hours) return { status: 'closed' }
+
+  const now = new Date()
+  const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+  const isOpen = currentTime >= hours.open && currentTime < hours.close
+
+  return isOpen
+    ? { status: 'open', closeTime: hours.close }
+    : { status: 'closed' }
+}
+
+function VenuePopup({ venue, index, userLocation }) {
+  const navigate = useNavigate()
+  const map = useMap()
+  const openStatus = getOpenStatus(venue.name)
+
+  const walkMins =
+    userLocation != null
+      ? getWalkingMinutes(userLocation.lat, userLocation.lng, venue.lat, venue.lng)
+      : null
+
+  return (
+    <div
+      style={{
+        backgroundColor: '#fff',
+        borderRadius: 16,
+        boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
+        padding: 20,
+        minWidth: 300,
+        fontFamily: "'Lexend', sans-serif",
+        position: 'relative',
+      }}
+    >
+      {/* Close button */}
+      <button
+        onClick={() => map.closePopup()}
+        aria-label="Close"
+        style={{
+          position: 'absolute',
+          top: 12,
+          right: 12,
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
+          padding: 4,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: '#94a3b8',
+          minWidth: 44,
+          minHeight: 44,
+        }}
+      >
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <line x1="2" y1="2" x2="14" y2="14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          <line x1="14" y1="2" x2="2" y2="14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+        </svg>
+      </button>
+
+      {/* Venue name */}
+      <p
+        style={{
+          fontFamily: "'Public Sans', sans-serif",
+          fontWeight: 700,
+          fontSize: 16,
+          color: '#1e293b',
+          margin: '0 32px 8px 0',
+        }}
+      >
+        {venue.name}
+      </p>
+
+      {/* Category badge */}
+      <span
+        style={{
+          display: 'inline-block',
+          backgroundColor: CATEGORY_COLORS[venue.category] ?? '#64748b',
+          color: '#fff',
+          borderRadius: 6,
+          padding: '2px 8px',
+          fontSize: 11,
+          fontWeight: 700,
+          marginBottom: 10,
+        }}
+      >
+        {venue.category}
+      </span>
+
+      {/* Address */}
+      {venue.address && (
+        <p style={{ fontSize: 12, color: '#64748b', margin: '0 0 12px' }}>
+          {venue.address}
+        </p>
+      )}
+
+      {/* Status row */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
+          flexWrap: 'wrap',
+          fontSize: 13,
+          marginBottom: 16,
+        }}
+      >
+        {openStatus.status === 'unavailable' ? (
+          <span style={{ color: '#94a3b8' }}>Hours unavailable</span>
+        ) : (
+          <>
+            <span
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: '50%',
+                backgroundColor: openStatus.status === 'open' ? '#16a34a' : '#ef4444',
+                flexShrink: 0,
+              }}
+            />
+            <span
+              style={{
+                color: openStatus.status === 'open' ? '#16a34a' : '#ef4444',
+                fontWeight: 600,
+              }}
+            >
+              {openStatus.status === 'open' ? 'Open Now' : 'Closed'}
+            </span>
+            {openStatus.status === 'open' && (
+              <>
+                <span style={{ color: '#cbd5e1' }}>•</span>
+                <span style={{ color: '#64748b' }}>Closes {openStatus.closeTime}</span>
+              </>
+            )}
+          </>
+        )}
+
+        {walkMins != null && (
+          <>
+            <span style={{ color: '#cbd5e1' }}>•</span>
+            <span style={{ color: '#64748b' }}>{walkMins} min walk</span>
+          </>
+        )}
+      </div>
+
+      {/* Fastest / Coolest buttons */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+        <button
+          onClick={() => { /* TODO: US 5.1 — trigger route calculation */ }}
+          style={{
+            flex: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 6,
+            backgroundColor: '#fff',
+            border: '1px solid #e2e8f0',
+            borderRadius: 10,
+            padding: '10px 0',
+            color: '#1e293b',
+            fontFamily: "'Lexend', sans-serif",
+            fontWeight: 600,
+            fontSize: 13,
+            cursor: 'pointer',
+            minHeight: 44,
+          }}
+        >
+          ⚡ Fastest
+        </button>
+        <button
+          onClick={() => { /* TODO: US 5.1 — trigger route calculation */ }}
+          style={{
+            flex: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 6,
+            backgroundColor: '#16a34a',
+            border: 'none',
+            borderRadius: 10,
+            padding: '10px 0',
+            color: '#fff',
+            fontFamily: "'Lexend', sans-serif",
+            fontWeight: 600,
+            fontSize: 13,
+            cursor: 'pointer',
+            minHeight: 44,
+          }}
+        >
+          🌲 Coolest
+        </button>
+      </div>
+
+      {/* View Full Details button */}
+      <button
+        onClick={() => navigate(`/venue/${index}`)}
+        style={{
+          width: '100%',
+          backgroundColor: '#003fa4',
+          color: '#fff',
+          border: 'none',
+          borderRadius: 12,
+          padding: '14px 0',
+          fontSize: 16,
+          fontWeight: 700,
+          fontFamily: "'Public Sans', sans-serif",
+          cursor: 'pointer',
+          minHeight: 44,
+        }}
+      >
+        View Full Details →
+      </button>
+    </div>
+  )
+}
+
+export default function CoolSpacesMap({ selectedCategory, flyTo }) {
   const mapRef = useRef(null)
   const [userLocation, setUserLocation] = useState(null)
+
+  useEffect(() => {
+    if (flyTo && mapRef.current) {
+      mapRef.current.flyTo([flyTo.lat, flyTo.lng], 16)
+    }
+  }, [flyTo])
 
   const { venues, loading: venuesLoading, error: venuesError } = useCoolSpaces()
   const { fountains, loading: fountainsLoading, error: fountainsError } = useFountains()
@@ -64,6 +294,25 @@ export default function CoolSpacesMap({ selectedCategory }) {
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+      <style>{`
+        .cool-popup .leaflet-popup-content-wrapper {
+          background: transparent;
+          border: none;
+          box-shadow: none;
+          padding: 0;
+          border-radius: 16px;
+        }
+        .cool-popup .leaflet-popup-content {
+          margin: 0;
+        }
+        .cool-popup .leaflet-popup-tip-container {
+          display: none;
+        }
+        .cool-popup .leaflet-popup-close-button {
+          display: none;
+        }
+      `}</style>
+
       {/* Non-blocking error notice */}
       {error && (
         <div
@@ -110,38 +359,12 @@ export default function CoolSpacesMap({ selectedCategory }) {
               fillOpacity: 0.9,
             }}
           >
-            <Popup>
-              <div style={{ fontFamily: "'Public Sans', sans-serif", minWidth: 160 }}>
-                <p style={{ fontWeight: 700, fontSize: 14, color: '#1e293b', margin: '0 0 6px' }}>
-                  {venue.name}
-                </p>
-                <span
-                  style={{
-                    display: 'inline-block',
-                    backgroundColor: CATEGORY_COLORS[venue.category] ?? '#64748b',
-                    color: '#fff',
-                    borderRadius: 6,
-                    padding: '2px 8px',
-                    fontSize: 11,
-                    fontWeight: 700,
-                    marginBottom: venue.address ? 6 : 0,
-                  }}
-                >
-                  {venue.category}
-                </span>
-                {venue.address && (
-                  <p
-                    style={{
-                      fontFamily: "'Lexend', sans-serif",
-                      fontSize: 12,
-                      color: '#64748b',
-                      margin: '6px 0 0',
-                    }}
-                  >
-                    {venue.address}
-                  </p>
-                )}
-              </div>
+            <Popup className="cool-popup">
+              <VenuePopup
+                venue={venue}
+                index={i}
+                userLocation={userLocation}
+              />
             </Popup>
           </CircleMarker>
         ))}

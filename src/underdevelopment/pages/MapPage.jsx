@@ -1,10 +1,13 @@
 import { useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import Navbar from '../components/layout/Navbar'
 import MapSidebar from '../components/map/MapSidebar'
 import CoolSpacesMap from '../components/map/CoolSpacesMap'
 
 export default function MapPage() {
   const [selectedCategory, setSelectedCategory] = useState('All')
+  const { state } = useLocation()
+  const flyTo = state?.flyTo ?? null
 
   return (
     <div className="flex flex-col h-screen bg-white overflow-hidden">
@@ -26,7 +29,7 @@ export default function MapPage() {
           onCategoryChange={setSelectedCategory}
         />
         <div className="flex-1 relative overflow-hidden">
-          <CoolSpacesMap selectedCategory={selectedCategory} />
+          <CoolSpacesMap selectedCategory={selectedCategory} flyTo={flyTo} />
         </div>
       </div>
     </div>

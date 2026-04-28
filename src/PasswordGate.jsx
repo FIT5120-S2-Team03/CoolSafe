@@ -48,7 +48,7 @@ export default function PasswordGate({ children, storageKey }) {
           marginBottom: '4px',
           letterSpacing: '-0.6px',
         }}>
-          CoolSafe
+          CoolSafer
         </div>
         <p style={{
           fontFamily: "'Lexend', sans-serif",

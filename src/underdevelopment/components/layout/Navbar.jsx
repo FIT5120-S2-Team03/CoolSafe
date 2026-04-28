@@ -25,7 +25,7 @@ export default function Navbar() {
           className="font-['Public_Sans'] text-[30px] text-[#0056d2]"
           style={{ fontWeight: 900, letterSpacing: '-0.6px' }}
         >
-          CoolSafe
+          CoolSafer
         </span>
         <nav className="absolute left-1/2 -translate-x-1/2 flex gap-[40px]">
           <Link to="/" className={pathname === '/' ? activeClass : inactiveClass}>

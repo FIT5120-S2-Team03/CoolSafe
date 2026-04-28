@@ -9,7 +9,7 @@
 
 import { useRef, useState, useEffect } from 'react'
 import L from 'leaflet'
-import { MapContainer, TileLayer, GeoJSON, CircleMarker, Marker, Popup, useMap } from 'react-leaflet'
+import { MapContainer, TileLayer, GeoJSON, CircleMarker, Marker, Popup, Pane, useMap } from 'react-leaflet'
 import { useNavigate } from 'react-router-dom'
 import useCoolSpaces from '../../hooks/useCoolSpaces'
 import useFountains from '../../hooks/useFountains'
@@ -365,14 +365,16 @@ export default function CoolSpacesMap({ selectedCategory, flyTo, showHVI }) {
           attribution="&copy; OpenStreetMap contributors &copy; CARTO"
         />
 
-        {showHVI && hviData && (
-          <GeoJSON
-            key="hvi-layer"
-            data={hviData}
-            style={hviStyle}
-            interactive={false}
-          />
-        )}
+        <Pane name="hvi" style={{ zIndex: 350 }}>
+          {showHVI && hviData && (
+            <GeoJSON
+              key="hvi-layer"
+              data={hviData}
+              style={hviStyle}
+              interactive={false}
+            />
+          )}
+        </Pane>
 
         {filtered.map((venue, i) => (
           <CircleMarker

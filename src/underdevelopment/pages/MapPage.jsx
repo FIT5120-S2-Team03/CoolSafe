@@ -6,6 +6,7 @@ import CoolSpacesMap from '../components/map/CoolSpacesMap'
 
 export default function MapPage() {
   const [selectedCategory, setSelectedCategory] = useState('All')
+  const [showHVI, setShowHVI] = useState(false)
   const { state } = useLocation()
   const flyTo = state?.flyTo ?? null
 
@@ -27,9 +28,11 @@ export default function MapPage() {
         <MapSidebar
           selectedCategory={selectedCategory}
           onCategoryChange={setSelectedCategory}
+          showHVI={showHVI}
+          onHVIToggle={() => setShowHVI((v) => !v)}
         />
         <div className="flex-1 relative overflow-hidden">
-          <CoolSpacesMap selectedCategory={selectedCategory} flyTo={flyTo} />
+          <CoolSpacesMap selectedCategory={selectedCategory} flyTo={flyTo} showHVI={showHVI} />
         </div>
       </div>
     </div>

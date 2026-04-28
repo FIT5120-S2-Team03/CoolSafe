@@ -9,10 +9,11 @@
 
 import { useRef, useState, useEffect } from 'react'
 import L from 'leaflet'
-import { MapContainer, TileLayer, CircleMarker, Marker, Popup, useMap } from 'react-leaflet'
+import { MapContainer, TileLayer, GeoJSON, CircleMarker, Marker, Popup, useMap } from 'react-leaflet'
 import { useNavigate } from 'react-router-dom'
 import useCoolSpaces from '../../hooks/useCoolSpaces'
 import useFountains from '../../hooks/useFountains'
+import useHVI from '../../hooks/useHVI'
 import { CATEGORY_COLORS } from '../../utils/categoryMapping'
 import { MOCK_OPENING_HOURS } from '../../data/mockVenues'
 import { getWalkingMinutes } from '../../utils/haversine'
@@ -252,7 +253,23 @@ function VenuePopup({ venue, index, userLocation }) {
   )
 }
 
-export default function CoolSpacesMap({ selectedCategory, flyTo }) {
+const HVI_COLORS = {
+  1: '#ffffb2',
+  2: '#fecc5c',
+  3: '#fd8d3c',
+  4: '#e31a1c',
+}
+
+function hviStyle(feature) {
+  return {
+    fillColor: HVI_COLORS[feature.properties.hvi] ?? '#cccccc',
+    fillOpacity: 0.5,
+    color: 'white',
+    weight: 0.5,
+  }
+}
+
+export default function CoolSpacesMap({ selectedCategory, flyTo, showHVI }) {
   const mapRef = useRef(null)
   const [userLocation, setUserLocation] = useState(null)
 
@@ -264,6 +281,7 @@ export default function CoolSpacesMap({ selectedCategory, flyTo }) {
 
   const { venues, loading: venuesLoading, error: venuesError } = useCoolSpaces()
   const { fountains, loading: fountainsLoading, error: fountainsError } = useFountains()
+  const { hviData } = useHVI()
 
   const isLoading = venuesLoading || fountainsLoading
   const error = venuesError || fountainsError
@@ -346,6 +364,15 @@ export default function CoolSpacesMap({ selectedCategory, flyTo }) {
           url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
           attribution="&copy; OpenStreetMap contributors &copy; CARTO"
         />
+
+        {showHVI && hviData && (
+          <GeoJSON
+            key="hvi-layer"
+            data={hviData}
+            style={hviStyle}
+            interactive={false}
+          />
+        )}
 
         {filtered.map((venue, i) => (
           <CircleMarker

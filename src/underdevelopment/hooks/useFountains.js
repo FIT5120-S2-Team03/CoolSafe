@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 
-const ENDPOINT =
-  'https://discover.data.vic.gov.au/api/3/action/datastore_search?resource_id=240212c6-0999-492f-b0c9-cdf175903a07&filters=%7B%22asset_type%22%3A%22Drinking+Fountain%22%7D&limit=100'
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:5000'
 
 export default function useFountains() {
   const [fountains, setFountains] = useState([])
@@ -13,30 +12,10 @@ export default function useFountains() {
 
     async function load() {
       try {
-        const res = await fetch(ENDPOINT)
+        const res = await fetch(`${API_BASE}/api/fountains`)
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
-        const json = await res.json()
-        const records = json?.result?.records ?? []
-
-        const processed = []
-        for (const r of records) {
-          if (r.asset_type !== 'Drinking Fountain') continue
-
-          const parts = (r.coordinatelocation ?? '').split(', ')
-          const lat = parseFloat(parts[0])
-          const lng = parseFloat(parts[1])
-          if (isNaN(lat) || isNaN(lng)) continue
-
-          processed.push({
-            name: 'Drinking Fountain',
-            lat,
-            lng,
-            category: 'Fountain',
-            address: r.location_desc ?? '',
-          })
-        }
-
-        if (!cancelled) setFountains(processed)
+        const data = await res.json()
+        if (!cancelled) setFountains(data.map(f => ({ ...f, category: 'Fountain' })))
       } catch (err) {
         if (!cancelled) setError(err.message)
       } finally {

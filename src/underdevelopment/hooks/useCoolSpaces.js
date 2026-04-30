@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react'
-import { getCategoryFromSubTheme } from '../utils/categoryMapping'
 
-const ENDPOINT =
-  'https://discover.data.vic.gov.au/api/3/action/datastore_search?resource_id=4dd37664-05e9-4904-9d19-662d8b718189&limit=500'
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:5000'
 
 export default function useCoolSpaces() {
   const [venues, setVenues] = useState([])
@@ -14,25 +12,10 @@ export default function useCoolSpaces() {
 
     async function load() {
       try {
-        const res = await fetch(ENDPOINT)
+        const res = await fetch(`${API_BASE}/api/cool-spaces`)
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
-        const json = await res.json()
-        const records = json?.result?.records ?? []
-
-        const processed = []
-        for (const r of records) {
-          const category = getCategoryFromSubTheme(r.sub_theme)
-          if (!category) continue
-
-          const parts = (r.co_ordinates ?? '').split(', ')
-          const lat = parseFloat(parts[0])
-          const lng = parseFloat(parts[1])
-          if (isNaN(lat) || isNaN(lng)) continue
-
-          processed.push({ name: r.feature_name, lat, lng, category, address: '' })
-        }
-
-        if (!cancelled) setVenues(processed)
+        const data = await res.json()
+        if (!cancelled) setVenues(data)
       } catch (err) {
         if (!cancelled) setError(err.message)
       } finally {

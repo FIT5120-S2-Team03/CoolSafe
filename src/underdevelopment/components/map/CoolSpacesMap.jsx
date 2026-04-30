@@ -15,7 +15,6 @@ import useCoolSpaces from '../../hooks/useCoolSpaces'
 import useFountains from '../../hooks/useFountains'
 import useHVI from '../../hooks/useHVI'
 import { CATEGORY_COLORS } from '../../utils/categoryMapping'
-import { MOCK_OPENING_HOURS } from '../../data/mockVenues'
 import { getWalkingMinutes } from '../../utils/haversine'
 
 const locationPinIcon = L.divIcon({
@@ -32,12 +31,11 @@ const locationPinIcon = L.divIcon({
 
 const MELBOURNE = [-37.8136, 144.9631]
 
-function getOpenStatus(venueName) {
-  const schedule = MOCK_OPENING_HOURS[venueName]
-  if (!schedule) return { status: 'unavailable' }
+function getOpenStatus(openingHours) {
+  if (!openingHours || Object.keys(openingHours).length === 0) return { status: 'unavailable' }
 
   const today = new Date().toLocaleDateString('en-AU', { weekday: 'long' })
-  const hours = schedule[today]
+  const hours = openingHours[today]
   if (!hours) return { status: 'closed' }
 
   const now = new Date()
@@ -49,10 +47,10 @@ function getOpenStatus(venueName) {
     : { status: 'closed' }
 }
 
-function VenuePopup({ venue, index, userLocation }) {
+function VenuePopup({ venue, userLocation }) {
   const navigate = useNavigate()
   const map = useMap()
-  const openStatus = getOpenStatus(venue.name)
+  const openStatus = getOpenStatus(venue.opening_hours)
 
   const walkMins =
     userLocation != null
@@ -232,7 +230,7 @@ function VenuePopup({ venue, index, userLocation }) {
 
       {/* View Full Details button */}
       <button
-        onClick={() => navigate(`/venue/${index}`)}
+        onClick={() => navigate(`/venue/${venue.id}`)}
         style={{
           width: '100%',
           backgroundColor: '#003fa4',
@@ -391,7 +389,6 @@ export default function CoolSpacesMap({ selectedCategory, flyTo, showHVI }) {
             <Popup className="cool-popup">
               <VenuePopup
                 venue={venue}
-                index={i}
                 userLocation={userLocation}
               />
             </Popup>

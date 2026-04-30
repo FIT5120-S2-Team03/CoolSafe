@@ -10,7 +10,7 @@ export default function useHVI() {
 
     async function load() {
       try {
-        const res = await fetch('http://127.0.0.1:5000/api/hvi')
+        const res = await fetch('https://coolsafe-api.onrender.com/api/hvi')
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
         const json = await res.json()
         if (!cancelled) setHviData(json)

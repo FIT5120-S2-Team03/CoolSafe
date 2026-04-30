@@ -23,3 +23,6 @@ dist-ssr
 *.sln
 *.sw?
 
+hvi_australia_sa1_2021.json
+hvi_melbourne.geojson
+backend/venv/

@@ -36,3 +36,5 @@ __pycache__/
 *.pyc
 hvi_australia_sa1_2021.json
 hvi_melbourne.geojson
+hvi_melbourne_slim.geojson
+hvi_melbourne_final.geojson

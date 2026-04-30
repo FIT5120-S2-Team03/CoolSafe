@@ -5,8 +5,7 @@ import { MapContainer, TileLayer, Marker } from 'react-leaflet'
 import Navbar from '../components/layout/Navbar'
 import Footer from '../components/layout/Footer'
 import { getWalkingMinutes } from '../utils/haversine'
-
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:5000'
+import useVenue from '../hooks/useVenue'
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
@@ -48,32 +47,12 @@ export default function VenueDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
 
-  const [venue, setVenue] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [fetchError, setFetchError] = useState(null)
+  const { venue, loading, error } = useVenue(id)
 
   const [userLocation, setUserLocation] = useState(null)
   const [locationDenied, setLocationDenied] = useState(false)
   const [showDeniedAlert, setShowDeniedAlert] = useState(false)
   const [routeMode, setRouteMode] = useState('fastest')
-
-  useEffect(() => {
-    let cancelled = false
-    async function fetchVenue() {
-      try {
-        const res = await fetch(`${API_BASE}/api/venue/${id}`)
-        if (!res.ok) throw new Error(`HTTP ${res.status}`)
-        const data = await res.json()
-        if (!cancelled) setVenue(data)
-      } catch (err) {
-        if (!cancelled) setFetchError(err.message)
-      } finally {
-        if (!cancelled) setLoading(false)
-      }
-    }
-    fetchVenue()
-    return () => { cancelled = true }
-  }, [id])
 
   useEffect(() => {
     if (!navigator.geolocation) return
@@ -109,7 +88,7 @@ export default function VenueDetailPage() {
     </div>
   )
 
-  if (fetchError || !venue) return (
+  if (error || !venue) return (
     <div className="flex flex-col min-h-screen" style={{ background: '#f8fafc' }}>
       <Navbar />
       <main className="flex-1 pt-[68px] flex items-center justify-center">

@@ -1,20 +1,12 @@
 /**
  * MapSidebar — left panel for the Cool Spaces Map page.
-<<<<<<< HEAD
- * Contains category filter pills, a static Heat Vulnerability Layer toggle,
- * and a colour-coded legend.
-=======
  * Contains category filter pills, Heat Vulnerability Layer toggle, and legend.
->>>>>>> dev
  *
  * Props:
  *   selectedCategory {string}   — currently active category ('All' or a category name)
  *   onCategoryChange {function} — called with the new category string when a pill is clicked
-<<<<<<< HEAD
-=======
  *   showHVI          {boolean}  — whether the HVI choropleth layer is visible
  *   onHVIToggle      {function} — called when the HVI toggle is clicked
->>>>>>> dev
  */
 
 const CATEGORIES = [
@@ -36,11 +28,7 @@ const LEGEND_ITEMS = [
   { color: '#0ea5e9', label: 'Fountain' },
 ]
 
-<<<<<<< HEAD
-export default function MapSidebar({ selectedCategory, onCategoryChange }) {
-=======
 export default function MapSidebar({ selectedCategory, onCategoryChange, showHVI, onHVIToggle }) {
->>>>>>> dev
   return (
     <aside
       className="hidden md:flex flex-col gap-8 overflow-y-auto shrink-0"
@@ -88,11 +76,7 @@ export default function MapSidebar({ selectedCategory, onCategoryChange, showHVI
         </div>
       </div>
 
-<<<<<<< HEAD
-      {/* HVI Layer toggle (static OFF state) */}
-=======
       {/* HVI Layer toggle */}
->>>>>>> dev
       <div
         style={{
           backgroundColor: 'rgba(248,250,252,0.5)',
@@ -117,14 +101,6 @@ export default function MapSidebar({ selectedCategory, onCategoryChange, showHVI
               </span>
             </div>
           </div>
-<<<<<<< HEAD
-          {/* Static OFF toggle */}
-          <div style={{ position: 'relative', width: 31, height: 24, backgroundColor: '#e2e8f0', borderRadius: 12 }}>
-            <div
-              style={{
-                position: 'absolute',
-                left: 4,
-=======
           <button
             onClick={onHVIToggle}
             aria-pressed={showHVI}
@@ -146,22 +122,15 @@ export default function MapSidebar({ selectedCategory, onCategoryChange, showHVI
               style={{
                 position: 'absolute',
                 left: showHVI ? 24 : 4,
->>>>>>> dev
                 top: 4,
                 width: 16,
                 height: 16,
                 backgroundColor: '#fff',
                 borderRadius: '50%',
-<<<<<<< HEAD
-              }}
-            />
-          </div>
-=======
                 transition: 'left 0.2s',
               }}
             />
           </button>
->>>>>>> dev
         </div>
       </div>
 

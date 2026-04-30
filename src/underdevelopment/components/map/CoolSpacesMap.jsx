@@ -7,14 +7,6 @@
  *   selectedCategory {string} — 'All' or a specific category name to filter pins
  */
 
-<<<<<<< HEAD
-import { useRef, useState } from 'react'
-import L from 'leaflet'
-import { MapContainer, TileLayer, CircleMarker, Marker, Popup } from 'react-leaflet'
-import useCoolSpaces from '../../hooks/useCoolSpaces'
-import useFountains from '../../hooks/useFountains'
-import { CATEGORY_COLORS } from '../../utils/categoryMapping'
-=======
 import { useRef, useState, useEffect } from 'react'
 import L from 'leaflet'
 import { MapContainer, TileLayer, GeoJSON, CircleMarker, Marker, Popup, Pane, useMap } from 'react-leaflet'
@@ -24,7 +16,6 @@ import useFountains from '../../hooks/useFountains'
 import useHVI from '../../hooks/useHVI'
 import { CATEGORY_COLORS } from '../../utils/categoryMapping'
 import { getWalkingMinutes } from '../../utils/haversine'
->>>>>>> dev
 
 const locationPinIcon = L.divIcon({
   className: '',
@@ -40,22 +31,8 @@ const locationPinIcon = L.divIcon({
 
 const MELBOURNE = [-37.8136, 144.9631]
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-export default function CoolSpacesMap({ selectedCategory }) {
-  const mapRef = useRef(null)
-  const [userLocation, setUserLocation] = useState(null)
-
-  const { venues, loading: venuesLoading, error: venuesError } = useCoolSpaces()
-  const { fountains, loading: fountainsLoading, error: fountainsError } = useFountains()
-=======
-function getOpenStatus(venueName) {
-  const schedule = MOCK_OPENING_HOURS[venueName]
-  if (!schedule) return { status: 'unavailable' }
-=======
 function getOpenStatus(openingHours) {
   if (!openingHours || Object.keys(openingHours).length === 0) return { status: 'unavailable' }
->>>>>>> origin/dev
 
   const today = new Date().toLocaleDateString('en-AU', { weekday: 'long' })
   const hours = openingHours[today]
@@ -303,7 +280,6 @@ export default function CoolSpacesMap({ selectedCategory, flyTo, showHVI }) {
   const { venues, loading: venuesLoading, error: venuesError } = useCoolSpaces()
   const { fountains, loading: fountainsLoading, error: fountainsError } = useFountains()
   const { hviData } = useHVI()
->>>>>>> dev
 
   const isLoading = venuesLoading || fountainsLoading
   const error = venuesError || fountainsError
@@ -334,8 +310,6 @@ export default function CoolSpacesMap({ selectedCategory, flyTo, showHVI }) {
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-<<<<<<< HEAD
-=======
       <style>{`
         .cool-popup .leaflet-popup-content-wrapper {
           background: transparent;
@@ -355,7 +329,7 @@ export default function CoolSpacesMap({ selectedCategory, flyTo, showHVI }) {
         }
       `}</style>
 
->>>>>>> dev
+
       {/* Non-blocking error notice */}
       {error && (
         <div
@@ -390,8 +364,6 @@ export default function CoolSpacesMap({ selectedCategory, flyTo, showHVI }) {
           attribution="&copy; OpenStreetMap contributors &copy; CARTO"
         />
 
-<<<<<<< HEAD
-=======
         <Pane name="hvi" style={{ zIndex: 350 }}>
           {showHVI && hviData && (
             <GeoJSON
@@ -403,7 +375,7 @@ export default function CoolSpacesMap({ selectedCategory, flyTo, showHVI }) {
           )}
         </Pane>
 
->>>>>>> dev
+
         {filtered.map((venue, i) => (
           <CircleMarker
             key={`${venue.category}-${i}`}
@@ -416,46 +388,11 @@ export default function CoolSpacesMap({ selectedCategory, flyTo, showHVI }) {
               fillOpacity: 0.9,
             }}
           >
-<<<<<<< HEAD
-            <Popup>
-              <div style={{ fontFamily: "'Public Sans', sans-serif", minWidth: 160 }}>
-                <p style={{ fontWeight: 700, fontSize: 14, color: '#1e293b', margin: '0 0 6px' }}>
-                  {venue.name}
-                </p>
-                <span
-                  style={{
-                    display: 'inline-block',
-                    backgroundColor: CATEGORY_COLORS[venue.category] ?? '#64748b',
-                    color: '#fff',
-                    borderRadius: 6,
-                    padding: '2px 8px',
-                    fontSize: 11,
-                    fontWeight: 700,
-                    marginBottom: venue.address ? 6 : 0,
-                  }}
-                >
-                  {venue.category}
-                </span>
-                {venue.address && (
-                  <p
-                    style={{
-                      fontFamily: "'Lexend', sans-serif",
-                      fontSize: 12,
-                      color: '#64748b',
-                      margin: '6px 0 0',
-                    }}
-                  >
-                    {venue.address}
-                  </p>
-                )}
-              </div>
-=======
             <Popup className="cool-popup">
               <VenuePopup
                 venue={venue}
                 userLocation={userLocation}
               />
->>>>>>> dev
             </Popup>
           </CircleMarker>
         ))}

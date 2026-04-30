@@ -60,7 +60,9 @@ def build_opening_hours(rows):
 
 @app.route('/api/hvi')
 def get_hvi():
-    return jsonify(HVI_DATA)
+    response = jsonify(HVI_DATA)
+    response.headers['Cache-Control'] = 'public, max-age=86400'
+    return response
 
 
 @app.route('/api/cool-spaces')

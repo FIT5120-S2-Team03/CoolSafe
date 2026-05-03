@@ -1,5 +1,15 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import PasswordGate from './PasswordGate'
+import useFountains from './underdevelopment/hooks/useFountains'
+import useHVI from './underdevelopment/hooks/useHVI'
+
+// Kicks off background fetches so map data is cached before the user navigates there.
+// useCoolSpaces is already called on the home page so it doesn't need to be here.
+function Prefetch() {
+  useFountains()
+  useHVI()
+  return null
+}
 
 import HomePageDev from './underdevelopment/pages/HomePage'
 import MapPageDev from './underdevelopment/pages/MapPage'
@@ -22,6 +32,7 @@ function DevLayout({ children }) {
 export default function App() {
   return (
     <BrowserRouter>
+      <Prefetch />
       <Routes>
         <Route path="/" element={
           <PasswordGate storageKey="auth_dev">

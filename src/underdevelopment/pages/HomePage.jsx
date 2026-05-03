@@ -33,7 +33,7 @@ export default function HomePage() {
 
   const [selectedMedications, setSelectedMedications] = useState([])
   const [showMedModal, setShowMedModal]               = useState(false)
-  const [showLocModal, setShowLocModal]               = useState(true)
+  const [showLocModal, setShowLocModal]               = useState(() => !localStorage.getItem('coolsafe_coords'))
   const [locPostcode, setLocPostcode]                 = useState('')
 
   // Close location modal once data arrives (covers mock-mode auto-load)
@@ -135,7 +135,7 @@ export default function HomePage() {
         {/* ── Section 3: Guidance cards ── */}
         <section
           id="sec2"
-          style={{ height: '100vh', scrollSnapAlign: 'start', background: '#111A2C', overflow: 'hidden' }}
+          style={{ height: '100vh', scrollSnapAlign: 'start', background: '#F5F3EE', overflow: 'hidden' }}
         >
           <DoThisAvoid riskLevel={risk?.level ?? 'Low'} />
         </section>

@@ -3,7 +3,7 @@
  * Always renders video background + slogan so the page is visible behind the
  * location modal. The glass panel is only shown once current data is available.
  */
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { getAqiInfo } from '../../utils/riskLevel'
 import { MED_ADVICE } from '../../utils/scoreCalculator'
@@ -39,6 +39,44 @@ export default function StatusCard({
   const [showScoreTooltip, setShowScoreTooltip] = useState(false)
   const [tooltipPos, setTooltipPos] = useState(null)
   const tooltipBtnRef = useRef(null)
+  const videoRef = useRef(null)
+
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video) return
+
+    // React doesn't reliably set the `muted` attribute on video elements via JSX props.
+    // Setting it imperatively ensures the browser sees the video as muted,
+    // which is required for autoplay without a user gesture.
+    video.muted = true
+
+    const tryPlay = () => video.play().catch(() => {})
+
+    // Try immediately and when buffered
+    tryPlay()
+    video.addEventListener('canplay', tryPlay)
+
+    // Browsers (especially Safari) block autoplay without a prior user gesture.
+    // When location is cached and no modal shows, there is no gesture on load,
+    // so we retry on the first interaction the user makes.
+    const onFirstInteraction = () => tryPlay()
+    const interactionEvents = ['pointerdown', 'scroll', 'keydown']
+    interactionEvents.forEach((e) =>
+      document.addEventListener(e, onFirstInteraction, { once: true, passive: true })
+    )
+
+    // Also resume when the tab becomes visible again
+    const onVisibilityChange = () => { if (!document.hidden) tryPlay() }
+    document.addEventListener('visibilitychange', onVisibilityChange)
+
+    return () => {
+      video.removeEventListener('canplay', tryPlay)
+      document.removeEventListener('visibilitychange', onVisibilityChange)
+      interactionEvents.forEach((e) =>
+        document.removeEventListener(e, onFirstInteraction)
+      )
+    }
+  }, [])
 
   const activeMeds = selectedMedications ?? []
   const hasMeds = activeMeds.length > 0
@@ -65,6 +103,7 @@ export default function StatusCard({
       {/* Background video */}
       <div style={{ position: 'absolute', inset: 0, zIndex: 0, overflow: 'hidden' }}>
         <video
+          ref={videoRef}
           autoPlay muted loop playsInline
           style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', opacity: 0.35 }}
           src={bgVideo}

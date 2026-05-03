@@ -1,6 +1,32 @@
 import { useState, useEffect } from 'react'
 import mockWeather from '../data/mockWeather.json'
 
+const CACHE_KEY = 'coolsafe_weather'
+const CACHE_TTL_MS = 30 * 60 * 1000 // 30 minutes
+
+function readWeatherCache() {
+  try {
+    const raw = sessionStorage.getItem(CACHE_KEY)
+    if (!raw) return null
+    const cached = JSON.parse(raw)
+    if (Date.now() - cached.cachedAt > CACHE_TTL_MS) {
+      sessionStorage.removeItem(CACHE_KEY)
+      return null
+    }
+    return cached
+  } catch {
+    return null
+  }
+}
+
+function writeWeatherCache(data) {
+  try {
+    sessionStorage.setItem(CACHE_KEY, JSON.stringify({ ...data, cachedAt: Date.now() }))
+  } catch {
+    // sessionStorage may be unavailable (private browsing quota)
+  }
+}
+
 export function useWeatherData() {
   const [coords, setCoords] = useState(null)
   const [current, setCurrent] = useState(null)
@@ -26,20 +52,23 @@ export function useWeatherData() {
           { headers: { 'Accept-Language': 'en' } }
         ).then((r) => r.json()).catch(() => null),
       ])
-      setCurrent({
+      const addr = geo?.address
+      const name = addr?.suburb ?? addr?.town ?? addr?.city_district ?? addr?.city ?? null
+      const currentData = {
         temp: data.current.temperature_2m,
         apparentTemp: data.current.apparent_temperature,
-      })
-      setHourly(data.hourly)
-      setDaily({
+      }
+      const dailyData = {
         todayMax: data.daily.temperature_2m_max[0],
         tomorrowMax: data.daily.temperature_2m_max[1],
-      })
-      const addr = geo?.address
-      setLocationName(
-        addr?.suburb ?? addr?.town ?? addr?.city_district ?? addr?.city ?? null
-      )
+      }
+      setCurrent(currentData)
+      setHourly(data.hourly)
+      setDaily(dailyData)
+      setLocationName(name)
       setCoords({ lat, lng })
+      localStorage.setItem('coolsafe_coords', JSON.stringify({ lat, lng }))
+      writeWeatherCache({ current: currentData, hourly: data.hourly, daily: dailyData, locationName: name, lat, lng })
     } catch {
       setError(true)
     } finally {
@@ -79,7 +108,42 @@ export function useWeatherData() {
       setLoading(false)
       return
     }
-    // GPS triggered manually via requestGps()
+
+    // Restore from session cache first (fast, no network)
+    const cached = readWeatherCache()
+    if (cached) {
+      setCurrent(cached.current)
+      setHourly(cached.hourly)
+      setDaily(cached.daily)
+      setLocationName(cached.locationName)
+      setCoords({ lat: cached.lat, lng: cached.lng })
+    } else {
+      // Fall back to saved coords and re-fetch
+      try {
+        const saved = localStorage.getItem('coolsafe_coords')
+        if (saved) {
+          const { lat, lng } = JSON.parse(saved)
+          fetchWeather(lat, lng)
+        }
+      } catch {
+        // ignore malformed storage
+      }
+    }
+
+    // Background refresh every 30 minutes while page is open
+    const timer = setInterval(() => {
+      try {
+        const saved = localStorage.getItem('coolsafe_coords')
+        if (saved) {
+          const { lat, lng } = JSON.parse(saved)
+          fetchWeather(lat, lng)
+        }
+      } catch {
+        // ignore
+      }
+    }, CACHE_TTL_MS)
+
+    return () => clearInterval(timer)
   }, [])
 
   function requestGps() {

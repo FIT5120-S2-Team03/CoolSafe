@@ -1,6 +1,36 @@
 import { useState, useEffect } from 'react'
 import mockWeather from '../data/mockWeather.json'
 
+const CACHE_KEY = 'coolsafe_aqi'
+const CACHE_TTL_MS = 30 * 60 * 1000 // 30 minutes
+
+function readAqiCache(lat, lng) {
+  try {
+    const raw = sessionStorage.getItem(CACHE_KEY)
+    if (!raw) return null
+    const cached = JSON.parse(raw)
+    if (
+      cached.lat !== lat ||
+      cached.lng !== lng ||
+      Date.now() - cached.cachedAt > CACHE_TTL_MS
+    ) {
+      sessionStorage.removeItem(CACHE_KEY)
+      return null
+    }
+    return cached
+  } catch {
+    return null
+  }
+}
+
+function writeAqiCache(lat, lng, aqi) {
+  try {
+    sessionStorage.setItem(CACHE_KEY, JSON.stringify({ lat, lng, aqi, cachedAt: Date.now() }))
+  } catch {
+    // sessionStorage may be unavailable
+  }
+}
+
 export function useAirQuality({ lat, lng }) {
   const [aqi, setAqi] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -13,6 +43,14 @@ export function useAirQuality({ lat, lng }) {
       return
     }
     if (lat == null || lng == null) return
+
+    // Return cached value if fresh and for same location
+    const cached = readAqiCache(lat, lng)
+    if (cached) {
+      setAqi(cached.aqi)
+      return
+    }
+
     setLoading(true)
     setError(false)
 
@@ -29,7 +67,9 @@ export function useAirQuality({ lat, lng }) {
       .then((r) => r.json())
       .then((data) => {
         const idx = data.hourly.time.indexOf(hourStr)
-        setAqi(idx >= 0 ? data.hourly.european_aqi[idx] : null)
+        const value = idx >= 0 ? data.hourly.european_aqi[idx] : null
+        setAqi(value)
+        writeAqiCache(lat, lng, value)
       })
       .catch(() => setError(true))
       .finally(() => setLoading(false))

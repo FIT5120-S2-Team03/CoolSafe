@@ -15,7 +15,6 @@ import {
   GeoJSON,
   CircleMarker,
   Marker,
-  Popup,
   Pane,
   Polyline,
   useMap,
@@ -65,10 +64,14 @@ function getOpenStatus(openingHours) {
     : { status: 'closed' }
 }
 
-function VenuePopup({ venue, userLocation, onFastestRoute, routeLoading }) {
+function VenuePopup({ venue, userLocation, onFastestRoute, routeLoading, onClose }) {
   const navigate = useNavigate()
-  const map = useMap()
   const openStatus = getOpenStatus(venue.opening_hours)
+  const [selectedRoute, setSelectedRoute] = useState('fastest')
+
+  useEffect(() => {
+    onFastestRoute(venue)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const walkMins =
     userLocation != null
@@ -82,14 +85,14 @@ function VenuePopup({ venue, userLocation, onFastestRoute, routeLoading }) {
         borderRadius: 16,
         boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
         padding: 20,
-        minWidth: 300,
+        width: 300,
         fontFamily: "'Lexend', sans-serif",
         position: 'relative',
       }}
     >
       {/* Close button */}
       <button
-        onClick={() => map.closePopup()}
+        onClick={onClose}
         aria-label="Close"
         style={{
           position: 'absolute',
@@ -113,72 +116,27 @@ function VenuePopup({ venue, userLocation, onFastestRoute, routeLoading }) {
         </svg>
       </button>
 
-      {/* Venue name */}
-      <p
-        style={{
-          fontFamily: "'Public Sans', sans-serif",
-          fontWeight: 700,
-          fontSize: 16,
-          color: '#1e293b',
-          margin: '0 32px 8px 0',
-        }}
-      >
+      <p style={{ fontFamily: "'Public Sans', sans-serif", fontWeight: 700, fontSize: 16, color: '#1e293b', margin: '0 32px 8px 0' }}>
         {venue.name}
       </p>
 
-      {/* Category badge */}
-      <span
-        style={{
-          display: 'inline-block',
-          backgroundColor: CATEGORY_COLORS[venue.category] ?? '#64748b',
-          color: '#fff',
-          borderRadius: 6,
-          padding: '2px 8px',
-          fontSize: 11,
-          fontWeight: 700,
-          marginBottom: 10,
-        }}
-      >
+      <span style={{ display: 'inline-block', backgroundColor: CATEGORY_COLORS[venue.category] ?? '#64748b', color: '#fff', borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 700, marginBottom: 10 }}>
         {venue.category}
       </span>
 
-      {/* Address */}
       {venue.address && (
         <p style={{ fontSize: 12, color: '#64748b', margin: '0 0 12px' }}>
           {venue.address}
         </p>
       )}
 
-      {/* Status row */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 6,
-          flexWrap: 'wrap',
-          fontSize: 13,
-          marginBottom: 16,
-        }}
-      >
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', fontSize: 13, marginBottom: 16 }}>
         {openStatus.status === 'unavailable' ? (
           <span style={{ color: '#94a3b8' }}>Hours unavailable</span>
         ) : (
           <>
-            <span
-              style={{
-                width: 8,
-                height: 8,
-                borderRadius: '50%',
-                backgroundColor: openStatus.status === 'open' ? '#16a34a' : '#ef4444',
-                flexShrink: 0,
-              }}
-            />
-            <span
-              style={{
-                color: openStatus.status === 'open' ? '#16a34a' : '#ef4444',
-                fontWeight: 600,
-              }}
-            >
+            <span style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: openStatus.status === 'open' ? '#16a34a' : '#ef4444', flexShrink: 0 }} />
+            <span style={{ color: openStatus.status === 'open' ? '#16a34a' : '#ef4444', fontWeight: 600 }}>
               {openStatus.status === 'open' ? 'Open Now' : 'Closed'}
             </span>
             {openStatus.status === 'open' && (
@@ -189,7 +147,6 @@ function VenuePopup({ venue, userLocation, onFastestRoute, routeLoading }) {
             )}
           </>
         )}
-
         {walkMins != null && (
           <>
             <span style={{ color: '#cbd5e1' }}>•</span>
@@ -198,79 +155,75 @@ function VenuePopup({ venue, userLocation, onFastestRoute, routeLoading }) {
         )}
       </div>
 
-      {/* Fastest / Coolest buttons */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
         <button
-          onClick={() => onFastestRoute(venue)}
+          onClick={() => { setSelectedRoute('fastest'); onFastestRoute(venue) }}
           disabled={routeLoading}
           style={{
-            flex: 1,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 6,
-            backgroundColor: routeLoading ? '#f1f5f9' : '#fff',
-            border: '1px solid #e2e8f0',
-            borderRadius: 10,
-            padding: '10px 0',
-            color: '#1e293b',
-            fontFamily: "'Lexend', sans-serif",
-            fontWeight: 600,
-            fontSize: 13,
-            cursor: routeLoading ? 'not-allowed' : 'pointer',
-            minHeight: 44,
+            flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+            backgroundColor: selectedRoute === 'fastest' ? '#16a34a' : routeLoading ? '#f1f5f9' : '#fff',
+            border: selectedRoute === 'fastest' ? 'none' : '1px solid #e2e8f0',
+            borderRadius: 10, padding: '10px 0',
+            color: selectedRoute === 'fastest' ? '#fff' : '#1e293b',
+            fontFamily: "'Lexend', sans-serif", fontWeight: 600, fontSize: 13,
+            cursor: routeLoading ? 'not-allowed' : 'pointer', minHeight: 44,
           }}
         >
-          {routeLoading ? 'Loading...' : '⚡ Fastest'}
+          {routeLoading && selectedRoute === 'fastest' ? 'Loading...' : '⚡ Fastest'}
         </button>
 
         <button
-          onClick={() => {
-            /* TODO: US 5.1 — trigger coolest route calculation */
-          }}
+          onClick={() => setSelectedRoute('coolest')}
           style={{
-            flex: 1,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 6,
-            backgroundColor: '#16a34a',
-            border: 'none',
-            borderRadius: 10,
-            padding: '10px 0',
-            color: '#fff',
-            fontFamily: "'Lexend', sans-serif",
-            fontWeight: 600,
-            fontSize: 13,
-            cursor: 'pointer',
-            minHeight: 44,
+            flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+            backgroundColor: selectedRoute === 'coolest' ? '#16a34a' : '#fff',
+            border: selectedRoute === 'coolest' ? 'none' : '1px solid #e2e8f0',
+            borderRadius: 10, padding: '10px 0',
+            color: selectedRoute === 'coolest' ? '#fff' : '#1e293b',
+            fontFamily: "'Lexend', sans-serif", fontWeight: 600, fontSize: 13,
+            cursor: 'pointer', minHeight: 44,
           }}
         >
           🌲 Coolest
         </button>
       </div>
 
-      {/* View Full Details button */}
       <button
         onClick={() => navigate(`/venue/${venue.id}`)}
-        style={{
-          width: '100%',
-          backgroundColor: '#003fa4',
-          color: '#fff',
-          border: 'none',
-          borderRadius: 12,
-          padding: '14px 0',
-          fontSize: 16,
-          fontWeight: 700,
-          fontFamily: "'Public Sans', sans-serif",
-          cursor: 'pointer',
-          minHeight: 44,
-        }}
+        style={{ width: '100%', backgroundColor: '#003fa4', color: '#fff', border: 'none', borderRadius: 12, padding: '14px 0', fontSize: 16, fontWeight: 700, fontFamily: "'Public Sans', sans-serif", cursor: 'pointer', minHeight: 44 }}
       >
         View Full Details →
       </button>
     </div>
   )
+}
+
+// Tracks the screen position of the selected venue pin and updates on map move/zoom.
+function PinTracker({ venue, onPosition }) {
+  const map = useMap()
+
+  useEffect(() => {
+    if (!venue) {
+      onPosition(null)
+      return
+    }
+
+    const update = () => {
+      const pt = map.latLngToContainerPoint([venue.lat, venue.lng])
+      onPosition({ x: pt.x, y: pt.y })
+    }
+
+    update()
+    map.on('move', update)
+    map.on('zoomend', update)
+
+    return () => {
+      map.off('move', update)
+      map.off('zoomend', update)
+    }
+  }, [venue?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  return null
 }
 
 const HVI_COLORS = {
@@ -289,8 +242,10 @@ function hviStyle(feature) {
   }
 }
 
-export default function CoolSpacesMap({ selectedCategory, flyTo, showHVI }) {
+export default function CoolSpacesMap({ selectedCategory, flyTo, showHVI, openVenueId }) {
   const mapRef = useRef(null)
+  const [selectedVenue, setSelectedVenue] = useState(null)
+  const [pinPos, setPinPos] = useState(null)
   const [userLocation, setUserLocation] = useState(null)
   const [routeCoords, setRouteCoords] = useState([])
   const [routeLoading, setRouteLoading] = useState(false)
@@ -315,6 +270,24 @@ export default function CoolSpacesMap({ selectedCategory, flyTo, showHVI }) {
       ? allVenues
       : allVenues.filter((v) => v.category === selectedCategory)
 
+  // Auto-open venue card when arriving from detail page
+  useEffect(() => {
+    if (!openVenueId || filtered.length === 0) return
+    const target = filtered.find(v => String(v.id) === String(openVenueId))
+    if (target) setSelectedVenue(target)
+  }, [openVenueId, filtered.length]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  function selectVenue(venue) {
+    clearRoute()
+    setSelectedVenue(venue)
+  }
+
+  function closeVenue() {
+    setSelectedVenue(null)
+    setPinPos(null)
+    clearRoute()
+  }
+
   function handleMyLocation() {
     if (!navigator.geolocation) {
       window.alert('Geolocation is not supported by your browser.')
@@ -325,7 +298,6 @@ export default function CoolSpacesMap({ selectedCategory, flyTo, showHVI }) {
       (pos) => {
         const lat = pos.coords.latitude
         const lng = pos.coords.longitude
-
         setUserLocation({ lat, lng })
         mapRef.current?.flyTo([lat, lng], 16)
       },
@@ -344,20 +316,18 @@ export default function CoolSpacesMap({ selectedCategory, flyTo, showHVI }) {
 
       navigator.geolocation.getCurrentPosition(
         (pos) => {
-          resolve({
-            lat: pos.coords.latitude,
-            lng: pos.coords.longitude,
-          })
+          resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude })
         },
         () => {
-          reject(
-            new Error(
-              'Location access denied. Please enable location in your browser settings.'
-            )
-          )
+          reject(new Error('Location access denied. Please enable location in your browser settings.'))
         }
       )
     })
+  }
+
+  function clearRoute() {
+    setRouteCoords([])
+    setRouteError('')
   }
 
   async function handleFastestRoute(venue) {
@@ -366,40 +336,23 @@ export default function CoolSpacesMap({ selectedCategory, flyTo, showHVI }) {
       setRouteError('')
 
       const currentLocation = userLocation || (await getCurrentLocation())
-
       setUserLocation(currentLocation)
 
-      const startLat = currentLocation.lat
-      const startLng = currentLocation.lng
-      const endLat = venue.lat
-      const endLng = venue.lng
-
-      const url =
-        `https://router.project-osrm.org/route/v1/foot/${startLng},${startLat};${endLng},${endLat}?overview=full&geometries=geojson`
-
+      const url = `https://router.project-osrm.org/route/v1/foot/${currentLocation.lng},${currentLocation.lat};${venue.lng},${venue.lat}?overview=full&geometries=geojson`
       const res = await fetch(url)
 
-      if (!res.ok) {
-        throw new Error(`Route request failed: HTTP ${res.status}`)
-      }
+      if (!res.ok) throw new Error(`Route request failed: HTTP ${res.status}`)
 
       const data = await res.json()
+      if (!data.routes || data.routes.length === 0) throw new Error('No route found.')
 
-      if (!data.routes || data.routes.length === 0) {
-        throw new Error('No route found.')
-      }
-
-      const coords = data.routes[0].geometry.coordinates.map((point) => [
-        point[1],
-        point[0],
-      ])
-
+      const coords = data.routes[0].geometry.coordinates.map((point) => [point[1], point[0]])
       setRouteCoords(coords)
 
       if (mapRef.current && coords.length > 0) {
-        const bounds = L.latLngBounds(coords)
-        mapRef.current.fitBounds(bounds, {
-          padding: [60, 60],
+        mapRef.current.fitBounds(L.latLngBounds(coords), {
+          paddingTopLeft: [60, 280],
+          paddingBottomRight: [60, 60],
         })
       }
     } catch (err) {
@@ -412,67 +365,40 @@ export default function CoolSpacesMap({ selectedCategory, flyTo, showHVI }) {
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-      <style>{`
-        .cool-popup .leaflet-popup-content-wrapper {
-          background: transparent;
-          border: none;
-          box-shadow: none;
-          padding: 0;
-          border-radius: 16px;
-        }
-        .cool-popup .leaflet-popup-content {
-          margin: 0;
-        }
-        .cool-popup .leaflet-popup-tip-container {
-          display: none;
-        }
-        .cool-popup .leaflet-popup-close-button {
-          display: none;
-        }
-      `}</style>
 
-      {/* Non-blocking error notice */}
-      {error && (
+      {/* Venue card — positioned above the pin, follows map movement via pinPos */}
+      {selectedVenue && pinPos && (
         <div
           style={{
             position: 'absolute',
-            top: 12,
-            left: '50%',
-            transform: 'translateX(-50%)',
+            left: pinPos.x,
+            top: pinPos.y,
+            transform: 'translate(-50%, calc(-100% - 16px))',
             zIndex: 1000,
-            backgroundColor: '#fff7ed',
-            border: '1px solid #fed7aa',
-            borderRadius: 8,
-            padding: '6px 14px',
-            fontFamily: "'Lexend', sans-serif",
-            fontSize: 13,
-            color: '#9a3412',
-            pointerEvents: 'none',
+            pointerEvents: 'auto',
           }}
         >
+          <VenuePopup
+            key={selectedVenue.id}
+            venue={selectedVenue}
+            userLocation={userLocation}
+            onFastestRoute={handleFastestRoute}
+            routeLoading={routeLoading}
+            onClose={closeVenue}
+          />
+        </div>
+      )}
+
+      {/* Non-blocking error notice */}
+      {error && (
+        <div style={{ position: 'absolute', top: 12, left: '50%', transform: 'translateX(-50%)', zIndex: 1000, backgroundColor: '#fff7ed', border: '1px solid #fed7aa', borderRadius: 8, padding: '6px 14px', fontFamily: "'Lexend', sans-serif", fontSize: 13, color: '#9a3412', pointerEvents: 'none' }}>
           Some venue data could not be loaded
         </div>
       )}
 
       {/* Route error notice */}
       {routeError && (
-        <div
-          style={{
-            position: 'absolute',
-            top: 52,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 1000,
-            backgroundColor: '#fef2f2',
-            border: '1px solid #fecaca',
-            borderRadius: 8,
-            padding: '6px 14px',
-            fontFamily: "'Lexend', sans-serif",
-            fontSize: 13,
-            color: '#991b1b',
-            pointerEvents: 'none',
-          }}
-        >
+        <div style={{ position: 'absolute', top: 52, left: '50%', transform: 'translateX(-50%)', zIndex: 1000, backgroundColor: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '6px 14px', fontFamily: "'Lexend', sans-serif", fontSize: 13, color: '#991b1b', pointerEvents: 'none' }}>
           {routeError}
         </div>
       )}
@@ -488,27 +414,21 @@ export default function CoolSpacesMap({ selectedCategory, flyTo, showHVI }) {
           attribution="&copy; OpenStreetMap contributors &copy; CARTO"
         />
 
+        {/* Tracks pin screen position so the card overlay follows map movement */}
+        <PinTracker venue={selectedVenue} onPosition={setPinPos} />
+
         <Pane name="route" style={{ zIndex: 450 }}>
           {routeCoords.length > 0 && (
             <Polyline
               positions={routeCoords}
-              pathOptions={{
-                color: '#003fa4',
-                weight: 6,
-                opacity: 0.85,
-              }}
+              pathOptions={{ color: '#003fa4', weight: 6, opacity: 0.85 }}
             />
           )}
         </Pane>
 
         <Pane name="hvi" style={{ zIndex: 350 }}>
           {showHVI && hviData && (
-            <GeoJSON
-              key="hvi-layer"
-              data={hviData}
-              style={hviStyle}
-              interactive={false}
-            />
+            <GeoJSON key="hvi-layer" data={hviData} style={hviStyle} interactive={false} />
           )}
         </Pane>
 
@@ -523,49 +443,19 @@ export default function CoolSpacesMap({ selectedCategory, flyTo, showHVI }) {
               weight: 2,
               fillOpacity: 0.9,
             }}
-          >
-            <Popup className="cool-popup">
-              <VenuePopup
-                venue={venue}
-                userLocation={userLocation}
-                onFastestRoute={handleFastestRoute}
-                routeLoading={routeLoading}
-              />
-            </Popup>
-          </CircleMarker>
+            eventHandlers={{ click: () => selectVenue(venue) }}
+          />
         ))}
 
         {userLocation && (
-          <Marker
-            position={[userLocation.lat, userLocation.lng]}
-            icon={locationPinIcon}
-          />
+          <Marker position={[userLocation.lat, userLocation.lng]} icon={locationPinIcon} />
         )}
       </MapContainer>
 
-      {/* Loading spinner overlay */}
+      {/* Loading spinner */}
       {isLoading && (
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: 'rgba(255,255,255,0.6)',
-            zIndex: 1000,
-          }}
-        >
-          <div
-            style={{
-              width: 40,
-              height: 40,
-              border: '4px solid #e2e8f0',
-              borderTopColor: '#003fa4',
-              borderRadius: '50%',
-              animation: 'spin 0.8s linear infinite',
-            }}
-          />
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.6)', zIndex: 1000 }}>
+          <div style={{ width: 40, height: 40, border: '4px solid #e2e8f0', borderTopColor: '#003fa4', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
           <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
         </div>
       )}
@@ -573,36 +463,9 @@ export default function CoolSpacesMap({ selectedCategory, flyTo, showHVI }) {
       {/* My Location button */}
       <button
         onClick={handleMyLocation}
-        style={{
-          position: 'absolute',
-          bottom: 32,
-          right: 32,
-          zIndex: 1000,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          backgroundColor: '#fff',
-          border: '1px solid #e2e8f0',
-          borderRadius: 12,
-          padding: '12px 20px',
-          boxShadow: '0 10px 40px rgba(0,0,0,0.18)',
-          cursor: 'pointer',
-          fontFamily: "'Lexend', sans-serif",
-          fontWeight: 700,
-          fontSize: 16,
-          color: '#1e293b',
-        }}
+        style={{ position: 'absolute', bottom: 32, right: 32, zIndex: 1000, display: 'flex', alignItems: 'center', gap: 8, backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: 12, padding: '12px 20px', boxShadow: '0 10px 40px rgba(0,0,0,0.18)', cursor: 'pointer', fontFamily: "'Lexend', sans-serif", fontWeight: 700, fontSize: 16, color: '#1e293b' }}
       >
-        <svg
-          width="18"
-          height="18"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="#003fa4"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#003fa4" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="12" r="4" />
           <line x1="12" y1="2" x2="12" y2="6" />
           <line x1="12" y1="18" x2="12" y2="22" />

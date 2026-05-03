@@ -238,7 +238,7 @@ export default function StatusCard({
                 onClick={(e) => { e.stopPropagation(); onOpenMedModal() }}
                 style={{ background: '#fff', color: '#1852B4', border: 'none', padding: '12px 16px', borderRadius: 10, fontFamily: "'DM Sans',sans-serif", fontSize: '0.875rem', fontWeight: 700, cursor: 'pointer', width: '100%', textAlign: 'center' }}
               >
-                Get Personal Profile →
+                Edit Personal Profile →
               </button>
             </div>
 

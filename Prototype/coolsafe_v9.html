@@ -1,0 +1,2880 @@
+<!DOCTYPE html><html lang="en" data-immersive-translate-page-theme="dark"><head>
+
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CoolSafer Melbourne</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&amp;family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&amp;family=DM+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --ink:#0F0F0F;--ink2:#3A3A3A;--ink3:#5C5C5C;--ink4:#A8A8A8;
+  --paper:#FAF8F5;--paper2:#F0EDE8;--paper3:#E5E1DA;
+  --blue:#1852B4;--blue-lt:#EAF0FB;
+  --safe:#2A7D4F;--safe-lt:#EAF5EE;
+  --heat:#C94B1A;--heat-lt:#FDF0EB;
+  --amber:#B87200;--amber-lt:#FDF5E6;
+  --warn-line:#E85D1A;
+  --border:rgba(0,0,0,0.09);--border2:rgba(0,0,0,0.05);
+  --serif:'DM Serif Display',Georgia,serif;
+  --sans:'DM Sans',sans-serif;
+  --mono:'DM Mono',monospace;
+  /* risk-level driven colours — JS updates these */
+  --hero-bg1:#0D2B1F;--hero-bg2:#0F1F2E;--hero-bg3:#130d0a;
+}
+html,body{height:100%;font-family:var(--sans);background:#0D2B1F;color:var(--ink);-webkit-font-smoothing:antialiased;}
+
+/* ════════════════════════════
+   NAV — floating pill, white, Bold-inspired
+════════════════════════════ */
+.nav{
+  position:fixed;top:12px;left:50%;transform:translateX(-50%);
+  z-index:200;width:calc(100% - 48px);max-width:900px;
+  display:grid;grid-template-columns:auto 1fr auto;align-items:center;
+  padding:0 24px;height:56px;
+  background:rgba(255,255,255,0.95);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border-radius:28px;
+  box-shadow:0 2px 20px rgba(0,0,0,0.12),0 0 0 0.5px rgba(0,0,0,0.06);
+}
+.nav-logo{font-family:var(--serif);font-size:18px;color:var(--ink);letter-spacing:-0.3px;}
+.nav-tabs{display:flex;justify-content:center;gap:2px;}
+.nav-tab{
+  font-family:var(--sans);font-size:16px;font-weight:500;
+  color:var(--ink2);padding:7px 16px;cursor:pointer;
+  border-radius:20px;transition:all .2s;letter-spacing:0.01em;
+}
+.nav-tab:hover{background:rgba(0,0,0,0.06);color:var(--ink);}
+.nav-tab.active{background:var(--ink);color:#fff;font-weight:600;}
+.nav-right{font-family:var(--mono);font-size:13px;color:var(--ink3);letter-spacing:0.06em;}
+
+/* ════════════════════════════
+   PAGES
+════════════════════════════ */
+.page{display:none;}
+.page.active{display:block;}
+
+/* ════════════════════════════
+   HOME — full-screen sections
+   Each section = 100vh, scroll-snap
+════════════════════════════ */
+.home-scroll{
+  height:100vh;overflow-y:scroll;
+  scroll-snap-type:y mandatory;
+  scroll-behavior:smooth;
+  padding-top:0;
+}
+/* hide scrollbar but keep functionality */
+.home-scroll::-webkit-scrollbar{display:none;}
+.home-scroll{-ms-overflow-style:none;scrollbar-width:none;}
+
+.home-section{
+  height:100vh;
+  scroll-snap-align:start;
+  position:relative;overflow:hidden;
+}
+
+/* scroll hint arrow */
+.scroll-hint{
+  position:absolute;bottom:28px;left:50%;transform:translateX(-50%);
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+  cursor:pointer;z-index:10;animation:bounce 2s infinite;
+}
+@keyframes bounce{0%,100%{transform:translateX(-50%) translateY(0);}50%{transform:translateX(-50%) translateY(6px);}}
+.scroll-hint svg{width:20px;height:20px;stroke:rgba(255,255,255,0.5);stroke-width:1.5;fill:none;stroke-linecap:round;stroke-linejoin:round;}
+.scroll-hint-label{font-family:var(--sans);font-size:13px;font-weight:500;color:rgba(255,255,255,0.4);letter-spacing:0.08em;text-transform:uppercase;}
+
+/* section nav dots */
+.section-dots{
+  position:fixed;right:28px;top:50%;transform:translateY(-50%);
+  display:flex;flex-direction:column;gap:8px;z-index:201;
+}
+.section-dot{
+  width:6px;height:6px;border-radius:50%;
+  background:rgba(255,255,255,0.25);
+  cursor:pointer;transition:all .25s;
+}
+.section-dot.active{background:#fff;height:18px;border-radius:3px;}
+
+/* ════ SECTION 1 — STATUS HERO ════ */
+.s1{
+  background:linear-gradient(135deg,#0D2B1F 0%,#0F1F2E 55%,#130d0a 100%);
+  display:grid;grid-template-columns:1fr 1fr;
+}
+/* Ken Burns photo background */
+.s1-photo{position:absolute;inset:0;z-index:0;overflow:hidden;}
+.s1-photo img{width:100%;height:100%;object-fit:cover;opacity:0.2;animation:kenBurns 20s ease-in-out infinite alternate;transform-origin:center center;}
+@keyframes kenBurns{from{transform:scale(1.0) translate(0,0);}to{transform:scale(1.08) translate(-1.5%,1%);}}
+.s1-left{position:relative;z-index:1;padding:100px 48px 48px;display:flex;flex-direction:column;justify-content:center;}
+.s1-slogan{font-family:var(--serif);font-size:46px;color:#fff;letter-spacing:-2px;line-height:1.1;margin-bottom:24px;opacity:0.95;}
+.s1-badge{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:6px;font-family:var(--sans);font-size:15px;font-weight:600;letter-spacing:0.02em;margin-bottom:20px;width:fit-content;}
+.s1-badge.safe{background:var(--safe);color:#fff;}
+.s1-badge.warn{background:var(--amber);color:#fff;}
+.s1-badge.danger{background:var(--heat);color:#fff;}
+.badge-dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.6);}
+.s1-temp{font-family:var(--serif);font-size:108px;color:#fff;letter-spacing:-6px;line-height:0.85;margin-bottom:22px;}
+.s1-desc{font-family:var(--sans);font-size:16px;color:rgba(255,255,255,0.5);line-height:1.65;max-width:440px;}
+
+/* medication tip card — appears below insight after meds saved */
+.med-tip-card{
+  display:none;
+  margin-top:20px;
+  border-left:2px solid rgba(255,199,80,0.7);
+  background:rgba(255,180,0,0.1);
+  border-radius:0 8px 8px 0;
+  padding:12px 14px;
+}
+.med-tip-card.show{display:block;}
+.med-tip-label{
+  font-family:var(--sans);font-size:12px;font-weight:600;
+  letter-spacing:0.07em;text-transform:uppercase;
+  color:rgba(255,199,80,0.9);margin-bottom:6px;
+}
+.med-tip-item{
+  font-family:var(--sans);font-size:14px;
+  color:rgba(255,255,255,0.75);line-height:1.55;
+  padding:6px 0;border-bottom:0.5px solid rgba(255,255,255,0.08);
+}
+.med-tip-item:last-child{border-bottom:none;padding-bottom:0;}
+.med-tip-name{font-weight:600;color:rgba(255,220,100,0.9);}
+
+/* right panel — left-dominant layout, empty transparent column */
+.s1-right{
+  position:relative;z-index:0;
+  background:transparent;
+  backdrop-filter:none;
+  border-left:none;
+  padding:0;
+  display:flex;flex-direction:column;gap:0;overflow-y:auto;
+}
+.s1-stat{padding:14px 0;}
+.s1-stat:first-child{padding-top:0;}
+.s1-stat + .s1-stat{border-bottom:1px solid rgba(255,255,255,0.08);}
+.s1-stat:last-of-type{border-bottom:none;padding-bottom:0;}
+.s1-stat-label{font-family:var(--sans);font-size:15px;font-weight:600;color:rgba(255,255,255,0.4);letter-spacing:0.05em;text-transform:uppercase;margin-bottom:6px;display:flex;align-items:center;gap:6px;}
+.s1-stat-val{color:#fff;line-height:1;}
+.s1-stat-val.lg{font-family:var(--serif);font-size:44px;letter-spacing:-2px;}
+.s1-stat-val.md{font-family:var(--sans);font-size:22px;font-weight:700;letter-spacing:-0.5px;}
+.s1-stat-val.safe{color:#6fcf97;}
+.s1-stat-val.warn{color:#f2c94c;}
+.s1-stat-sub{font-family:var(--sans);font-size:16px;color:rgba(255,255,255,0.35);margin-top:4px;}
+.risk-bar-track{height:4px;background:rgba(255,255,255,0.12);border-radius:2px;overflow:hidden;margin-top:8px;}
+.risk-bar-fill{height:100%;border-radius:2px;background:#6fcf97;width:20%;}
+.risk-bar-labels{display:flex;justify-content:space-between;margin-top:5px;}
+.risk-bar-label{font-family:var(--sans);font-size:13px;color:rgba(255,255,255,0.22);}
+/* insight in s1 */
+.s1-insight{margin-top:12px;border-left:2px solid rgba(111,207,151,0.6);padding:12px 14px;background:rgba(111,207,151,0.08);border-radius:0 8px 8px 0;}
+.s1-insight-label{font-family:var(--sans);font-size:13px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:rgba(111,207,151,0.8);margin-bottom:5px;}
+.s1-insight-text{font-family:var(--sans);font-size:16px;color:rgba(255,255,255,0.7);line-height:1.55;}
+/* tooltip */
+.info-icon{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;border:1.5px solid rgba(255,255,255,0.3);font-size:9px;font-weight:700;color:rgba(255,255,255,0.4);cursor:pointer;flex-shrink:0;position:relative;font-family:var(--sans);transition:all .15s;}
+.info-icon:hover{border-color:rgba(255,255,255,0.7);color:rgba(255,255,255,0.8);}
+.score-tooltip{display:none;position:absolute;left:50%;transform:translateX(-50%);bottom:calc(100% + 10px);background:rgba(10,10,10,0.96);color:#fff;border-radius:8px;padding:14px 16px;width:220px;font-family:var(--sans);font-size:16px;line-height:1.6;box-shadow:0 12px 36px rgba(0,0,0,0.5);z-index:50;border:0.5px solid rgba(255,255,255,0.1);}
+.info-icon:hover .score-tooltip{display:block;}
+.score-tooltip-title{font-size:13px;font-weight:600;letter-spacing:0.06em;color:rgba(255,255,255,0.4);text-transform:uppercase;margin-bottom:10px;}
+.score-formula-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:0.5px solid rgba(255,255,255,0.08);font-size:16px;}
+.score-formula-row:last-child{border-bottom:none;}
+.score-formula-pct{color:rgba(255,255,255,0.4);font-family:var(--mono);font-size:15px;}
+.med-link-s1{display:flex;align-items:center;gap:8px;padding:14px 0 0;font-family:var(--sans);font-size:16px;color:rgba(120,180,255,0.9);font-weight:500;cursor:pointer;background:none;border:none;margin-top:4px;width:100%;text-align:left;min-height:44px;}
+.med-link-icon{width:18px;height:18px;border-radius:50%;background:rgba(120,180,255,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.med-link-icon svg{width:9px;height:9px;stroke:rgba(120,180,255,0.9);stroke-width:2;fill:none;}
+
+/* ── S1 background video ── */
+.s1-photo{position:absolute;inset:0;z-index:0;overflow:hidden;}
+.s1-photo video{
+  width:100%;height:100%;
+  object-fit:cover;
+  object-position:left bottom;
+  opacity:0.22;
+}
+
+/* ════ SECTION 2 — PLAN YOUR DAY (editorial redesign) ════ */
+.s2{background:var(--paper2);}
+.s2-inner{padding:88px 56px 36px;height:100%;display:flex;flex-direction:column;}
+.s2-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:16px;}
+.s2-title{font-family:var(--serif);font-size:36px;letter-spacing:-1px;color:var(--ink);}
+.s2-meta{font-family:var(--sans);font-size:13px;font-weight:500;color:var(--ink3);text-transform:uppercase;letter-spacing:0.04em;}
+
+/* chart full-width */
+.chart-legend{display:flex;align-items:center;gap:16px;margin-bottom:12px;}
+.chart-legend-item{display:flex;align-items:center;gap:6px;font-family:var(--sans);font-size:14px;color:var(--ink3);}
+.chart-legend-line.temp{width:20px;height:2px;border-radius:1px;background:#1852B4;}
+.chart-legend-line.thresh{width:20px;border-top:2px dashed var(--warn-line);}
+.chart-container{position:relative;height:155px;width:100%;contain:size layout;}
+.chart-container canvas{position:absolute;inset:0;}
+
+/* time windows */
+.time-windows{
+  display:flex;flex-direction:row;
+  gap:3px;margin-top:16px;border-radius:14px;overflow:hidden;
+  flex:1;min-height:0;
+}
+.tw{
+  position:relative;
+  padding:18px 16px 148px;
+  display:flex;flex-direction:column;
+  min-width:0;border-radius:14px;
+  transition:all 0.3s ease;
+}
+.tw.safe-win{
+  background:#fff;
+  border-left:3px solid var(--safe);
+  border-top:0.5px solid rgba(42,125,79,0.15);
+  border-right:0.5px solid rgba(42,125,79,0.15);
+  border-bottom:0.5px solid rgba(42,125,79,0.15);
+  color:var(--ink);
+}
+.tw.warn-win{
+  background:#fff;
+  border-left:3px solid var(--amber);
+  border-top:0.5px solid rgba(184,114,0,0.15);
+  border-right:0.5px solid rgba(184,114,0,0.15);
+  border-bottom:0.5px solid rgba(184,114,0,0.15);
+  color:var(--ink);
+}
+.safe-win .tw-desc,.warn-win .tw-desc{color:var(--ink2);}
+.safe-win .tw-hours{color:var(--safe);}
+.warn-win .tw-hours{color:var(--amber);}
+.warn-win .tw-check-item{color:var(--ink2);border-bottom:0.5px solid rgba(0,0,0,0.06);}
+.warn-win .tw-check-box{border-color:rgba(0,0,0,0.2);}
+.tw-place{
+  position:absolute;bottom:0;left:0;right:0;
+  height:148px;padding:12px 16px 14px;
+  background:var(--paper2);
+  border-top:0.5px solid var(--border);
+  overflow:hidden;
+}
+
+.safe-win .tw-place-name,.warn-win .tw-place-name{color:var(--ink);}
+.safe-win .tw-place-label,.warn-win .tw-place-label{color:var(--ink3);}
+.safe-win .tw-place-sub,.warn-win .tw-place-sub{color:var(--ink3);}
+.safe-win .tw-place{background:var(--paper3);}
+.warn-win .tw-place{background:var(--amber-lt);}
+.safe-win .tw-place-sub, .warn-win .tw-place-sub { color: var(--ink3); }
+
+/* UV/Peak 数据小方块 */
+.tw [style*="background:rgba(0,0,0,0.2)"] {
+  background: rgba(255, 255, 255, 0.6) !important;
+  border: 1px solid rgba(0,0,0,0.03);
+}
+.tw [style*="color:rgba(255,255,255,0.4)"] { color: var(--ink3) !important; }
+.tw [style*="color:rgba(255,255,255,0.5)"] { color: var(--ink3) !important; }
+
+
+/* ══ UNIFIED Find Cool Spaces token — same component everywhere ══
+   Use .fcs-btn class on any element to get consistent blue CTA     */
+.fcs-btn{
+  display:flex;align-items:center;justify-content:space-between;
+  background:var(--blue);border-radius:10px;padding:14px 18px;
+  cursor:pointer;transition:background .18s;border:none;
+  text-decoration:none;
+}
+.fcs-btn:hover{background:#1345A0;}
+.fcs-btn-text{}
+.fcs-btn-eye{font-family:var(--sans);font-size:11px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:rgba(255,255,255,0.6);margin-bottom:3px;}
+.fcs-btn-title{font-family:var(--sans);font-size:15px;font-weight:700;color:#fff;}
+.fcs-btn-sub{font-family:var(--sans);font-size:13px;color:rgba(255,255,255,0.6);margin-top:2px;}
+.fcs-btn-arr{width:30px;height:30px;border-radius:7px;background:rgba(255,255,255,0.18);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.fcs-btn-arr svg{width:14px;height:14px;stroke:#fff;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round;}
+
+/* ════ SECTION 3 — stays the same ════ */
+.s3{background:#111A2C;}
+.s3-inner{padding:72px 56px 32px;height:100%;display:flex;flex-direction:column;}
+.s3-header{margin-bottom:10px;}
+.s3-title{font-family:var(--serif);font-size:32px;letter-spacing:-1px;color:#fff;}
+.s3-sub{font-family:var(--sans);font-size:15px;color:rgba(255,255,255,0.45);margin-top:4px;}
+.guidance-cards{display:flex;min-height:0;border-radius:14px;overflow:hidden;gap:2px;background:rgba(255,255,255,0.05);}
+.g-card{position:relative;overflow:hidden;flex:1;min-height:0;transition:flex .45s cubic-bezier(.4,0,.2,1);cursor:default;}
+.g-card:hover{flex:2.6;}
+.g-card:not(:last-child){border-right:1px solid rgba(255,255,255,0.06);}
+.g-card-img{position:absolute;inset:0;background-size:cover;background-position:center;transition:transform .5s ease;}
+.g-card:hover .g-card-img{transform:scale(1.04);}
+.g-card-overlay{position:absolute;inset:0;transition:background .35s;}
+.g-card-content{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:22px;z-index:1;}
+.g-card-category{font-family:var(--sans);font-size:13px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.55);margin-bottom:7px;opacity:0;transition:opacity .3s;}
+.g-card:hover .g-card-category{opacity:1;}
+.g-card-title{font-family:var(--sans);font-size:20px;font-weight:700;color:#fff;line-height:1.2;margin-bottom:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:white-space .1s .3s;}
+.g-card:hover .g-card-title{white-space:normal;text-overflow:unset;}
+.g-card-body{font-family:var(--sans);font-size:16px;color:rgba(255,255,255,0.8);line-height:1.6;max-height:0;overflow:hidden;transition:max-height .4s cubic-bezier(.4,0,.2,1),margin .3s;}
+.g-card:hover .g-card-body{max-height:200px;margin-top:10px;}
+.g-card.hydration .g-card-overlay{background:linear-gradient(to top,rgba(24,82,180,0.82) 0%,rgba(0,0,0,0.2) 55%,transparent 100%);}
+.g-card.hydration:hover .g-card-overlay{background:linear-gradient(to top,rgba(24,82,180,0.92) 0%,rgba(24,82,180,0.4) 55%,rgba(0,0,0,0.05) 100%);}
+.g-card.movement .g-card-overlay{background:linear-gradient(to top,rgba(42,125,79,0.82) 0%,rgba(0,0,0,0.2) 55%,transparent 100%);}
+.g-card.movement:hover .g-card-overlay{background:linear-gradient(to top,rgba(42,125,79,0.92) 0%,rgba(42,125,79,0.4) 55%,rgba(0,0,0,0.05) 100%);}
+.g-card.home-env .g-card-overlay{background:linear-gradient(to top,rgba(140,80,0,0.82) 0%,rgba(0,0,0,0.2) 55%,transparent 100%);}
+.g-card.home-env:hover .g-card-overlay{background:linear-gradient(to top,rgba(140,80,0,0.92) 0%,rgba(140,80,0,0.4) 55%,rgba(0,0,0,0.05) 100%);}
+.g-card.social .g-card-overlay{background:linear-gradient(to top,rgba(80,40,140,0.82) 0%,rgba(0,0,0,0.2) 55%,transparent 100%);}
+.g-card.social:hover .g-card-overlay{background:linear-gradient(to top,rgba(80,40,140,0.92) 0%,rgba(80,40,140,0.4) 55%,rgba(0,0,0,0.05) 100%);}
+
+/* ════ SECTION 4 — IF YOU NEED HELP (editorial redesign) ════ */
+.s4{background:#0A1628;}
+.s4-title{font-family:var(--serif);font-size:36px;letter-spacing:-1px;color:#fff;margin-bottom:4px;}
+.s4-sub{font-family:var(--sans);font-size:16px;color:rgba(255,255,255,0.4);margin-bottom:20px;flex-shrink:0;}
+
+/* full-width 000 hero — prominent, can't miss it */
+.emergency-hero{
+  display:flex;align-items:center;justify-content:space-between;
+  background:var(--heat);border-radius:14px;padding:24px 32px;
+  margin-bottom:14px;text-decoration:none;
+  cursor:pointer;transition:opacity .18s;flex-shrink:0;
+}
+.emergency-hero:hover{opacity:.9;}
+.emergency-hero-eye{font-family:var(--sans);font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,255,255,0.72);margin-bottom:4px;}
+.emergency-hero-title{font-family:var(--serif);font-size:22px;color:#fff;letter-spacing:-0.3px;}
+.emergency-hero-sub{font-family:var(--sans);font-size:14px;color:rgba(255,255,255,0.72);margin-top:3px;}
+.emergency-hero-num{
+  font-family:var(--serif);font-size:68px;color:#fff;
+  letter-spacing:-3px;line-height:1;flex-shrink:0;
+  text-shadow:0 2px 24px rgba(0,0,0,0.25);
+}
+
+/* three-column lower grid */
+.s4-lower{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:12px;flex:1;min-height:0;}
+
+/* symptoms — left column, editorial list with severity bar */
+.symptoms-panel{
+  background:rgba(255,255,255,0.04);border:0.5px solid rgba(255,255,255,0.09);
+  border-radius:14px;padding:20px 22px;display:flex;flex-direction:column;overflow:hidden;
+}
+.symptoms-panel-title{
+  font-family:var(--sans);font-size:12px;font-weight:600;
+  text-transform:uppercase;letter-spacing:0.07em;
+  color:rgba(255,255,255,0.35);margin-bottom:14px;flex-shrink:0;
+}
+.symptom-item{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:0.5px solid rgba(255,255,255,0.07);}
+.symptom-item:last-child{border-bottom:none;padding-bottom:0;}
+.symptom-sev{width:3px;border-radius:2px;flex-shrink:0;align-self:stretch;min-height:100%;}
+.symptom-sev.danger{background:var(--heat);}
+.symptom-sev.warn{background:var(--amber);}
+.symptom-item-name{font-family:var(--sans);font-size:15px;font-weight:600;color:#fff;margin-bottom:3px;}
+.symptom-item-desc{font-family:var(--sans);font-size:13px;color:rgba(255,255,255,0.5);line-height:1.5;}
+
+/* nurse on call — middle column */
+.noc-panel{
+  background:rgba(255,149,0,0.1);border:0.5px solid rgba(255,149,0,0.25);
+  border-radius:14px;padding:20px 22px;
+  text-decoration:none;cursor:pointer;transition:background .2s;
+  display:flex;flex-direction:column;
+}
+.noc-panel:hover{background:rgba(255,149,0,0.18);}
+.noc-eye{font-family:var(--sans);font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,149,0,0.8);margin-bottom:8px;}
+.noc-title{font-family:var(--sans);font-size:18px;font-weight:700;color:#fff;margin-bottom:4px;}
+.noc-num{font-family:var(--mono);font-size:22px;color:rgba(255,180,60,0.95);font-weight:500;letter-spacing:0.02em;}
+.noc-sub{font-family:var(--sans);font-size:13px;color:rgba(255,255,255,0.45);line-height:1.5;margin-top:auto;padding-top:12px;}
+
+/* find cool spaces column — right, uses unified fcs-btn full height */
+.s4-fcs{display:flex;flex-direction:column;}
+.s4-fcs .fcs-btn{
+  flex:1;flex-direction:column;
+  align-items:flex-start;justify-content:space-between;
+  padding:20px 22px;border-radius:14px;
+}
+.s4-fcs .fcs-btn-arr{margin-top:auto;}
+
+/* ════════════════════════════
+   FIND COOL SPACES
+════════════════════════════ */
+.spaces-layout{display:grid;grid-template-columns:300px 1fr;height:100vh;padding-top:80px;overflow:hidden;}
+.sidebar{border-right:0.5px solid var(--border);display:flex;flex-direction:column;overflow:hidden;background:var(--paper);}
+.sidebar-top{padding:20px 20px 0;flex-shrink:0;}
+.sidebar-title{font-family:var(--serif);font-size:18px;letter-spacing:-0.4px;margin-bottom:14px;color:var(--ink);}
+.cat-list{display:flex;flex-wrap:wrap;gap:5px;padding-bottom:14px;border-bottom:0.5px solid var(--border);}
+.cat-btn{padding:7px 12px;border-radius:20px;font-family:var(--sans);font-size:15px;font-weight:500;cursor:pointer;border:0.5px solid var(--border);color:var(--ink2);background:var(--paper);transition:all .15s;min-height:34px;}
+.cat-btn:hover{border-color:var(--ink3);}
+.cat-btn.on{background:var(--ink);border-color:var(--ink);color:#fff;font-weight:600;}
+.heat-toggle-wrap{padding:12px 20px;border-bottom:0.5px solid var(--border);flex-shrink:0;}
+.heat-toggle-label{font-family:var(--sans);font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink3);margin-bottom:8px;}
+.heat-toggle-row{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.heat-toggle-title{font-family:var(--sans);font-size:13px;font-weight:500;color:var(--ink);}
+.heat-toggle-sub{font-family:var(--sans);font-size:13px;color:var(--ink3);margin-top:1px;}
+.toggle{width:38px;height:22px;border-radius:11px;background:var(--paper3);position:relative;cursor:pointer;transition:background .2s;flex-shrink:0;}
+.toggle.on{background:var(--safe);}
+.toggle::after{content:'';position:absolute;width:16px;height:16px;background:#fff;border-radius:50%;top:3px;left:3px;transition:left .18s;box-shadow:0 1px 3px rgba(0,0,0,0.2);}
+.toggle.on::after{left:19px;}
+.loc-list{flex:1;overflow-y:auto;}
+.loc-item{padding:13px 20px;cursor:pointer;border-bottom:0.5px solid var(--paper3);transition:background .15s;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.loc-item:hover,.loc-item.active{background:var(--paper2);}
+.loc-item-body{flex:1;min-width:0;}
+.loc-dist{font-family:var(--mono);font-size:12px;color:var(--ink3);margin-top:2px;}
+.loc-cat{font-family:var(--sans);font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink3);margin-bottom:3px;}
+.loc-name{font-family:var(--sans);font-size:16px;font-weight:600;color:var(--ink);margin-bottom:2px;}
+.loc-addr{font-family:var(--sans);font-size:13px;color:var(--ink3);}
+.loc-open{display:flex;align-items:center;gap:4px;margin-top:4px;font-family:var(--sans);font-size:13px;font-weight:500;color:var(--safe);}
+.loc-open-dot{width:5px;height:5px;border-radius:50%;background:var(--safe);}
+.loc-chevron{flex-shrink:0;width:7px;height:12px;opacity:0.3;transition:opacity .15s;}
+.loc-item:hover .loc-chevron,.loc-item.active .loc-chevron{opacity:0.7;}
+
+/* map */
+.map-area{position:relative;background:#E9E5DC;overflow:visible;}
+#leafletMap{width:100%;height:100%;}
+.map-popup-cs{position:absolute;background:var(--paper);border:0.5px solid var(--border);border-radius:8px;padding:16px 18px;width:234px;box-shadow:0 8px 32px rgba(0,0,0,0.14);z-index:500;display:none;}
+.map-popup-cs.show{display:block;}
+.popup-cat{font-family:var(--sans);font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink3);margin-bottom:4px;}
+.popup-name{font-family:var(--serif);font-size:16px;color:var(--ink);margin-bottom:3px;letter-spacing:-0.3px;}
+.popup-addr{font-family:var(--sans);font-size:13px;color:var(--ink3);margin-bottom:8px;}
+.popup-open-row{display:flex;align-items:center;gap:5px;font-family:var(--sans);font-size:13px;font-weight:500;color:var(--safe);margin-bottom:12px;}
+.popup-open-dot{width:5px;height:5px;border-radius:50%;background:var(--safe);}
+.popup-btns{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;}
+.popup-btn{padding:8px;border-radius:7px;font-family:var(--sans);font-size:15px;font-weight:600;text-align:center;cursor:pointer;transition:all .18s;border:1.5px solid var(--blue);}
+.popup-btn.outline{background:#fff;color:var(--blue);}
+.popup-btn.outline:hover{background:var(--blue);color:#fff;}
+.popup-btn.filled{background:var(--blue);color:#fff;}
+.popup-btn.filled:hover{background:#1345A0;}
+.popup-view{width:100%;padding:9px;border-radius:7px;background:var(--ink);color:#fff;font-family:var(--sans);font-size:15px;font-weight:600;text-align:center;cursor:pointer;border:none;transition:background .18s;}
+.popup-view:hover{background:#2a2a2a;}
+
+/* nav drawer */
+.route-overlay-svg{position:absolute;inset:0;pointer-events:none;z-index:450;display:none;}
+.route-overlay-svg.show{display:block;}
+.route-path{fill:none;stroke-linecap:round;stroke-linejoin:round;}
+.route-path.fastest{stroke:#1852B4;stroke-width:4;opacity:0;}
+.route-path.coolest{stroke:#2A7D4F;stroke-width:4;opacity:0;}
+.route-path.fastest.active{opacity:1;stroke-dasharray:12 5;animation:dashMove 1s linear infinite;}
+.route-path.coolest.active{opacity:1;stroke-dasharray:12 5;animation:dashMove 1.2s linear infinite;}
+@keyframes dashMove{to{stroke-dashoffset:-17;}}
+.nav-drawer{position:absolute;bottom:0;left:0;right:0;z-index:600;transform:translateY(100%);transition:transform .38s cubic-bezier(.4,0,.2,1);pointer-events:none;}
+.nav-drawer.show{transform:translateY(0);pointer-events:all;}
+.nav-drawer-inner{background:var(--paper);border-radius:16px 16px 0 0;box-shadow:0 -8px 40px rgba(0,0,0,0.14);overflow:hidden;}
+.nav-handle{width:36px;height:4px;background:var(--paper3);border-radius:2px;margin:12px auto 0;}
+.nav-type-tabs{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);border-bottom:0.5px solid var(--border);margin-top:12px;}
+.nav-type-tab{display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 16px;cursor:pointer;background:var(--paper2);font-family:var(--sans);font-size:13px;font-weight:500;color:var(--ink3);transition:all .18s;}
+.nav-type-tab.active.fastest{background:var(--paper);color:var(--blue);}
+.nav-type-tab.active.coolest{background:var(--paper);color:var(--safe);}
+.nav-type-tab-icon{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.nav-type-tab.active.fastest .nav-type-tab-icon{background:var(--blue-lt);}
+.nav-type-tab.active.coolest .nav-type-tab-icon{background:var(--safe-lt);}
+.nav-type-tab-icon svg{width:13px;height:13px;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+.nav-type-tab.active.fastest .nav-type-tab-icon svg{stroke:var(--blue);}
+.nav-type-tab.active.coolest .nav-type-tab-icon svg{stroke:var(--safe);}
+.nav-summary{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--border2);border-bottom:0.5px solid var(--border);}
+.nav-summary-item{padding:12px 16px;background:var(--paper);text-align:center;}
+.nav-summary-val{font-family:var(--serif);font-size:22px;color:var(--ink);letter-spacing:-1px;line-height:1;}
+.nav-summary-val.blue{color:var(--blue);}
+.nav-summary-val.green{color:var(--safe);}
+.nav-summary-label{font-family:var(--sans);font-size:13px;font-weight:500;color:var(--ink3);text-transform:uppercase;letter-spacing:0.04em;margin-top:4px;}
+.nav-shade-bar{display:flex;align-items:center;gap:10px;padding:9px 20px;background:var(--safe-lt);border-bottom:0.5px solid rgba(42,125,79,0.12);}
+.nav-shade-bar svg{width:13px;height:13px;stroke:var(--safe);stroke-width:1.8;fill:none;flex-shrink:0;}
+.nav-shade-label{font-family:var(--sans);font-size:15px;color:var(--safe);font-weight:500;flex:1;}
+.nav-shade-track{flex:0 0 80px;height:4px;background:rgba(42,125,79,0.15);border-radius:2px;overflow:hidden;}
+.nav-shade-fill{height:100%;background:var(--safe);border-radius:2px;}
+.nav-steps{max-height:180px;overflow-y:auto;}
+.nav-step{display:flex;align-items:flex-start;gap:12px;padding:11px 20px;border-bottom:0.5px solid var(--paper3);position:relative;}
+.nav-step:last-child{border-bottom:none;}
+.nav-step:not(:last-child)::after{content:'';position:absolute;left:29px;top:36px;bottom:-11px;width:1.5px;background:var(--paper3);}
+.nav-step-icon{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:1.5px solid var(--border);background:var(--paper);position:relative;z-index:1;margin-top:1px;}
+.nav-step-icon svg{width:9px;height:9px;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke:var(--ink3);}
+.nav-step-icon.active-step{background:var(--blue);border-color:var(--blue);}
+.nav-step-icon.active-step svg{stroke:#fff;}
+.nav-step-body{flex:1;}
+.nav-step-instruction{font-family:var(--sans);font-size:16px;font-weight:500;color:var(--ink);line-height:1.4;margin-bottom:2px;}
+.nav-step-detail{font-family:var(--sans);font-size:13px;color:var(--ink3);}
+.nav-step-dist{font-family:var(--mono);font-size:13px;color:var(--ink3);flex-shrink:0;padding-top:2px;}
+.nav-cta-row{padding:14px 20px 24px;}
+.nav-start-btn{width:100%;padding:13px;border-radius:8px;font-family:var(--sans);font-size:16px;font-weight:700;color:#fff;border:none;cursor:pointer;transition:opacity .18s;}
+.nav-start-btn.fastest{background:var(--blue);}
+.nav-start-btn.coolest{background:var(--safe);}
+.nav-start-btn:hover{opacity:.88;}
+.nav-drawer-scrim{position:absolute;inset:0;z-index:599;display:none;}
+.nav-drawer-scrim.show{display:block;}
+
+/* venue detail */
+.venue-detail{position:absolute;inset:0;background:var(--paper);z-index:550;overflow-y:auto;display:none;animation:slideIn .25s ease;}
+.venue-detail.show{display:block;}
+@keyframes slideIn{from{transform:translateX(40px);opacity:0;}to{transform:translateX(0);opacity:1;}}
+.vd-back{
+  display:inline-flex;align-items:center;gap:7px;
+  margin:16px 22px;padding:9px 16px;
+  border-radius:20px;background:var(--paper2);border:0.5px solid var(--border);
+  cursor:pointer;font-family:var(--sans);font-size:14px;color:var(--ink2);
+  font-weight:500;transition:all .15s;width:fit-content;
+}
+.vd-back:hover{background:var(--paper3);color:var(--ink);}
+.vd-back svg{width:14px;height:14px;stroke:currentColor;stroke-width:2;fill:none;}
+.vd-back:hover{background:var(--paper2);}
+.vd-back svg{width:14px;height:14px;stroke:currentColor;stroke-width:2;fill:none;}
+.vd-body{padding:22px;}
+.vd-cat{font-family:var(--sans);font-size:13px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink3);margin-bottom:7px;}
+.vd-name{font-family:var(--serif);font-size:24px;color:var(--ink);letter-spacing:-0.6px;margin-bottom:4px;}
+.vd-addr{font-family:var(--sans);font-size:16px;color:var(--ink3);margin-bottom:14px;}
+.vd-open-row{display:flex;align-items:center;gap:6px;font-family:var(--sans);font-size:16px;font-weight:500;color:var(--safe);margin-bottom:18px;}
+.vd-open-dot{width:6px;height:6px;border-radius:50%;background:var(--safe);}
+.vd-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:22px;}
+.vd-btn{padding:11px;border-radius:7px;font-family:var(--sans);font-size:13px;font-weight:600;text-align:center;cursor:pointer;transition:all .18s;border:1.5px solid var(--blue);}
+.vd-btn.outline{background:#fff;color:var(--blue);}
+.vd-btn.outline:hover{background:var(--blue);color:#fff;}
+.vd-btn.filled{background:var(--blue);color:#fff;}
+.vd-btn.filled:hover{background:#1345A0;}
+.vd-hours{margin-bottom:20px;}
+.vd-hours-title{font-family:var(--sans);font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--ink3);margin-bottom:8px;}
+.vd-hours-row{display:flex;justify-content:space-between;font-family:var(--sans);font-size:15px;padding:5px 0;border-bottom:0.5px solid var(--paper3);color:var(--ink2);}
+.vd-hours-row.today{font-weight:600;color:var(--blue);}
+.vd-hours-row:last-child{border-bottom:none;}
+.ai-section{border-top:0.5px solid var(--border);padding-top:18px;}
+.ai-section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.ai-section-title{font-family:var(--serif);font-size:17px;letter-spacing:-0.3px;color:var(--ink);}
+.ai-badge{font-family:var(--sans);font-size:9px;font-weight:600;color:var(--blue);letter-spacing:0.08em;background:var(--blue-lt);padding:3px 8px;border-radius:3px;text-transform:uppercase;}
+.ai-best-time{background:var(--blue-lt);border:0.5px solid rgba(24,82,180,0.15);border-radius:8px;padding:11px 13px;margin-bottom:14px;}
+.ai-best-time-label{font-family:var(--sans);font-size:13px;font-weight:600;color:var(--blue);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:4px;}
+.ai-best-time-text{font-family:var(--sans);font-size:16px;color:var(--ink);font-weight:500;}
+.activity-card{background:var(--paper2);border:0.5px solid var(--border);border-radius:8px;padding:13px;margin-bottom:9px;}
+.activity-name{font-family:var(--sans);font-size:16px;font-weight:600;color:var(--ink);margin-bottom:3px;}
+.activity-meta{font-family:var(--mono);font-size:13px;color:var(--ink3);margin-bottom:5px;}
+.activity-why{font-family:var(--sans);font-size:16px;color:var(--ink2);line-height:1.5;}
+.activity-cost{display:inline-block;margin-top:6px;font-family:var(--sans);font-size:13px;font-weight:600;color:var(--safe);background:var(--safe-lt);padding:2px 8px;border-radius:3px;}
+.ai-tip{background:var(--amber-lt);border:0.5px solid rgba(184,114,0,0.18);border-radius:8px;padding:11px 13px;margin-top:10px;}
+.ai-tip-label{font-family:var(--sans);font-size:13px;font-weight:600;color:var(--amber);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:4px;}
+.ai-tip-text{font-family:var(--sans);font-size:16px;color:var(--ink2);line-height:1.5;}
+.ai-reminder{font-family:var(--sans);font-size:16px;color:var(--ink3);margin-top:10px;padding-top:10px;border-top:0.5px solid var(--border);line-height:1.5;}
+.ai-loading{text-align:center;padding:18px 0;}
+.ai-loading-text{font-family:var(--sans);font-size:16px;color:var(--ink3);}
+.map-legend{position:absolute;bottom:80px;left:20px;background:var(--paper);border:0.5px solid var(--border);border-radius:8px;padding:10px 13px;box-shadow:0 4px 14px rgba(0,0,0,0.08);z-index:450;}
+.my-loc-btn{
+  position:absolute;bottom:20px;right:20px;z-index:450;
+  display:flex;align-items:center;gap:7px;
+  padding:9px 14px;border-radius:8px;
+  background:var(--paper);border:0.5px solid var(--border);
+  font-family:var(--sans);font-size:14px;font-weight:600;color:var(--ink);
+  cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,0.1);
+  transition:box-shadow .15s;
+}
+.my-loc-btn:hover{box-shadow:0 4px 16px rgba(0,0,0,0.15);}
+.legend-title{font-family:var(--sans);font-size:13px;font-weight:600;color:var(--ink3);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:7px;}
+.legend-item{display:flex;align-items:center;gap:7px;font-family:var(--sans);font-size:13px;color:var(--ink2);margin-bottom:4px;}
+.legend-item:last-child{margin-bottom:0;}
+.legend-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.venue-preview-popup .leaflet-popup-content-wrapper{
+  border-radius:16px;padding:0;
+  box-shadow:0 12px 40px rgba(0,0,0,0.18);
+  border:0.5px solid rgba(0,0,0,0.07);
+}
+.venue-preview-popup .leaflet-popup-content{
+  margin:0;padding:0;
+}
+.venue-preview-popup .leaflet-popup-tip-container{opacity:0.6;}
+.venue-preview-popup .leaflet-popup-close-button{
+  top:12px!important;right:12px!important;
+  width:24px!important;height:24px!important;
+  border-radius:50%!important;
+  background:rgba(0,0,0,0.06)!important;
+  color:#555!important;font-size:16px!important;
+  display:flex!important;align-items:center!important;justify-content:center!important;
+  line-height:1!important;
+}
+.vpp-inner{
+  font-family:'DM Sans',sans-serif;
+  padding:18px 18px 16px;
+  min-width:260px;max-width:280px;
+}
+.vpp-cat-pill{
+  display:inline-flex;align-items:center;
+  padding:3px 10px;border-radius:20px;
+  font-size:12px;font-weight:700;
+  letter-spacing:0.04em;
+  margin-bottom:10px;
+}
+.vpp-name{
+  font-family:'DM Serif Display',serif;
+  font-size:19px;color:#0F0F0F;
+  letter-spacing:-0.3px;line-height:1.2;
+  margin-bottom:5px;
+}
+.vpp-addr{
+  font-size:13px;color:#5C5C5C;
+  margin-bottom:8px;line-height:1.4;
+}
+.vpp-open-row{
+  display:flex;align-items:center;gap:5px;
+  font-size:13px;font-weight:600;
+  margin-bottom:14px;
+}
+.vpp-open-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.vpp-open-dot.open{background:#2A7D4F;}
+.vpp-open-dot.closed{background:#C94B1A;}
+.vpp-open-label.open{color:#2A7D4F;}
+.vpp-open-label.closed{color:#C94B1A;}
+.vpp-open-time{color:#888;font-weight:400;}
+.vpp-route-btns{
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:7px;margin-bottom:8px;
+}
+.vpp-route-btn{
+  padding:9px 6px;border-radius:9px;
+  font-family:'DM Sans',sans-serif;
+  font-size:13px;font-weight:700;
+  text-align:center;cursor:pointer;
+  border:1.5px solid #E0E0E0;
+  background:#fff;color:#0F0F0F;
+  transition:all .15s;
+  display:flex;align-items:center;justify-content:center;gap:5px;
+}
+.vpp-route-btn:hover{border-color:#aaa;}
+.vpp-route-btn.active-fastest{
+  background:#1852B4;color:#fff;border-color:#1852B4;
+}
+.vpp-route-btn.active-coolest{
+  background:#2A7D4F;color:#fff;border-color:#2A7D4F;
+}
+.vpp-view-btn{
+  width:100%;padding:11px;
+  border-radius:10px;
+  background:#1A2D8F;color:#fff;
+  font-family:'DM Sans',sans-serif;
+  font-size:14px;font-weight:700;
+  border:none;cursor:pointer;
+  transition:background .18s;
+  display:flex;align-items:center;justify-content:center;gap:6px;
+}
+.vpp-view-btn:hover{background:#1345A0;}
+.leaflet-marker-icon.leaflet-interactive{pointer-events:all !important;}
+
+/* map app picker */
+.map-picker-overlay.show{display:flex;}
+@keyframes popIn{from{opacity:0;transform:scale(.92);}to{opacity:1;transform:scale(1);}}
+.map-picker-title{font-family:var(--serif);font-size:20px;color:var(--ink);letter-spacing:-0.5px;margin-bottom:3px;}
+.map-picker-options{display:flex;flex-direction:column;gap:7px;margin-bottom:14px;}
+.map-picker-btn:hover{background:var(--paper2);border-color:var(--ink3);}
+.map-picker-btn-icon.google{background:#E8F0FE;}
+.map-picker-btn-icon svg{width:18px;height:18px;}
+.map-picker-btn-sub{font-family:var(--sans);font-size:13px;color:var(--ink3);margin-top:1px;}
+.map-picker-cancel:hover{color:var(--ink);}
+
+/* med modal */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:700;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px);}
+.overlay.show{display:flex;}
+.modal{background:var(--paper);width:100%;max-width:520px;padding:24px 24px 32px;position:relative;border-radius:12px 12px 0 0;}
+.modal-handle{width:32px;height:3px;background:var(--paper3);border-radius:2px;margin:0 auto 20px;}
+.modal-close{position:absolute;top:18px;right:18px;width:26px;height:26px;border-radius:50%;background:var(--paper2);border:none;cursor:pointer;font-size:14px;color:var(--ink2);display:flex;align-items:center;justify-content:center;}
+.modal-title{font-family:var(--serif);font-size:22px;color:var(--ink);margin-bottom:4px;letter-spacing:-0.5px;}
+.modal-sub{font-family:var(--sans);font-size:13px;color:var(--ink3);margin-bottom:20px;line-height:1.5;}
+.med-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+.med-btn{padding:10px 13px;border-radius:6px;border:0.5px solid var(--border);background:var(--paper);font-family:var(--sans);font-size:13px;color:var(--ink2);cursor:pointer;display:flex;align-items:center;gap:8px;transition:all .15s;}
+.med-btn:hover{border-color:var(--ink3);}
+.med-btn.on{border-color:var(--blue);background:var(--blue-lt);color:var(--blue);}
+.med-radio{width:7px;height:7px;border-radius:50%;border:1.5px solid var(--border);flex-shrink:0;transition:all .15s;}
+.med-btn.on .med-radio{border-color:var(--blue);background:var(--blue);}
+.modal-cta{width:100%;margin-top:16px;padding:13px;background:var(--ink);color:#fff;font-family:var(--sans);font-size:16px;font-weight:600;border:none;cursor:pointer;border-radius:6px;transition:opacity .15s;}
+.modal-cta:hover{opacity:.85;}
+
+/* tour */
+.tour-layer{display:none;position:fixed;inset:0;z-index:900;}
+.tour-layer.active{display:block;}
+.hl-glow{position:fixed;pointer-events:none;box-shadow:0 0 0 9999px rgba(0,0,0,0.52);z-index:901;border-radius:6px;transition:all .3s cubic-bezier(.4,0,.2,1);}
+.hl-border{position:fixed;pointer-events:none;border:1.5px solid var(--blue);border-radius:6px;z-index:902;transition:all .3s cubic-bezier(.4,0,.2,1);}
+.tip{
+  position:fixed;z-index:903;background:var(--ink);color:#fff;
+  border-radius:8px;padding:16px 18px 14px;
+  box-shadow:0 16px 48px rgba(0,0,0,0.35);
+  transition:top .3s cubic-bezier(.4,0,.2,1),left .3s cubic-bezier(.4,0,.2,1);
+}
+.tip-arrow{position:absolute;width:10px;height:10px;background:var(--ink);transform:rotate(45deg);}
+.tip-arrow.up{top:-5px;left:22px;}
+.tip-arrow.down{bottom:-5px;left:22px;}
+.tip-arrow.right-side{right:-5px;top:18px;}
+.tip-step{font-family:var(--mono);font-size:11px;color:rgba(255,255,255,0.35);letter-spacing:0.1em;margin-bottom:5px;text-transform:uppercase;}
+.tip-title{font-family:var(--serif);font-size:17px;margin-bottom:6px;letter-spacing:-0.3px;}
+.tip-body{font-family:var(--sans);font-size:14px;color:rgba(255,255,255,0.65);line-height:1.55;margin-bottom:14px;}
+.tip-footer{display:flex;align-items:center;justify-content:space-between;}
+.tip-skip{font-family:var(--sans);font-size:13px;color:rgba(255,255,255,0.3);cursor:pointer;background:none;border:none;}
+.tip-dots{display:flex;gap:4px;}
+.tip-dot{width:4px;height:4px;border-radius:50%;background:rgba(255,255,255,0.2);transition:all .2s;}
+.tip-dot.on{background:#fff;width:12px;border-radius:2px;}
+.tip-next{font-family:var(--sans);font-size:13px;font-weight:600;color:var(--ink);background:#fff;border:none;border-radius:3px;padding:6px 14px;cursor:pointer;}
+
+/* ── LOCATION MODAL ── */
+.loc-modal-overlay{
+  position:fixed;inset:0;z-index:1000;
+  background:rgba(10,10,10,0.7);backdrop-filter:blur(8px);
+  display:flex;align-items:center;justify-content:center;
+}
+.loc-modal{
+  background:var(--paper);border-radius:20px;padding:36px 32px;
+  width:360px;box-shadow:0 24px 64px rgba(0,0,0,0.25);
+  animation:popIn .25s cubic-bezier(.34,1.56,.64,1);
+}
+.loc-modal-icon{width:48px;height:48px;border-radius:12px;background:var(--blue-lt);display:flex;align-items:center;justify-content:center;margin-bottom:16px;}
+.loc-modal-icon svg{width:22px;height:22px;stroke:var(--blue);stroke-width:1.8;fill:none;}
+.loc-modal-title{font-family:var(--serif);font-size:22px;color:var(--ink);letter-spacing:-0.5px;margin-bottom:8px;}
+.loc-modal-sub{font-family:var(--sans);font-size:15px;color:var(--ink3);line-height:1.55;margin-bottom:24px;}
+.loc-btn-gps{width:100%;padding:14px;background:var(--blue);color:#fff;border:none;border-radius:10px;font-family:var(--sans);font-size:15px;font-weight:600;cursor:pointer;margin-bottom:10px;transition:opacity .18s;}
+.loc-btn-gps:hover{opacity:.88;}
+.loc-divider{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.loc-divider::before,.loc-divider::after{content:'';flex:1;height:0.5px;background:var(--border);}
+.loc-divider span{font-family:var(--sans);font-size:13px;color:var(--ink3);}
+.loc-postcode-row{display:flex;gap:8px;}
+.loc-postcode-input{
+  flex:1;padding:12px 14px;border:1px solid var(--border);border-radius:10px;
+  font-family:var(--sans);font-size:15px;color:var(--ink);background:var(--paper);
+  outline:none;transition:border .15s;
+}
+.loc-postcode-input:focus{border-color:var(--blue);}
+.loc-btn-post{padding:12px 16px;background:var(--ink);color:#fff;border:none;border-radius:10px;font-family:var(--sans);font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;transition:opacity .18s;}
+.loc-btn-post:hover{opacity:.85;}
+
+/* ── FONT SIZE TOGGLE (left edge, shows active A collapsed, expands on hover) ── */
+.font-toggle{
+  position:fixed;bottom: 150px;;transform:translateY(50%);
+  left:0;z-index:300;
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+  background:rgba(255,255,255,0.92);backdrop-filter:blur(12px);
+  border-radius:0 12px 12px 0;
+  padding:6px 4px;
+  box-shadow:2px 0 12px rgba(0,0,0,0.10),0 0 0 0.5px rgba(0,0,0,0.06);
+  overflow:hidden;
+  transition:width .22s cubic-bezier(.4,0,.2,1),padding .22s;
+}
+/* collapsed: only active button visible via width clip */
+.font-toggle .font-toggle-btn{display:none;}
+.font-toggle .font-toggle-btn.active{display:flex;align-items:center;justify-content:center;}
+.font-toggle:hover .font-toggle-btn{display:flex;align-items:center;justify-content:center;}
+.font-toggle-btn{
+  font-family:var(--sans);font-weight:600;color:var(--ink2);
+  background:none;border:none;cursor:pointer;
+  width:36px;height:36px;
+  border-radius:8px;transition:all .15s;line-height:1;
+  white-space:nowrap;
+}
+.font-toggle-btn:hover{background:rgba(0,0,0,0.06);}
+.font-toggle-btn.active{background:var(--ink);color:#fff;}
+.font-toggle-btn:nth-child(1){font-size:13px;}
+.font-toggle-btn:nth-child(2){font-size:16px;}
+.font-toggle-btn:nth-child(3){font-size:19px;}
+
+/* ── "WHY?" pill on slogan ── */
+.why-pill{
+  display:inline-flex;align-items:center;
+  background:rgba(255,255,255,0.14);border-radius:20px;
+  padding:4px 11px;font-family:var(--sans);font-size:13px;font-weight:600;
+  color:rgba(255,255,255,0.75);cursor:pointer;
+  margin-left:10px;vertical-align:middle;
+  transition:background .18s,color .18s;text-decoration:none;
+  border:0.5px solid rgba(255,255,255,0.2);
+}
+.why-pill:hover{background:rgba(255,255,255,0.25);color:#fff;}
+
+/* ── GREETING in s1-right ── */
+.s1-greeting{
+  font-family:var(--serif);font-size:28px;letter-spacing:-0.5px;
+  color:rgba(255,255,255,0.82);
+  margin-bottom:20px;line-height:1.15;
+}
+
+/* ── S2 centre checklist ── */
+.tw-checklist{margin-top:12px;}
+.tw-check-item{
+  display:flex;align-items:center;gap:10px;
+  padding:8px 0;border-bottom:0.5px solid rgba(255,255,255,0.08);
+  font-family:var(--sans);font-size:14px;color:rgba(255,255,255,0.7);
+  cursor:pointer;user-select:none;
+}
+.tw-check-item:last-child{border-bottom:none;}
+.tw-check-box{
+  width:18px;height:18px;border-radius:5px;
+  border:1.5px solid rgba(255,255,255,0.25);flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .15s;
+}
+.tw-check-item.done .tw-check-box{background:var(--safe);border-color:var(--safe);}
+.tw-check-item.done .tw-check-box svg{display:block;}
+.tw-check-box svg{display:none;width:10px;height:10px;stroke:#fff;stroke-width:2.5;fill:none;}
+.tw-check-item.done{color:rgba(0,0,0,0.3);text-decoration:line-through;}
+
+/* ── tw place recommendation + Go here button ── */
+.tw-place{
+  position:absolute;bottom:0;left:0;right:0;
+  height:148px;
+  padding:12px 16px 14px;
+  border-top:0.5px solid rgba(255,255,255,0.15);
+  overflow:hidden;
+}
+.tw.safe-win .tw-place{background:var(--paper3);}
+.tw.warn-win .tw-place{background:var(--amber-lt);}
+.tw.cool-win .tw-place{background:var(--paper2);}
+.tw-place-label{
+  font-family:var(--sans);font-size:11px;font-weight:600;
+  letter-spacing:0.08em;text-transform:uppercase;
+  color:rgba(255,255,255,0.35);margin-bottom:4px;
+}
+.tw-place-name{
+  font-family:var(--sans);font-size:15px;font-weight:700;
+  color:#fff;margin-bottom:2px;
+}
+.tw-place-sub{
+  font-family:var(--sans);font-size:13px;
+  color:rgba(255,255,255,0.5);margin-bottom:10px;
+}
+.tw-go-btn{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:8px 16px;border-radius:20px;
+  background:var(--safe);border:none;
+  font-family:var(--sans);font-size:14px;font-weight:600;color:#fff;
+  cursor:pointer;transition:opacity .18s;
+}
+.tw-go-btn:hover{opacity:.85;}
+
+/* sleep window */
+.tw.sleep-win{background:rgba(80,60,120,0.18);border:0.5px solid rgba(80,60,120,0.3);}
+.tw.sleep-win .tw-badge{background:rgba(80,60,120,0.28);color:#c4a8f0;}
+.tw.sleep-win .tw-hours{color:#c4a8f0;}
+
+.tw-go-btn.warn{
+  background:var(--amber);border:none;color:#fff;
+}
+
+.tw-go-btn svg{width:12px;height:12px;flex-shrink:0;}
+
+/* ── checklist column inside wide warn panel ── */
+.tw-checklist-col{
+  flex:0 0 220px;border-left:0.5px solid rgba(255,255,255,0.08);
+  padding-left:14px;display:flex;flex-direction:column;
+}
+.tw-checklist-heading{
+  font-family:var(--sans);font-size:11px;font-weight:600;
+  letter-spacing:0.07em;text-transform:uppercase;
+  color:rgba(255,255,255,0.35);margin-bottom:8px;
+}
+
+/* ── S3/S4 LIGHT BACKGROUND ── */
+.s3{background:#111A2C;}
+.s3-title{color:#fff;}
+.s3-sub{color:rgba(255,255,255,0.45);}
+.s4{background:var(--paper);}
+.s4-title{color:var(--ink);}
+.s4-sub{color:var(--ink3);}
+.s4-inner{max-width:860px;margin:0 auto;width:100%;padding:0 56px;height:100%;display:flex;flex-direction:column;justify-content:center;gap:16px;}
+
+/* S4 two-banner layout */
+.s4-two{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:14px;}
+
+/* unified CTA row — same pattern for both banners */
+.s4-cta-row{
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  margin-top:auto;padding:14px 16px;border-radius:10px;
+  text-decoration:none;transition:opacity .18s;cursor:pointer;
+}
+.s4-nurse-banner .s4-cta-row{background:var(--blue);}
+.s4-warn-banner .s4-cta-row{background:var(--heat);}
+.s4-cta-row:hover{opacity:.88;}
+.s4-cta-left{}
+.s4-cta-label{font-family:var(--sans);font-size:12px;color:rgba(255,255,255,0.72);margin-bottom:3px;}
+.s4-cta-num{font-family:var(--mono);font-size:22px;font-weight:500;color:#fff;letter-spacing:0.02em;}
+.s4-cta-arr{width:34px;height:34px;border-radius:8px;background:rgba(255,255,255,0.18);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.s4-cta-arr svg{width:14px;height:14px;}
+
+/* colored severity dots */
+.s4-check-dot{width:7px;height:7px;border-radius:50%;background:var(--blue);flex-shrink:0;margin-top:6px;}
+.s4-check-dot.red{background:var(--heat);}
+.s4-check-dot.orange{background:var(--amber);}
+
+/* remove old nurse/warn CTA styles that conflict */
+.s4-nurse-banner{
+  background:#F0F6FF;border:1px solid rgba(24,82,180,0.15);
+  border-radius:16px;padding:20px 22px;display:flex;flex-direction:column;gap:0;
+}
+.s4-warn-banner{
+  background:var(--heat-lt);border:1px solid rgba(201,75,26,0.18);
+  border-radius:16px;padding:20px 22px;display:flex;flex-direction:column;gap:0;
+}
+.s4-nurse-eye{font-family:var(--sans);font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--blue);margin-bottom:8px;}
+.s4-warn-eye{font-family:var(--sans);font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--heat);margin-bottom:8px;}
+.s4-nurse-title,.s4-warn-title{font-family:var(--sans);font-size:17px;font-weight:700;color:var(--ink);margin-bottom:12px;}
+.s4-check-list{margin-bottom:14px;}
+.s4-check-row{display:flex;align-items:flex-start;gap:10px;padding:7px 0;border-bottom:0.5px solid var(--border);}
+.s4-check-row:last-child{border-bottom:none;}
+.s4-check-text{font-family:var(--sans);font-size:14px;color:var(--ink2);line-height:1.5;}
+
+/* full-width FCS bar at bottom of s4 — green to distinguish from blue nurse */
+.s4-fcs-bar{
+  display:flex;align-items:center;justify-content:space-between;
+  background:var(--safe);border-radius:12px;padding:16px 24px;
+  cursor:pointer;transition:opacity .18s;flex-shrink:0;
+}
+.s4-fcs-bar:hover{opacity:.88;}
+.s4-fcs-bar-left{}
+.s4-fcs-bar-eye{font-family:var(--sans);font-size:11px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:rgba(255,255,255,0.6);margin-bottom:3px;}
+.s4-fcs-bar-title{font-family:var(--sans);font-size:16px;font-weight:700;color:#fff;}
+.s4-fcs-bar-arr{width:28px;height:28px;border-radius:7px;background:rgba(255,255,255,0.18);display:flex;align-items:center;justify-content:center;}
+.s4-fcs-bar-arr svg{width:13px;height:13px;stroke:#fff;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round;}
+
+/* clear all now blue */
+.clear-all-btn{
+  font-family:var(--sans);font-size:14px;color:var(--blue);
+  background:none;border:none;cursor:pointer;padding:6px 12px;
+  text-decoration:none;transition:color .15s,text-decoration .15s;
+}
+.clear-all-btn:hover{color:#1345A0;text-decoration:underline;}
+
+/* s4 scroll-hint override for light bg */
+.s4 .scroll-hint svg{stroke:rgba(0,0,0,0.25);}
+.s4 .scroll-hint-label{color:rgba(0,0,0,0.25);}
+
+/* ── Location modal ── */
+.loc-overlay{position:fixed;inset:0;z-index:1000;background:rgba(10,10,10,0.65);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;}
+.loc-box{background:var(--paper);border-radius:20px;padding:36px 32px;width:340px;box-shadow:0 24px 64px rgba(0,0,0,0.22);animation:popIn .25s cubic-bezier(.34,1.56,.64,1);}
+.loc-icon{width:46px;height:46px;border-radius:12px;background:var(--blue-lt);display:flex;align-items:center;justify-content:center;margin-bottom:16px;}
+.loc-icon svg{width:22px;height:22px;stroke:var(--blue);stroke-width:1.8;fill:none;}
+.loc-title{font-family:var(--serif);font-size:22px;color:var(--ink);letter-spacing:-0.5px;margin-bottom:8px;}
+.loc-sub{font-family:var(--sans);font-size:15px;color:var(--ink3);line-height:1.55;margin-bottom:22px;}
+.loc-gps-btn{width:100%;padding:14px;background:var(--blue);color:#fff;border:none;border-radius:10px;font-family:var(--sans);font-size:15px;font-weight:600;cursor:pointer;margin-bottom:10px;transition:opacity .18s;}
+.loc-gps-btn:hover{opacity:.88;}
+.loc-divider{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.loc-divider::before,.loc-divider::after{content:'';flex:1;height:0.5px;background:var(--border);}
+.loc-divider span{font-family:var(--sans);font-size:13px;color:var(--ink3);}
+.loc-pc-row{display:flex;gap:8px;}
+.loc-pc-input{flex:1;padding:12px 14px;border:1px solid var(--border);border-radius:10px;font-family:var(--sans);font-size:15px;color:var(--ink);background:var(--paper);outline:none;transition:border .15s;}
+.loc-pc-input:focus{border-color:var(--blue);}
+.loc-pc-btn{padding:12px 16px;background:var(--ink);color:#fff;border:none;border-radius:10px;font-family:var(--sans);font-size:14px;font-weight:600;cursor:pointer;transition:opacity .18s;}
+.loc-pc-btn:hover{opacity:.85;}
+</style>
+<style id="font-size-overrides">
+    .s1-slogan{font-size:46px!important}
+    .s1-temp{font-size:108px!important}
+    .s1-desc,.s1-insight-text,.med-tip-item{font-size:16px!important}
+    .s1-stat-val.lg{font-size:44px!important}
+    .s1-stat-val.md{font-size:22px!important}
+    .nav-tab,.nav-right{font-size:16px!important}
+    .chart-legend-item{font-size:14px!important}
+    .heat-toggle-title,.heat-toggle-sub{font-size:13px!important}
+    .tw-desc,.tw-place-sub,.g-card-body{font-size:15px!important}
+    .tw-place-name{font-size:15px!important}
+    .tw-hours{font-size:20px!important}
+    .s4-nurse-title,.s4-warn-title{font-size:17px!important}
+    .s4-check-text{font-size:14px!important}
+    .s4-cta-num{font-size:22px!important}
+    .s3-title,.s4-title,.s2-title{font-size:36px!important}
+    .s1-greeting{font-size:28px!important}
+    /* Find Cool Spaces */
+    .sidebar-title,.vd-name,.ai-section-title{font-size:18px!important}
+    .loc-name,.popup-name{font-size:16px!important}
+    .loc-addr,.loc-cat,.loc-open,.vd-addr,.vd-cat{font-size:13px!important}
+    .cat-btn{font-size:15px!important}
+    .activity-name,.activity-why,.ai-best-time-text,.ai-tip-text{font-size:16px!important}
+    /* Why It Matters */
+    .why-heading{font-size:40px!important}
+    .s4-nurse-eye,.s4-warn-eye{font-size:11px!important}
+    .s4-sub{font-size:16px!important}
+    .heat-toggle-label{font-size:13px!important}
+    .my-loc-btn{font-size:15px!important}
+    .legend-item{font-size:13px!important}
+    .loc-open{font-size:13px!important}
+    .tw-badge{font-size:12px!important}
+    .tw-place-label{font-size:11px!important}
+    .s2-meta{font-size:13px!important}
+    .s1-stat-label{font-size:15px!important}
+  </style><style data-id="immersive-translate-input-injected-css"></style></head>
+<body style="background-color: rgb(64, 99, 85);">
+
+<nav class="nav" id="mainNav">
+  <div class="nav-logo">CoolSafer</div>
+  <div class="nav-tabs">
+    <div class="nav-tab active" onclick="showPage('home',this)">Home</div>
+    <div class="nav-tab" id="spacesNavTab" onclick="showPage('spaces',this)">Find Cool Spaces</div>
+    <div class="nav-tab" onclick="showPage('why',this)">Why It Matters</div>
+  </div>
+  <div class="nav-right" id="navLocation">MELBOURNE · 2 MAY 2026</div>
+</nav>
+
+<!-- section nav dots (home only) -->
+<div class="section-dots" id="sectionDots">
+  <div class="section-dot active" onclick="scrollToSection(0)"></div>
+  <div class="section-dot" onclick="scrollToSection(1)"></div>
+  <div class="section-dot" onclick="scrollToSection(2)"></div>
+  <div class="section-dot" onclick="scrollToSection(3)"></div>
+</div>
+
+<!-- ═══════════════════════════════
+     HOME
+═══════════════════════════════ -->
+<div id="page-home" class="page active">
+<div class="home-scroll" id="homeScroll">
+
+  <!-- ── SECTION 1: STATUS HERO ── -->
+  <div class="home-section s1" id="sec0" style="display:flex; flex-direction:column;">
+    <!-- 背景视频 -->
+    <div class="s1-photo">
+      <video autoplay muted loop playsinline>
+        <source src="https://raw.githubusercontent.com/FIT5120-S2-Team03/CoolSafe/main/assets/bg-video-1.mp4" type="video/mp4">
+      </video>
+    </div>
+
+    <!-- ── 上区：Slogan，占约 35vh，左对齐 ── -->
+    <div style="position:relative; z-index:2; flex:0 0 35vh; display:flex; align-items:flex-end; padding:0 64px 32px;">
+      <div>
+        <div style="font-family:var(--serif); font-size:48px; color:#fff; letter-spacing:-2px; line-height:1.1; margin-bottom:12px;">
+          Know the heat.<br>Enjoy your day.
+        </div>
+        <div style="font-family:var(--sans); font-size:15px; color:rgba(255,255,255,0.5);">
+          Heat is the deadliest natural hazard in Australia.
+          <a href="#" onclick="showPage('why',document.querySelectorAll('.nav-tab')[2]);return false;"
+             style="color:#6fcf97; text-decoration:underline; margin-left:4px;">Read why</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 下区：状态面板 ── -->
+    <div style="position:relative; z-index:2; flex:1; display:flex; flex-direction:column;
+                background:rgba(8,16,26,0.88); backdrop-filter:blur(32px); -webkit-backdrop-filter:blur(32px);
+                border-top:1px solid rgba(255,255,255,0.1); padding:22px 64px 26px; gap:16px;">
+
+      <!-- 第一行：温度 ＋ 风险主卡 ＋ CTA -->
+      <div style="display:grid; grid-template-columns:220px 1fr 220px; gap:28px; align-items:stretch; flex:1;">
+
+        <!-- 左卡：天气数据 -->
+        <div style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1);
+                    border-radius:16px; padding:20px; display:flex; flex-direction:column; justify-content:center; gap:12px;">
+          <div>
+            <div style="font-family:var(--serif); font-size:58px; color:#fff; line-height:1; letter-spacing:-3px;">25°C</div>
+            <div style="font-family:var(--sans); font-size:12px; font-weight:600; color:rgba(255,255,255,0.4);
+                        text-transform:uppercase; letter-spacing:0.1em; margin-top:6px;">Feels Like</div>
+          </div>
+          <div style="border-top:1px solid rgba(255,255,255,0.08); padding-top:12px;
+                      display:flex; flex-direction:column; gap:8px;">
+            <div style="display:flex; align-items:center; justify-content:space-between;">
+              <span style="font-family:var(--sans); font-size:13px; color:rgba(255,255,255,0.45);">Peak today</span>
+              <span style="font-family:var(--sans); font-size:13px; font-weight:600; color:#fff;">30°C</span>
+            </div>
+            <div style="display:flex; align-items:center; justify-content:space-between;">
+              <span style="font-family:var(--sans); font-size:13px; color:rgba(255,255,255,0.45);">Air quality</span>
+              <span style="font-family:var(--sans); font-size:13px; font-weight:600; color:#fff;">AQI 26</span>
+            </div>
+            <div style="display:flex; align-items:center; justify-content:space-between;">
+              <span style="font-family:var(--sans); font-size:13px; color:rgba(255,255,255,0.45);">UV Index</span>
+              <span style="font-family:var(--sans); font-size:13px; font-weight:600; color:#f2c94c;">4 · Moderate</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 中卡：风险核心（最大最重要） -->
+        <div style="background:rgba(111,207,151,0.07); border:1px solid rgba(111,207,151,0.2);
+                    border-radius:16px; padding:24px 32px; display:flex; flex-direction:column; justify-content:center; gap:14px;">
+
+          <!-- 风险等级标签 + 进度条 -->
+          <div>
+            <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+              <span style="width:9px; height:9px; border-radius:50%; background:#6fcf97; display:inline-block; flex-shrink:0;"></span>
+              <span id="ribbonScoreLabel" style="font-family:var(--sans); font-size:19px; font-weight:800;
+                    color:#6fcf97; text-transform:uppercase; letter-spacing:0.06em;">Low Risk</span>
+              <span style="font-family:var(--mono); font-size:15px; color:rgba(111,207,151,0.6);">20 / 100</span>
+              <div class="info-icon" style="width:18px;height:18px;font-size:10px; margin-left:4px;">?
+                <div class="score-tooltip">
+                  <div class="score-tooltip-title">How your score is calculated</div>
+                  <div class="score-formula-row"><span>Weather heat risk</span><span id="tt-weather" class="score-formula-pct">+40</span></div>
+                  <div class="score-formula-row"><span>Time of day</span><span id="tt-time" class="score-formula-pct">+10</span></div>
+                  <div class="score-formula-row"><span>Medication risk</span><span id="tt-med" class="score-formula-pct">+0</span></div>
+                  <div class="score-formula-row" style="margin-top:6px;border-top:0.5px solid rgba(255,255,255,0.15);padding-top:6px;font-weight:600;">
+                    <span>Total score</span><span id="tt-total" class="score-formula-pct" style="color:#6fcf97;">20</span>
+                  </div>
+                </div>
+              </div>
+              <span id="medPill" onclick="openMed()" style="display:none;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;border:1px solid rgba(242,201,76,0.5);color:rgba(242,201,76,0.9);font-family:var(--sans);font-size:12px;font-weight:600;cursor:pointer;">💊 <span id="medPillCount">0</span> meds</span>
+            </div>
+            <div style="height:6px; background:rgba(255,255,255,0.08); border-radius:3px; overflow:hidden;">
+              <div id="ribbonScoreBar" style="width:20%; height:100%; background:#6fcf97; border-radius:3px; transition:width .5s ease;"></div>
+            </div>
+          </div>
+
+          <!-- 建议文字 -->
+          <div id="insightText" style="font-family:var(--sans); font-size:18px; color:rgba(255,255,255,0.9);
+                font-weight:500; line-height:1.5;">
+            Conditions are comfortable. Keep water with you and enjoy your day.
+          </div>
+
+          <!-- 药物 Quick Tips（选完 medication 后自动显示，默认隐藏） -->
+          <div id="medQuickTips" style="display:none; background:rgba(255,199,80,0.1); border:1px solid rgba(255,199,80,0.25);
+                border-radius:12px; padding:14px 16px;">
+            <div style="font-family:var(--sans); font-size:11px; font-weight:700; text-transform:uppercase;
+                        letter-spacing:0.08em; color:rgba(255,199,80,0.85); margin-bottom:8px;">💊 Quick Tips for you</div>
+            <ul id="medQuickTipsList" style="font-family:var(--sans); font-size:13px; color:rgba(255,255,255,0.8);
+                line-height:1.6; padding-left:16px; margin:0;"></ul>
+          </div>
+
+          <!-- 快捷徽章行 -->
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <span style="display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;
+                          background:rgba(111,207,151,0.12);border:1px solid rgba(111,207,151,0.25);
+                          font-family:var(--sans);font-size:12px;font-weight:600;color:#6fcf97;">
+              ✓ Heat: Low
+            </span>
+            <span style="display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;
+                          background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);
+                          font-family:var(--sans);font-size:12px;color:rgba(255,255,255,0.6);">
+              ☁ Air: Fair
+            </span>
+            <span style="display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;
+                          background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);
+                          font-family:var(--sans);font-size:12px;color:rgba(255,255,255,0.6);">
+              ☀ UV: Moderate
+            </span>
+          </div>
+        </div>
+
+        <!-- 右卡：CTA -->
+        <div style="background:var(--blue); border-radius:16px; padding:20px;
+                    display:flex; flex-direction:column; justify-content:space-between; gap:14px;
+                    cursor:pointer; transition:opacity .2s;" onclick="openMed()">
+          <div>
+            <div style="font-family:var(--sans); font-size:11px; font-weight:600; text-transform:uppercase;
+                        letter-spacing:0.1em; color:rgba(255,255,255,0.55); margin-bottom:10px;">Personalise</div>
+            <div style="font-family:var(--serif); font-size:22px; color:#fff; letter-spacing:-0.5px; line-height:1.2;">
+              Get your personal risk profile
+            </div>
+          </div>
+          <div style="font-family:var(--sans); font-size:13px; color:rgba(255,255,255,0.65); line-height:1.5;">
+            Add your health profile and medications for a score tailored to you.
+          </div>
+          <button id="profileBtn" onclick="openMed()" style="background:#fff; color:var(--blue); border:none;
+                  padding:12px 16px; border-radius:10px; font-family:var(--sans); font-size:14px; font-weight:700;
+                  cursor:pointer; width:100%; text-align:center;">
+            Get Personal Profile →
+          </button>
+        </div>
+
+      </div><!-- /grid -->
+
+    </div><!-- /下区 -->
+  </div>
+  <!-- ── Med advice strip (only shown when meds selected) ── -->
+  <div id="medAdviceStrip" style="display:none;position:absolute;bottom:0;left:0;right:0;background:rgba(255,199,80,0.13);border-top:1px solid rgba(255,199,80,0.3);padding:10px 60px;z-index:11;display:none;">
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+      <span style="font-family:var(--sans);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:rgba(255,199,80,0.95);">💊 Medication reminders</span>
+      <div id="medStripContent" style="font-family:var(--sans);font-size:14px;color:rgba(255,255,255,0.8);line-height:1.5;"></div>
+    </div>
+  </div>
+
+  <!-- ── SECTION 2: TODAY'S SCHEDULE ── -->
+  <div class="home-section s2" id="sec1">
+    <div class="s2-inner">
+      <div class="s2-header">
+        <div class="s2-title">Plan your day</div>
+      </div>
+      
+      <!-- 全新的左右分栏布局 (左 60% / 右 40%) -->
+      <div style="display:flex; gap:36px; align-items:stretch; flex:1; min-height:0; margin-top:10px;">
+        
+        <!-- 左侧：折线图占 60% -->
+        <div style="flex: 6; display:flex; flex-direction:column; position:relative;">
+          <!-- 图表容器 (覆盖了原本写死的 155px 高度，使其自适应拉伸) -->
+          <div class="chart-container" id="chartSect" style="flex:1; height:auto; min-height:300px; width:100%;">
+            <canvas id="tc"></canvas>
+          </div>
+          <!-- 色条 (Legend) 紧贴图表下方居中对齐 -->
+          <div class="chart-legend" style="margin-top:16px; margin-bottom:0; justify-content:center;">
+            <div class="chart-legend-item"><div class="chart-legend-line temp"></div>Temperature</div>
+            <div class="chart-legend-item"><div class="chart-legend-line thresh"></div>Heat alert threshold (32°C)</div>
+          </div>
+          <!-- Tomorrow Alert card -->
+          <div id="tomorrowAlert" style="margin-top:14px;border-radius:10px;border:0.5px solid var(--border);background:var(--paper);padding:14px 18px;display:flex;align-items:center;gap:20px;">
+            <div style="display:flex;gap:16px;align-items:center;flex-shrink:0;">
+              <div style="text-align:center;">
+                <div style="font-family:var(--sans);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink3);margin-bottom:3px;">Today</div>
+                <div style="font-family:var(--serif);font-size:24px;color:#B87200;letter-spacing:-1px;">35°C</div>
+              </div>
+              <div style="font-family:var(--sans);font-size:18px;color:var(--ink3);">→</div>
+              <div style="text-align:center;">
+                <div style="font-family:var(--sans);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink3);margin-bottom:3px;">Tomorrow</div>
+                <div style="font-family:var(--serif);font-size:24px;color:#C94B1A;letter-spacing:-1px;">38°C</div>
+              </div>
+            </div>
+            <div style="flex:1;border-left:0.5px solid var(--border);padding-left:18px;">
+              <div style="display:inline-flex;align-items:center;gap:6px;font-family:var(--sans);font-size:12px;font-weight:700;padding:3px 10px;border-radius:20px;margin-bottom:6px;background:#FDF0EB;color:#C94B1A;">🔴 Tomorrow is also dangerous</div>
+              <div style="font-family:var(--sans);font-size:14px;color:var(--ink2);line-height:1.5;">Plan ahead: find a cool space and avoid being outdoors between 11 AM–4 PM.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 右侧：时间卡片垂直叠放占 40% -->
+        <div id="timeWindows" style="flex: 4; display:flex; flex-direction:column; gap:16px; justify-content:space-between;">
+
+          <!-- 上面卡片: Safe to go out -->
+          <div class="tw safe-win" id="safeCard" style="width:100%; flex:1;">
+            <div class="tw-badge"><span class="tw-badge-dot"></span>Safe to go out</div>
+            <div class="tw-hours" id="safeTime">—</div>
+            <div class="tw-desc">Good conditions for a walk or outdoor activities.</div>
+            <!-- UV + temp info -->
+            <div style="display:flex;gap:10px;margin-top:16px;">
+              <div style="flex:1;background:var(--paper2);border:1px solid var(--paper3);border-radius:8px;padding:10px 12px;">
+                <div style="font-family:var(--sans);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink3);margin-bottom:4px;">UV Index</div>
+                <div style="font-family:var(--serif);font-size:22px;color:var(--amber);" id="safeUV">4</div>
+                <div style="font-family:var(--sans);font-size:12px;color:var(--ink3);">Moderate</div>
+              </div>
+              <div style="flex:1;background:var(--paper2);border:1px solid var(--paper3);border-radius:8px;padding:10px 12px;">
+                <div style="font-family:var(--sans);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink3);margin-bottom:4px;">Today's peak</div>
+                <div style="font-family:var(--serif);font-size:22px;color:var(--ink);" id="safePeakTemp">—</div>
+                <div style="font-family:var(--sans);font-size:12px;color:var(--ink3);" id="safePeakLabel">at 3 PM</div>
+              </div>
+            </div>
+            <div class="tw-place" style="margin-top:8px;">
+              <div class="tw-place-label">Cool space nearby</div>
+              <div class="tw-place-name" id="safeVenueName">Flagstaff Gardens</div>
+              <div class="tw-place-sub" id="safeVenueSub">calculating...</div>
+              <button class="tw-go-btn" id="safeBtn" onclick="goToVenue('Flagstaff Gardens','Recreation','Flagstaff Gardens, Melbourne')">
+                <span>Go here</span>
+                <svg viewBox="0 0 12 12" fill="none"><path d="M2 6h8M7 3l3 3-3 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- 下面卡片: Stay indoors (peak heat) -->
+          <div class="tw warn-win" id="peakCard" style="width:100%; flex:1; display:none;">
+            <div class="tw-badge"><span class="tw-badge-dot"></span>Stay indoors</div>
+            <div class="tw-hours" id="peakTime">—</div>
+            <div class="tw-desc">Peak heat. Stay cool and drink water regularly.</div>
+            <!-- checklist -->
+            <div style="margin-top:6px;">
+              <div class="tw-check-item" onclick="this.classList.toggle('done')">
+                <div class="tw-check-box"><svg viewBox="0 0 10 10"><path d="M1.5 5l2.5 2.5 5-4.5"></path></svg></div>Water bottle filled
+              </div>
+              <div class="tw-check-item" onclick="this.classList.toggle('done')">
+                <div class="tw-check-box"><svg viewBox="0 0 10 10"><path d="M1.5 5l2.5 2.5 5-4.5"></path></svg></div>Hat and sunscreen ready
+              </div>
+              <div class="tw-check-item" onclick="this.classList.toggle('done')">
+                <div class="tw-check-box"><svg viewBox="0 0 10 10"><path d="M1.5 5l2.5 2.5 5-4.5"></path></svg></div>Phone charged
+              </div>
+              <div class="tw-check-item" onclick="this.classList.toggle('done')">
+                <div class="tw-check-box"><svg viewBox="0 0 10 10"><path d="M1.5 5l2.5 2.5 5-4.5"></path></svg></div>Check on a neighbour
+              </div>
+            </div>
+            <div class="tw-place" style="margin-top:8px;">
+              <div class="tw-place-label">Cool space nearby</div>
+              <div class="tw-place-name" id="peakVenueName">State Library Victoria</div>
+              <div class="tw-place-sub" id="peakVenueSub">calculating...</div>
+              <button class="tw-go-btn warn" id="peakBtn" onclick="goToVenue('State Library Victoria','Learning','328 Swanston St, Melbourne')">
+                <span>Go here</span>
+                <svg viewBox="0 0 12 12" fill="none"><path d="M2 6h8M7 3l3 3-3 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+    <div class="scroll-hint" onclick="scrollToSection(2)">
+      <svg viewBox="0 0 20 20"><path d="M5 8l5 5 5-5"></path></svg>
+      <span class="scroll-hint-label">Scroll</span>
+    </div>
+  </div>
+
+  <!-- ── SECTION 3: WHAT TO DO & AVOID ── -->
+  <div class="home-section s3" id="sec2">
+    <div class="s3-inner">
+      <div class="s3-header">
+        <div class="s3-title">What to do today</div>
+        <div class="s3-sub">Hover any card for details — based on today's heat conditions</div>
+      </div>
+
+      <!-- Row 1 label: DO THIS -->
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px; flex-shrink:0;">
+        <span style="font-family:var(--sans);font-size:11px;font-weight:700;text-transform:uppercase;
+                     letter-spacing:0.1em;color:#6fcf97;">✓ Do this</span>
+        <span style="flex:1;height:1px;background:rgba(111,207,151,0.2);"></span>
+      </div>
+
+      <div class="guidance-cards" style="flex:0 0 46%; max-height:46%;">
+        <!-- Card 1: Hydration -->
+        <div class="g-card hydration">
+          <div class="g-card-img" style="background-image:url('https://images.unsplash.com/photo-1548839140-29a749e1cf4d?w=700&q=80')"></div>
+          <div class="g-card-overlay"></div>
+          <div class="g-card-content">
+            <div class="g-card-category">DO THIS</div>
+            <div class="g-card-title">Stay Hydrated</div>
+            <div class="g-card-body">Drink a glass of water every hour — even if you don't feel thirsty. Your body needs fluid to regulate heat.</div>
+          </div>
+        </div>
+        <!-- Card 2: Cool Down -->
+        <div class="g-card movement">
+          <div class="g-card-img" style="background-image:url('https://images.unsplash.com/photo-1602932213623-cc17e9541bb4?q=80&w=2670&auto=format&fit=crop')"></div>
+          <div class="g-card-overlay"></div>
+          <div class="g-card-content">
+            <div class="g-card-category">DO THIS</div>
+            <div class="g-card-title">Cool Your Body</div>
+            <div class="g-card-body">Apply a cool, damp cloth to your neck and wrists. Cooling pulse points lowers your core temperature fast.</div>
+          </div>
+        </div>
+        <!-- Card 3: Find Cool Space -->
+        <div class="g-card" style="--card-accent:#2A7D4F;">
+          <div class="g-card-img" style="background-image:url('https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=700&q=80')"></div>
+          <div class="g-card-overlay" style="background:linear-gradient(to top,rgba(42,125,79,0.9) 0%,rgba(0,0,0,0.2) 55%,transparent 100%);"></div>
+          <div class="g-card-content">
+            <div class="g-card-category">DO THIS</div>
+            <div class="g-card-title">Find a Cool Space</div>
+            <div class="g-card-body">Libraries, community centres and shopping centres are free and air-conditioned. Check the map for what's open near you.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 2 label: AVOID -->
+      <div style="display:flex; align-items:center; gap:10px; margin-top:14px; margin-bottom:6px; flex-shrink:0;">
+        <span style="font-family:var(--sans);font-size:11px;font-weight:700;text-transform:uppercase;
+                     letter-spacing:0.1em;color:#f2994a;">✕ Avoid this</span>
+        <span style="flex:1;height:1px;background:rgba(242,153,74,0.2);"></span>
+      </div>
+
+      <div class="guidance-cards" style="flex:0 0 46%; max-height:46%;">
+        <!-- Card 4: Peak Sun -->
+        <div class="g-card home-env">
+          <div class="g-card-img" style="background-image:url('https://images.unsplash.com/photo-1512069772995-ec65ed45afd6?w=700&q=80')"></div>
+          <div class="g-card-overlay"></div>
+          <div class="g-card-content">
+            <div class="g-card-category">AVOID</div>
+            <div class="g-card-title">Peak Sun Hours</div>
+            <div class="g-card-body">Avoid being outdoors between 11 AM and 4 PM. Direct sun during peak hours dramatically increases your heat risk.</div>
+          </div>
+        </div>
+        <!-- Card 5: Alcohol -->
+        <div class="g-card social">
+          <div class="g-card-img" style="background-image:url('https://plus.unsplash.com/premium_photo-1728176933865-3c2221defa69?q=80&w=2680&auto=format&fit=crop')"></div>
+          <div class="g-card-overlay"></div>
+          <div class="g-card-content">
+            <div class="g-card-category">AVOID</div>
+            <div class="g-card-title">Alcohol &amp; Heavy Meals</div>
+            <div class="g-card-body">Alcohol accelerates dehydration and impairs heat response. Heavy meals generate extra internal heat — both raise your risk.</div>
+          </div>
+        </div>
+        <!-- Card 6: Staying Home Alone -->
+        <div class="g-card" style="">
+          <div class="g-card-img" style="background-image:url('https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=700&q=80')"></div>
+          <div class="g-card-overlay" style="background:linear-gradient(to top,rgba(120,40,140,0.9) 0%,rgba(0,0,0,0.2) 55%,transparent 100%);"></div>
+          <div class="g-card-content">
+            <div class="g-card-category">AVOID</div>
+            <div class="g-card-title">Staying Home Alone</div>
+            <div class="g-card-body">Poorly ventilated homes can exceed outdoor temperatures. Let someone know where you are and check on elderly neighbours.</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="scroll-hint" onclick="scrollToSection(3)">
+      <svg viewBox="0 0 20 20"><path d="M5 8l5 5 5-5"></path></svg>
+      <span class="scroll-hint-label">Scroll</span>
+    </div>
+  </div>
+
+  <!-- ── SECTION 4: GET HELP ── -->
+  <div class="home-section s4" id="sec3">
+    <div class="s4-inner">
+      <!-- header -->
+      <div>
+        <div class="s4-title">If you need help</div>
+        <div class="s4-sub">Know the warning signs and who to call</div>
+      </div>
+
+      <!-- two unified banners -->
+      <div class="s4-two">
+
+        <!-- left: not feeling well → Nurse-on-Call -->
+        <div class="s4-nurse-banner">
+          <div class="s4-nurse-eye">Not feeling well?</div>
+          <div class="s4-nurse-title">Check how you feel</div>
+          <div class="s4-check-list">
+            <div class="s4-check-row"><div class="s4-check-dot"></div><div class="s4-check-text">Feeling unusually tired or dizzy</div></div>
+            <div class="s4-check-row"><div class="s4-check-dot"></div><div class="s4-check-text">Headache or nausea</div></div>
+            <div class="s4-check-row"><div class="s4-check-dot"></div><div class="s4-check-text">Skin feels hot but you're not sweating</div></div>
+            <div class="s4-check-row"><div class="s4-check-dot"></div><div class="s4-check-text">Dark urine or haven't urinated recently</div></div>
+          </div>
+          <a class="s4-cta-row" href="tel:1300606024">
+            <div class="s4-cta-left">
+              <div class="s4-cta-label">Free · 24 hours · Nurse-on-Call</div>
+              <div class="s4-cta-num">1300 606 024</div>
+            </div>
+            <div class="s4-cta-arr blue">
+              <svg viewBox="0 0 14 14" fill="none"><path d="M3 7h8M7 3l4 4-4 4" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+            </div>
+          </a>
+        </div>
+
+        <!-- right: emergency warning signs → 000 -->
+        <div class="s4-warn-banner">
+          <div class="s4-warn-eye">Emergency warning signs</div>
+          <div class="s4-warn-title">Call 000 immediately if you see:</div>
+          <div class="s4-check-list">
+            <div class="s4-check-row"><div class="s4-check-dot red"></div><div class="s4-check-text"><strong>Heat stroke</strong> — hot dry skin, confusion, not sweating</div></div>
+            <div class="s4-check-row"><div class="s4-check-dot orange"></div><div class="s4-check-text"><strong>Severe heat exhaustion</strong> — heavy sweating, weakness, pale skin</div></div>
+            <div class="s4-check-row"><div class="s4-check-dot orange"></div><div class="s4-check-text"><strong>Collapse or unconsciousness</strong> — any loss of consciousness in heat</div></div>
+          </div>
+          <a class="s4-cta-row" href="tel:000">
+            <div class="s4-cta-left">
+              <div class="s4-cta-label">Emergency · Ambulance · Fire · Police</div>
+              <div class="s4-cta-num">000</div>
+            </div>
+            <div class="s4-cta-arr red">
+              <svg viewBox="0 0 14 14" fill="none"><path d="M3 7h8M7 3l4 4-4 4" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+            </div>
+          </a>
+        </div>
+
+      </div>
+
+      <!-- full-width Find Cool Spaces bar -->
+      <div class="s4-fcs-bar" onclick="showPage('spaces',document.querySelectorAll('.nav-tab')[1])">
+        <div class="s4-fcs-bar-left">
+          <div class="s4-fcs-bar-eye">Cooling locations</div>
+          <div class="s4-fcs-bar-title">Find a cool space near me — libraries, gardens and community centres open now</div>
+        </div>
+        <div class="s4-fcs-bar-arr"><svg viewBox="0 0 14 14"><path d="M3 7h8M7 3l4 4-4 4"></path></svg></div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /home-scroll -->
+</div><!-- /page-home -->
+
+<!-- ═══════════════════════════════
+     FIND COOL SPACES
+═══════════════════════════════ -->
+<div id="page-spaces" class="page">
+  <div class="spaces-layout">
+    <div class="sidebar">
+      <div class="sidebar-top">
+        <div class="sidebar-title">Cool Spaces</div>
+        <div class="cat-list">
+          <div class="cat-btn on" onclick="setCat(this)">All</div>
+          <div class="cat-btn" onclick="setCat(this)">Arts &amp; Culture</div>
+          <div class="cat-btn" onclick="setCat(this)">Recreation</div>
+          <div class="cat-btn" onclick="setCat(this)">Learning</div>
+          <div class="cat-btn" onclick="setCat(this)">Community</div>
+          <div class="cat-btn" onclick="setCat(this)">Visitor Info</div>
+          <div class="cat-btn" onclick="setCat(this)">Fountain</div>
+        </div>
+      </div>
+      <div class="heat-toggle-wrap">
+        <div class="heat-toggle-label">Heat vulnerability layer</div>
+        <div class="heat-toggle-row">
+          <div>
+            <div class="heat-toggle-title">Show high-risk suburbs</div>
+            <div class="heat-toggle-sub">Highlights vulnerable areas on map</div>
+          </div>
+          <div class="toggle" onclick="this.classList.toggle('on')"></div>
+        </div>
+      </div>
+      <div style="padding:8px 20px;font-family:var(--sans);font-size:12px;font-weight:600;color:var(--ink3);text-transform:uppercase;letter-spacing:0.06em;background:var(--paper2);border-bottom:0.5px solid var(--border);display:flex;align-items:center;gap:5px;flex-shrink:0;">
+        <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><circle cx="5.5" cy="4.5" r="2"/><path d="M5.5 1a3.5 3.5 0 013.5 3.5C9 7.5 5.5 11 5.5 11S2 7.5 2 4.5A3.5 3.5 0 015.5 1z" stroke="currentColor" stroke-width="1.2"/></svg>
+        Sorted by distance
+      </div>
+      <div class="loc-list">
+        <div class="loc-item" data-name="Flagstaff Gardens" data-cat="William St & La Trobe St" data-addr="William St & La Trobe St, West Melbourne" data-lat="-37.809" data-lng="144.953" onclick="handleLocClick(this)">
+          <div class="loc-item-body"><div class="loc-cat">Recreation</div><div class="loc-name">Flagstaff Gardens</div><div class="loc-dist" data-base-dist="0">— km</div><div class="loc-addr">William St &amp; La Trobe St</div><div class="loc-open"><span class="loc-open-dot"></span>Open · Closes 23:59</div></div>
+          <svg class="loc-chevron" viewBox="0 0 7 12" fill="none"><path d="M1 1l5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="loc-item" data-name="State Library Victoria" data-cat="328 Swanston St" data-addr="328 Swanston St, Melbourne" data-lat="-37.81" data-lng="144.964" onclick="handleLocClick(this)">
+          <div class="loc-item-body"><div class="loc-cat">Learning</div><div class="loc-name">State Library Victoria</div><div class="loc-dist" data-base-dist="0">— km</div><div class="loc-addr">328 Swanston St</div><div class="loc-open"><span class="loc-open-dot"></span>Open · Closes 21:00</div></div>
+          <svg class="loc-chevron" viewBox="0 0 7 12" fill="none"><path d="M1 1l5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="loc-item" data-name="Melbourne Museum" data-cat="11 Nicholson St" data-addr="11 Nicholson St, Carlton" data-lat="-37.804" data-lng="144.972" onclick="handleLocClick(this)">
+          <div class="loc-item-body"><div class="loc-cat">Arts &amp; Culture</div><div class="loc-name">Melbourne Museum</div><div class="loc-dist" data-base-dist="0">— km</div><div class="loc-addr">11 Nicholson St, Carlton</div><div class="loc-open"><span class="loc-open-dot"></span>Open · Closes 17:00</div></div>
+          <svg class="loc-chevron" viewBox="0 0 7 12" fill="none"><path d="M1 1l5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="loc-item" data-name="Queen Victoria Market" data-cat="Corner Elizabeth & Victoria St" data-addr="Corner Elizabeth & Victoria St, Melbourne" data-lat="-37.807" data-lng="144.957" onclick="handleLocClick(this)">
+          <div class="loc-item-body"><div class="loc-cat">Community</div><div class="loc-name">Queen Victoria Market</div><div class="loc-dist" data-base-dist="0">— km</div><div class="loc-addr">Corner Elizabeth &amp; Victoria St</div><div class="loc-open"><span class="loc-open-dot"></span>Open · Closes 15:00</div></div>
+          <svg class="loc-chevron" viewBox="0 0 7 12" fill="none"><path d="M1 1l5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="loc-item" data-name="Birrarung Marr" data-cat="Batman Ave" data-addr="Batman Ave, Melbourne" data-lat="-37.818" data-lng="144.97" onclick="handleLocClick(this)">
+          <div class="loc-item-body"><div class="loc-cat">Fountain</div><div class="loc-name">Birrarung Marr</div><div class="loc-dist" data-base-dist="0">— km</div><div class="loc-addr">Batman Ave</div><div class="loc-open"><span class="loc-open-dot"></span>Always accessible</div></div>
+          <svg class="loc-chevron" viewBox="0 0 7 12" fill="none"><path d="M1 1l5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="loc-item" data-name="Melbourne Town Hall" data-cat="90-130 Swanston St" data-addr="90-130 Swanston St, Melbourne" data-lat="-37.814" data-lng="144.966" onclick="handleLocClick(this)">
+          <div class="loc-item-body"><div class="loc-cat">Visitor Info</div><div class="loc-name">Melbourne Town Hall</div><div class="loc-dist" data-base-dist="0">— km</div><div class="loc-addr">90-130 Swanston St</div><div class="loc-open"><span class="loc-open-dot"></span>Open · Closes 17:00</div></div>
+          <svg class="loc-chevron" viewBox="0 0 7 12" fill="none"><path d="M1 1l5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="loc-item" data-name="Carlton Gardens" data-cat="Nicholson St" data-addr="Nicholson St, Carlton" data-lat="-37.804" data-lng="144.974" onclick="handleLocClick(this)">
+          <div class="loc-item-body"><div class="loc-cat">Recreation</div><div class="loc-name">Carlton Gardens</div><div class="loc-dist" data-base-dist="0">— km</div><div class="loc-addr">Nicholson St, Carlton</div><div class="loc-open"><span class="loc-open-dot"></span>Always accessible</div></div>
+          <svg class="loc-chevron" viewBox="0 0 7 12" fill="none"><path d="M1 1l5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="map-area" id="mapArea">
+      <!-- Leaflet map -->
+      <div id="leafletMap" style="width:100%;height:100%;"></div>
+
+      <!-- route SVG overlay -->
+      <!-- venue detail -->
+      <div class="venue-detail" id="venueDetail">
+        <div class="vd-back" onclick="closeVenueDetail()">
+          <svg viewBox="0 0 14 14"><path d="M9 2L4 7l5 5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+          Back to map
+        </div>
+        <div class="vd-body">
+          <div class="vd-cat" id="vdCat"></div>
+          <div class="vd-name" id="vdName"></div>
+          <div class="vd-addr" id="vdAddr"></div>
+          <div class="vd-open-row"><span class="vd-open-dot"></span>Open Now · Closes 23:59</div>
+          <div class="vd-hours">
+            <div class="vd-hours-title">Opening hours</div>
+            <div class="vd-hours-row today"><span>Today (Fri)</span><span>12:00 AM – 11:59 PM</span></div>
+            <div class="vd-hours-row"><span>Saturday</span><span>12:00 AM – 11:59 PM</span></div>
+            <div class="vd-hours-row"><span>Sunday</span><span>12:00 AM – 11:59 PM</span></div>
+          </div>
+          <div class="ai-section">
+            <div class="ai-section-head">
+              <div class="ai-section-title">Today's activities</div>
+              <div class="ai-badge">AI · Live</div>
+            </div>
+            <div id="aiContent"><div class="ai-loading"><div class="ai-loading-text">Checking today's events...</div></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="map-legend">
+        <div class="legend-title">Category</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#2A7D4F"></div>Recreation</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#7B4FA6"></div>Arts &amp; Culture</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#1852B4"></div>Learning</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#B87200"></div>Community</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#0E8FA4"></div>Fountain</div>
+      </div>
+      <div class="my-loc-btn" onclick="centerOnMyLocation()">
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><circle cx="6.5" cy="6.5" r="2.5" stroke="currentColor" stroke-width="1.5"></circle><circle cx="6.5" cy="6.5" r="5.5" stroke="currentColor" stroke-width="1" stroke-dasharray="2 2"></circle></svg>
+        My location
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════
+     WHY IT MATTERS (condensed)
+═══════════════════════════════ -->
+<div id="page-why" class="page">
+  <div style="background:var(--paper);min-height:100vh;padding-top:80px;">
+  <div style="max-width:900px;margin:0 auto;padding:40px 40px 60px;">
+    <div class="why-heading" style="font-family:var(--serif);font-size:40.0px;letter-spacing:-1.5px;color:var(--ink);margin-bottom:8px;line-height:1.1;">Heat is the deadliest<br>natural hazard in Australia.</div>
+    <div style="font-family:var(--sans);font-size:17.0px;color:var(--ink3);max-width:500px;line-height:1.65;margin-bottom:48px;">Most heat-related illness is preventable. Knowing the numbers and warning signs can save your life or someone else's.</div>
+    <div style="background:#0F2044;border-radius:20px;padding:40px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;align-items:stretch;margin-bottom:48px;">
+      <div style="background:rgba(255,255,255,0.08);border-radius:14px;padding:24px;">
+        <div style="font-family:var(--serif);font-size:52.0px;color:#fff;letter-spacing:-2px;line-height:1;margin-bottom:8px;">374</div>
+        <div style="font-family:var(--sans);font-size:16.0px;font-weight:700;color:#fff;margin-bottom:6px;">Excess deaths</div>
+        <div style="font-family:var(--sans);font-size:16.0px;color:rgba(255,255,255,0.65);line-height:1.6;margin-bottom:10px;">Victoria's 2009 heatwave — more than Black Saturday that same week.</div>
+        <div style="font-family:var(--sans);font-size:13.0px;color:rgba(255,255,255,0.3);font-style:italic;">Victorian Department of Health</div>
+      </div>
+      <div style="min-height:240px;border-radius:14px;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,0.4);">
+        <img src="https://images.unsplash.com/photo-1471193945509-9ad0617afabf?w=600&amp;q=80" style="width:100%;height:100%;object-fit:cover;" alt="Older adults outdoors">
+      </div>
+      <div style="background:rgba(255,255,255,0.08);border-radius:14px;padding:24px;">
+        <div style="font-family:var(--serif);font-size:52.0px;color:#fff;letter-spacing:-2px;line-height:1;margin-bottom:8px;">3×</div>
+        <div style="font-family:var(--sans);font-size:16.0px;font-weight:700;color:#fff;margin-bottom:6px;">Higher risk</div>
+        <div style="font-family:var(--sans);font-size:16.0px;color:rgba(255,255,255,0.65);line-height:1.6;margin-bottom:10px;">Adults over 65 are three times more likely to suffer heat stroke due to reduced sweating and thirst sensation.</div>
+        <div style="font-family:var(--sans);font-size:13.0px;color:rgba(255,255,255,0.3);font-style:italic;">Australian Institute of Health and Welfare</div>
+      </div>
+    </div>
+    <!-- temperature scale -->
+    <div style="margin-bottom:40px;">
+      <div style="font-family:var(--serif);font-size:26.0px;letter-spacing:-0.5px;margin-bottom:20px;color:var(--ink);">What the temperature means</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;">
+        <div style="background:var(--safe-lt);border:0.5px solid rgba(42,125,79,0.2);border-radius:12px;padding:20px;">
+          <div style="font-family:var(--serif);font-size:28.0px;color:var(--safe);letter-spacing:-1px;margin-bottom:6px;">Below 28°</div>
+          <div style="font-family:var(--sans);font-size:15.0px;font-weight:600;color:var(--safe);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.05em;">Safe</div>
+          <div style="font-family:var(--sans);font-size:16.0px;color:var(--ink2);line-height:1.55;">Stay hydrated and enjoy outdoor activities at any time of day.</div>
+        </div>
+        <div style="background:var(--amber-lt);border:0.5px solid rgba(184,114,0,0.2);border-radius:12px;padding:20px;">
+          <div style="font-family:var(--serif);font-size:28.0px;color:var(--amber);letter-spacing:-1px;margin-bottom:6px;">28–32°</div>
+          <div style="font-family:var(--sans);font-size:15.0px;font-weight:600;color:var(--amber);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.05em;">Caution</div>
+          <div style="font-family:var(--sans);font-size:16.0px;color:var(--ink2);line-height:1.55;">Avoid prolonged sun exposure. Drink frequently and rest during peak hours.</div>
+        </div>
+        <div style="background:var(--heat-lt);border:0.5px solid rgba(201,75,26,0.2);border-radius:12px;padding:20px;">
+          <div style="font-family:var(--serif);font-size:28.0px;color:var(--heat);letter-spacing:-1px;margin-bottom:6px;">32–38°</div>
+          <div style="font-family:var(--sans);font-size:15.0px;font-weight:600;color:var(--heat);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.05em;">Heat alert</div>
+          <div style="font-family:var(--sans);font-size:16.0px;color:var(--ink2);line-height:1.55;">Victoria's official threshold. Limit outdoor time. Check on neighbours.</div>
+        </div>
+        <div style="background:#fde8e8;border:0.5px solid rgba(139,0,0,0.15);border-radius:12px;padding:20px;">
+          <div style="font-family:var(--serif);font-size:28.0px;color:#8B0000;letter-spacing:-1px;margin-bottom:6px;">Above 38°</div>
+          <div style="font-family:var(--sans);font-size:15.0px;font-weight:600;color:#8B0000;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.05em;">Extreme</div>
+          <div style="font-family:var(--sans);font-size:16.0px;color:var(--ink2);line-height:1.55;">Stay indoors. Visit a cool space. Call 000 if someone shows heat stroke signs.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  </div>
+</div>
+
+<!-- med modal (Animal Profile Quiz) -->
+<div class="overlay" id="medOverlay" onclick="if(event.target===this)closeMed()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeMed()">✕</button>
+    <div class="modal-handle"></div>
+    
+    <!-- Step 1: The Quiz -->
+    <div id="medStep1">
+      <div class="modal-title">Find your heat profile</div>
+      <div class="modal-sub">Tell us about your medications to see which Australian animal matches your heat safety needs, and get a more accurate risk score.</div>
+      <div class="med-grid">
+        <div class="med-btn" data-med="Blood pressure" onclick="this.classList.toggle('on')"><div class="med-radio"></div>Blood pressure</div>
+        <div class="med-btn" data-med="Diuretics" onclick="this.classList.toggle('on')"><div class="med-radio"></div>Diuretics</div>
+        <div class="med-btn" data-med="Antidepressants" onclick="this.classList.toggle('on')"><div class="med-radio"></div>Antidepressants</div>
+        <div class="med-btn" data-med="Diabetes" onclick="this.classList.toggle('on')"><div class="med-radio"></div>Diabetes</div>
+        <div class="med-btn" data-med="Antihistamines" onclick="this.classList.toggle('on')"><div class="med-radio"></div>Antihistamines</div>
+        <div class="med-btn" data-med="Heart medication" onclick="this.classList.toggle('on')"><div class="med-radio"></div>Heart medication</div>
+        <div class="med-btn" data-med="Antipsychotics" onclick="this.classList.toggle('on')"><div class="med-radio"></div>Antipsychotics</div>
+        <div class="med-btn" data-med="Opioid pain medication" onclick="this.classList.toggle('on')"><div class="med-radio"></div>Opioid pain medication</div>
+
+      </div>
+      <div style="text-align:center;margin-top:10px;">
+        <button class="clear-all-btn" onclick="document.querySelectorAll('.med-btn').forEach(b=>b.classList.remove('on'))">Clear all choices</button>
+      </div>
+      <button class="modal-cta" onclick="generateProfile()">See my heat profile</button>
+    </div>
+
+    <!-- Step 2: The Result (Hidden by default) -->
+    <div id="medStep2" style="display:none;">
+      <div style="text-align:center; margin-bottom:16px; font-size:48px;" id="profileEmoji">🦡</div>
+      <div class="modal-title" style="text-align:center;" id="profileTitle">You are: The Wombat</div>
+      <div class="modal-sub" style="text-align:center; margin-bottom:24px;" id="profileDesc">Like the Wombat, your body's cooling mechanism is reduced...</div>
+      
+      <div style="background:var(--paper2); border-radius:8px; padding:16px; margin-bottom:20px;">
+        <div style="font-family:var(--sans); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink2); margin-bottom:8px;">Quick Tips for you:</div>
+        <ul id="profileTips" style="font-family:var(--sans); font-size:14px; color:var(--ink); line-height:1.6; padding-left:16px; margin:0;">
+        </ul>
+      </div>
+      
+      <div id="medAdviceSection" style="display:none;background:rgba(24,82,180,0.07);border:1px solid rgba(24,82,180,0.18);border-radius:10px;padding:14px 16px;margin-bottom:16px;">
+        <div style="font-family:var(--sans);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--blue);margin-bottom:10px;">Heat Safety Advice for Your Medications</div>
+        <div id="medAdviceList"></div>
+      </div>
+      <button class="modal-cta" onclick="closeMed()">Update my dashboard &amp; close</button>
+      <button onclick="document.getElementById('medStep1').style.display='block';document.getElementById('medStep2').style.display='none';" style="width:100%;margin-top:10px;padding:10px;background:none;border:none;font-family:var(--sans);font-size:14px;color:var(--ink3);cursor:pointer;text-decoration:underline;">Change medications</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ── LOCATION MODAL ── -->
+<div class="loc-modal-overlay" id="locModal" style="display: none;">
+  <div class="loc-modal">
+    <div class="loc-modal-icon">
+      <svg viewBox="0 0 22 22"><circle cx="11" cy="9" r="3.5"></circle><path d="M11 1a8 8 0 018 8c0 5.5-8 13-8 13S3 14.5 3 9a8 8 0 018-8z"></path></svg>
+    </div>
+    <div class="loc-modal-title">Where are you?</div>
+    <div class="loc-modal-sub">To show your heat risk and find cool spaces nearby, we need your location.</div>
+    <button class="loc-btn-gps" onclick="requestGPS()">Use my current location</button>
+    <div class="loc-divider"><span>or</span></div>
+    <div class="loc-postcode-row">
+      <input class="loc-postcode-input" id="postcodeInput" type="text" inputmode="numeric" maxlength="4" placeholder="Enter postcode">
+      <button class="loc-btn-post" onclick="submitPostcode()">Go</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── FONT SIZE TOGGLE ── -->
+<div class="font-toggle">
+  <button class="font-toggle-btn" onclick="setFontSize('sm',this)">A</button>
+  <button class="font-toggle-btn active" onclick="setFontSize('md',this)">A</button>
+  <button class="font-toggle-btn" onclick="setFontSize('lg',this)">A</button>
+</div>
+
+<!-- tour -->
+<div class="tour-layer" id="tourLayer">
+  <div class="hl-glow" id="hlGlow"></div>
+  <div class="hl-border" id="hlBorder"></div>
+  <div class="tip" id="tipBox">
+    <div class="tip-arrow up" id="tipArrow"></div>
+    <div class="tip-step" id="tipStep"></div>
+    <div class="tip-title" id="tipTitle"></div>
+    <div class="tip-body" id="tipBody"></div>
+    <div class="tip-footer">
+      <button class="tip-skip" onclick="endTour()">Skip</button>
+      <div class="tip-dots" id="tipDots"></div>
+      <button class="tip-next" onclick="nextStep()">Next</button>
+    </div>
+  </div>
+</div>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js">
+
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+// ══ VENUE DATA — must be declared before any function uses it ══
+var VENUE_DATA=[
+  {name:'Flagstaff Gardens',     type:'outdoor', cat:'Recreation',    lat:-37.809,lng:144.953},
+  {name:'State Library Victoria',type:'indoor',  cat:'Learning',      lat:-37.810,lng:144.964},
+  {name:'Melbourne Museum',      type:'indoor',  cat:'Arts & Culture',lat:-37.804,lng:144.972},
+  {name:'Queen Victoria Market', type:'indoor',  cat:'Community',     lat:-37.807,lng:144.957},
+  {name:'Melbourne Town Hall',   type:'indoor',  cat:'Visitor Info',  lat:-37.814,lng:144.966},
+  {name:'Carlton Gardens',       type:'outdoor', cat:'Recreation',    lat:-37.804,lng:144.974},
+];
+var VENUE_HOURS={
+  'Flagstaff Gardens':      [0,  24],
+  'State Library Victoria': [9,  21],
+  'Melbourne Museum':       [10, 17],
+  'Queen Victoria Market':  [6,  15],
+  'Melbourne Town Hall':    [8,  17],
+  'Carlton Gardens':        [0,  24],
+};
+// ── deep-link from Section 2 "Go here" to a specific venue
+function goToVenue(name, cat, addr){
+  const spacesTab = document.querySelectorAll('.nav-tab')[1];
+  showPage('spaces', spacesTab);
+  // wait for map to init then open venue detail
+  setTimeout(()=>{ openVenue(name, cat, addr); }, 350);
+}
+
+// ── page nav
+function showPage(id,tab){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  if(tab) tab.classList.add('active');
+  const dots=document.getElementById('sectionDots');
+  dots.style.display=id==='home'?'flex':'none';
+  if(id==='home') setTimeout(()=>{},0);
+  if(id==='spaces'){
+    if(leafletMap){ leafletMap.remove(); leafletMap=null; }
+    mapInitialized=false;
+    setTimeout(initMap, 50);
+  }
+}
+
+// ── scroll snap sections
+const sectionIds=['sec0','sec1','sec2','sec3'];
+function scrollToSection(i){
+  document.getElementById(sectionIds[i]).scrollIntoView({behavior:'smooth'});
+}
+// update dots on scroll
+const scroll=document.getElementById('homeScroll');
+if(scroll){
+  scroll.addEventListener('scroll',()=>{
+    const dots=document.querySelectorAll('.section-dot');
+    sectionIds.forEach((id,i)=>{
+      const el=document.getElementById(id);
+      if(!el) return;
+      const r=el.getBoundingClientRect();
+      dots[i].classList.toggle('active',r.top>-50&&r.top<200);
+    });
+  },{passive:true});
+}
+
+// ── 24h mock temperature data (replace with real API) ──
+// generateMockTemps(startHour) returns 24 hourly temps from startHour
+function generateMockTemps(startHour){
+  // Full-day base curve: hour 0-23 (midnight-based)
+  const fullDay=[16,15,15,14,14,14,15,16,18,20,22,24,26,28,33,35,32,30,29,25,21,20,19,17];
+  var result=[];
+  for(var i=0;i<24;i++){
+    result.push(fullDay[(startHour+i)%24]);
+  }
+  return result;
+}
+
+function fmtHour(h){
+  var h24=h%24;
+  if(h24===0) return '12 AM';
+  if(h24===12) return '12 PM';
+  return h24<12 ? h24+' AM' : (h24-12)+' PM';
+}
+
+// ── chart with font-size awareness
+var chartInstance=null;
+var CHART_START_HOUR=new Date().getHours();
+var CHART_TEMPS=generateMockTemps(CHART_START_HOUR);
+var THRESH=32;
+
+function buildChart(tickSize){
+  var ctxEl=document.getElementById('tc');
+  if(!ctxEl) return;
+  if(chartInstance){chartInstance.destroy();chartInstance=null;}
+  var labels=[];
+  for(var i=0;i<24;i++) labels.push(fmtHour(CHART_START_HOUR+i));
+  var peakIdx=CHART_TEMPS.indexOf(Math.max.apply(null,CHART_TEMPS));
+  var pointRadii=CHART_TEMPS.map(function(_,i){return i===peakIdx?5:0;});
+  chartInstance=new Chart(ctxEl.getContext('2d'),{
+    type:'line',
+    data:{labels:labels,datasets:[
+      {label:'Temperature',data:CHART_TEMPS,borderColor:'#1852B4',borderWidth:2,
+       pointRadius:3,pointBackgroundColor:'#1852B4',pointHoverRadius:6,
+       tension:0.4,fill:false},
+      {label:'Threshold',data:new Array(24).fill(THRESH),
+       borderColor:'#E85D1A',borderWidth:1.5,borderDash:[6,4],
+       pointRadius:0,fill:false,tension:0}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},
+        tooltip:{callbacks:{label:function(c){return c.datasetIndex===0?c.parsed.y+'°C':'Threshold: 32°C';}},
+          backgroundColor:'#0F0F0F',titleColor:'#fff',bodyColor:'rgba(255,255,255,0.65)',
+          borderColor:'rgba(255,255,255,0.08)',borderWidth:1,
+          titleFont:{family:"'DM Sans',sans-serif",size:11},
+          bodyFont:{family:"'DM Sans',sans-serif",size:tickSize}}},
+      scales:{
+        x:{grid:{display:false},ticks:{font:{family:"'DM Mono',monospace",size:tickSize},
+           color:'#888',maxRotation:0,
+           callback:function(val,i){return i%3===0?this.getLabelForValue(val):''}},
+           border:{display:false}},
+        y:{grid:{color:'rgba(0,0,0,0.08)'},
+           ticks:{font:{family:"'DM Mono',monospace",size:tickSize},
+           color:'#888',callback:function(v){return v+'°';},stepSize:4},
+           border:{display:false},min:10,max:36}
+      }
+    }
+  });
+}
+buildChart(10);
+
+// ── Leaflet map
+let mapInitialized=false;
+let leafletMap=null;
+
+function centerOnMyLocation(){
+  // Use cached coords from initial auth — no need to re-request permission
+  if(window._uLat && window._uLng){
+    if(leafletMap) leafletMap.setView([window._uLat, window._uLng], 15);
+    if(window._userMarker) window._userMarker.remove();
+    const userIcon=L.divIcon({
+      className:'',
+      html:`<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="12" cy="12" r="5" fill="#1852B4" stroke="#fff" stroke-width="2"/>
+        <circle cx="12" cy="12" r="10" stroke="#1852B4" stroke-width="1.5" stroke-dasharray="3 3" fill="none" opacity="0.6"/>
+      </svg>`,
+      iconSize:[24,24],
+      iconAnchor:[12,12],
+    });
+    window._userMarker=L.marker([window._uLat,window._uLng],{icon:userIcon})
+      .addTo(leafletMap).bindPopup('<b>You are here</b>').openPopup();
+    return;
+  }
+  // No cache yet — request fresh
+  if(!navigator.geolocation){ alert('Geolocation is not supported by your browser.'); return; }
+  const btn=document.querySelector('.my-loc-btn');
+  if(btn) btn.textContent='Locating…';
+  navigator.geolocation.getCurrentPosition(pos=>{
+    if(btn) btn.innerHTML='<svg width="13" height="13" viewBox="0 0 13 13" fill="none"><circle cx="6.5" cy="6.5" r="2.5" stroke="currentColor" stroke-width="1.5"/><circle cx="6.5" cy="6.5" r="5.5" stroke="currentColor" stroke-width="1" stroke-dasharray="2 2"/></svg> My location';
+    updateDistances(pos.coords.latitude,pos.coords.longitude);
+    if(leafletMap) leafletMap.setView([pos.coords.latitude,pos.coords.longitude],15);
+  }, ()=>{
+    if(btn) btn.innerHTML='<svg width="13" height="13" viewBox="0 0 13 13" fill="none"><circle cx="6.5" cy="6.5" r="2.5" stroke="currentColor" stroke-width="1.5"/><circle cx="6.5" cy="6.5" r="5.5" stroke="currentColor" stroke-width="1" stroke-dasharray="2 2"/></svg> My location';
+    alert('Location access denied. Please allow location in browser settings.');
+  });
+}
+
+function initMap(){
+  if(mapInitialized) return;
+  mapInitialized=true;
+  const m=L.map('leafletMap',{preferCanvas:false}).setView([-37.812,144.963],14);
+  leafletMap=m;
+  setTimeout(()=>m.invalidateSize(),100);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{attribution:'© OpenStreetMap © CARTO',maxZoom:19}).addTo(m);
+  const venues=[
+    {name:'Flagstaff Gardens',cat:'Recreation',addr:'William St & La Trobe St',lat:-37.809,lng:144.953,color:'#2A7D4F'},
+    {name:'State Library Victoria',cat:'Learning',addr:'328 Swanston St',lat:-37.810,lng:144.964,color:'#1852B4'},
+    {name:'Melbourne Museum',cat:'Arts & Culture',addr:'11 Nicholson St, Carlton',lat:-37.804,lng:144.972,color:'#7B4FA6'},
+    {name:'Queen Victoria Market',cat:'Community',addr:'Elizabeth & Victoria St',lat:-37.807,lng:144.957,color:'#B87200'},
+    {name:'Birrarung Marr',cat:'Fountain',addr:'Batman Ave',lat:-37.818,lng:144.970,color:'#0E8FA4'},
+    {name:'NGV International',cat:'Arts & Culture',addr:'180 St Kilda Rd',lat:-37.821,lng:144.969,color:'#7B4FA6'},
+    {name:'Carlton Gardens',cat:'Recreation',addr:'Nicholson St, Carlton',lat:-37.804,lng:144.974,color:'#2A7D4F'},
+    {name:'RMIT Library',cat:'Learning',addr:'RMIT University',lat:-37.809,lng:144.962,color:'#1852B4'},
+  ];
+  venues.forEach(v=>{
+    const icon=L.divIcon({className:'',html:`<div style="width:14px;height:14px;border-radius:50%;background:${v.color};border:2.5px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.25);cursor:pointer;"></div>`,iconSize:[14,14],iconAnchor:[7,7]});
+    const marker=L.marker([v.lat,v.lng],{icon,interactive:true}).addTo(m);
+
+    // Build popup content at click time so distance is current
+    marker.bindPopup(function(){
+      const hrs=(typeof VENUE_HOURS!=="undefined")&&VENUE_HOURS[v.name];
+      const h24=new Date().getHours();
+      const isOpen=!hrs||(h24>=hrs[0]&&h24<hrs[1]);
+      // Close time label
+      const closeH=hrs?hrs[1]:24;
+      const closeLabel=closeH===24?'23:59':(closeH<10?'0'+closeH+':00':closeH+':00');
+      // Distance
+      const dist=window._uLat?haversine(window._uLat,window._uLng,v.lat,v.lng):null;
+      const distStr=dist?(dist<1?Math.round(dist*1000)+'m away':dist.toFixed(1)+' km away'):'';
+      // Category pill colour
+      const catColors={
+        'Recreation':   {bg:'#EAF5EE',color:'#2A7D4F'},
+        'Learning':     {bg:'#EAF0FB',color:'#1852B4'},
+        'Arts & Culture':{bg:'#F3EEF9',color:'#7B4FA6'},
+        'Community':    {bg:'#FDF5E6',color:'#B87200'},
+        'Fountain':     {bg:'#E6F7FA',color:'#0E8FA4'},
+        'Visitor Info': {bg:'#FFF0F0',color:'#C94B1A'},
+      };
+      const cc=catColors[v.cat]||{bg:'#F0EDE8',color:'#5C5C5C'};
+
+      const el=document.createElement('div');
+      el.className='vpp-inner';
+      el.innerHTML=
+        '<div class="vpp-cat-pill" style="background:'+cc.bg+';color:'+cc.color+'">'+v.cat+'</div>'
+        +'<div class="vpp-name">'+v.name+'</div>'
+        +'<div class="vpp-addr">'+v.addr+'</div>'
+        +'<div class="vpp-open-row">'
+          +'<div class="vpp-open-dot '+(isOpen?'open':'closed')+'"></div>'
+          +'<span class="vpp-open-label '+(isOpen?'open':'closed')+'">'+(isOpen?'Open Now':'Closed')+'</span>'
+          +(isOpen?'<span class="vpp-open-time"> · Closes '+closeLabel+'</span>':(distStr?'<span class="vpp-open-time"> · '+distStr+'</span>':''))
+        +'</div>'
+        +'<div class="vpp-route-btns">'
+          +'<button class="vpp-route-btn" id="vpp-fastest-'+v.name.replace(/\s/g,'_')+'">⚡ Fastest</button>'
+          +'<button class="vpp-route-btn" id="vpp-coolest-'+v.name.replace(/\s/g,'_')+'">🌲 Coolest</button>'
+        +'</div>'
+        +'<button class="vpp-view-btn">View Full Details &nbsp;→</button>';
+
+      // Route buttons toggle active state
+      const fBtn=el.querySelector('#vpp-fastest-'+v.name.replace(/\s/g,'_'));
+      const cBtn=el.querySelector('#vpp-coolest-'+v.name.replace(/\s/g,'_'));
+      fBtn.addEventListener('click',function(e){
+        e.stopPropagation();
+        fBtn.classList.toggle('active-fastest');
+        cBtn.classList.remove('active-coolest');
+      });
+      cBtn.addEventListener('click',function(e){
+        e.stopPropagation();
+        cBtn.classList.toggle('active-coolest');
+        fBtn.classList.remove('active-fastest');
+      });
+
+      el.querySelector('.vpp-view-btn').addEventListener('click',function(){
+        marker.closePopup();
+        openVenue(v.name,v.cat,v.addr);
+      });
+      return el;
+    },{maxWidth:300,className:'venue-preview-popup',closeButton:true});
+  });
+}
+
+// ── venue detail + AI
+let currentVenueName='';
+function openVenue(name,cat,addr){
+  currentVenueName=name;
+  document.getElementById('vdCat').textContent=cat.toUpperCase();
+  document.getElementById('vdName').textContent=name;
+  document.getElementById('vdAddr').textContent=addr;
+  document.getElementById('venueDetail').classList.add('show');
+  loadAIActivities(name);
+  document.querySelectorAll('.loc-item').forEach(l=>{
+    const nm=l.querySelector('.loc-name');
+    l.classList.toggle('active',nm&&nm.textContent===name);
+  });
+}
+function closeVenueDetail(){
+  document.getElementById('venueDetail').classList.remove('show');
+  document.querySelectorAll('.loc-item').forEach(l=>l.classList.remove('active'));
+}
+
+async function loadAIActivities(venueName){
+  const cont=document.getElementById('aiContent');
+  cont.innerHTML='<div class="ai-loading"><div class="ai-loading-text">Searching for today\'s activities...</div></div>';
+  const today=new Date().toLocaleDateString('en-AU',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  const prompt=`You are a helpful assistant for CoolSafer Melbourne, a heat safety app for older adults. Today is ${today}. The venue is: ${venueName}, Melbourne. Return ONLY valid JSON, no markdown, no backticks. Format: {"best_outside_time":"one sentence about best visiting time given 25°C today peaking at 3 PM","events":[{"venue":"${venueName}","activity":"activity name","date_time":"specific day and time","is_free":true,"cost":"Free or $X","seniors_discount":false,"why_suitable":"one sentence max 15 words","source_url":null}],"seasonal_tip":{"description":"one sentence about what is worth seeing right now in autumn Melbourne","source_url":null},"health_reminder":"one sentence heat safety reminder max 15 words"}. Generate 2 plausible senior-friendly activities if no specific events found.`;
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})});
+    const data=await res.json();
+    const raw=data.content.filter(b=>b.type==='text').map(b=>b.text).join('');
+    const info=JSON.parse(raw.replace(/```json|```/g,'').trim());
+    let html='';
+    if(info.best_outside_time) html+=`<div class="ai-best-time"><div class="ai-best-time-label">Best time to visit today</div><div class="ai-best-time-text">${info.best_outside_time}</div></div>`;
+    if(info.events) info.events.forEach(ev=>{html+=`<div class="activity-card"><div class="activity-name">${ev.activity}</div><div class="activity-meta">${ev.date_time}</div><div class="activity-why">${ev.why_suitable}</div><span class="activity-cost">${ev.cost}${ev.seniors_discount?' · Seniors discount':''}</span></div>`;});
+    if(info.seasonal_tip) html+=`<div class="ai-tip"><div class="ai-tip-label">Right now</div><div class="ai-tip-text">${info.seasonal_tip.description}</div></div>`;
+    if(info.health_reminder) html+=`<div class="ai-reminder">${info.health_reminder}</div>`;
+    cont.innerHTML=html;
+  }catch(e){cont.innerHTML='<div style="font-size:16px;color:#C94B1A;padding:10px 0;">Unable to load activities right now.</div>';}
+}
+
+// ── route nav
+const ROUTE_DATA={
+  fastest:{time:'12',dist:'900m',extra:'25°C',extraLabel:'feels like',shade:false,steps:[
+    {dir:'start',instruction:'Start at your current location',detail:'Docklands',dist:''},
+    {dir:'right',instruction:'Turn right onto Bourke Street',detail:'Continue for 350 m',dist:'350m'},
+    {dir:'straight',instruction:'Continue along Bourke Street',detail:'Past Elizabeth St',dist:'200m'},
+    {dir:'left',instruction:'Turn left onto William Street',detail:'Continue north for 300 m',dist:'300m'},
+    {dir:'arrive',instruction:'Arrive at Flagstaff Gardens',detail:'Entrance on William St',dist:''},
+  ]},
+  coolest:{time:'17',dist:'1.1km',extra:'72%',extraLabel:'shade cover',shade:true,steps:[
+    {dir:'start',instruction:'Start at your current location',detail:'Docklands',dist:''},
+    {dir:'right',instruction:'Turn right onto Harbour Esplanade',detail:'Tree-lined waterfront path',dist:'280m'},
+    {dir:'straight',instruction:'Continue through Docklands Park',detail:'Shaded park path — cooler conditions',dist:'200m'},
+    {dir:'left',instruction:'Turn left onto Dudley Street',detail:'Residential street with canopy',dist:'220m'},
+    {dir:'right',instruction:'Turn right onto King Street',detail:'Stay on footpath',dist:'180m'},
+    {dir:'arrive',instruction:'Arrive at Flagstaff Gardens',detail:'South entrance via King St',dist:''},
+  ]}
+};
+const DIR_ICONS={start:'<path d="M7 11V3M7 3L4 6M7 3l3 3"/>',right:'<path d="M3 7h8M8 4l3 3-3 3"/>',left:'<path d="M11 7H3M6 4L3 7l3 3"/>',straight:'<path d="M7 11V3M4 6l3-3 3 3"/>',arrive:'<circle cx="7" cy="7" r="3"/><circle cx="7" cy="7" r="5.5" stroke-dasharray="2 2"/>'};
+let activeRouteType='fastest';
+
+// map picker
+
+
+
+// ── cat filter
+function setCat(el){document.querySelectorAll('.cat-btn').forEach(c=>c.classList.remove('on'));el.classList.add('on');}
+
+// ── med modal + medication tips
+const MED_TIPS={
+  'Blood pressure':'Blood pressure medication can lower your blood pressure further in heat. Stay cool, sit down if dizzy, and drink water regularly.',
+  'Diuretics':'Diuretics increase fluid loss. In heat, dehydration risk is higher — drink an extra glass of water every hour.',
+  'Antidepressants':'Some antidepressants reduce your ability to sweat. Stay in cool environments and watch for signs of overheating.',
+  'Diabetes':'Heat can affect blood sugar levels. Check your levels more frequently and keep medication stored below 25°C.',
+  'Antihistamines':'Antihistamines can reduce sweating, making it harder to cool down. Limit sun exposure during peak hours.',
+  'Heart medication':'Heart medication can affect your circulation in heat. Avoid sudden exertion and stay in cool, shaded areas.',
+  'Antipsychotics':'Antipsychotic medication can impair your body\'s heat regulation. Avoid outdoor activity during peak heat hours.',
+  'Opioid pain medication':'Opioids can impair your body\'s ability to regulate temperature. Stay indoors during peak heat and ask your doctor if your dose needs adjusting in hot weather.',
+};
+
+// ── Animal Profile Quiz Logic ──
+function openMed(){
+  const selected = [...document.querySelectorAll('.med-btn.on')].map(b => b.dataset.med);
+  if (selected.length > 0) {
+    // Already has a profile — show it directly
+    document.getElementById('medStep1').style.display = 'none';
+    document.getElementById('medStep2').style.display = 'block';
+  } else {
+    // First time — show the selection step
+    document.getElementById('medStep1').style.display = 'block';
+    document.getElementById('medStep2').style.display = 'none';
+  }
+  document.getElementById('medOverlay').classList.add('show');
+}
+
+function generateProfile() {
+  const selected = [...document.querySelectorAll('.med-btn.on')].map(b => b.dataset.med);
+
+  // Per-medication extra tips (appended after profile tips)
+  const MED_EXTRA = {
+    'Blood pressure':       'Your blood pressure medication may lower BP further in heat — sit down if you feel dizzy.',
+    'Diuretics':            'Diuretics increase fluid loss in heat — drink an extra glass of water every hour.',
+    'Antidepressants':      'Some antidepressants reduce sweating — watch for overheating even if you feel fine.',
+    'Diabetes':             'Heat affects blood sugar — check your levels more often and keep medication below 25\u00b0C.',
+    'Antihistamines':       'Antihistamines reduce sweating — limit sun exposure during peak hours.',
+    'Heart medication':     'Your heart medication affects circulation in heat — avoid sudden exertion.',
+    'Antipsychotics':       'Antipsychotics impair heat regulation — avoid outdoor activity during peak heat hours.',
+    'Opioid pain medication':'Opioids impair temperature regulation — stay indoors during peak heat.',
+  };
+
+  let emoji = "🐦";
+  let title = "You are: The Emu";
+  let desc = "Like the emu, your baseline cooling is strong. Since you haven't added any heat-sensitive medications, your body's natural heat regulation works well. However, standard heat rules still apply in extreme Australian summers.";
+  let tips = [
+    "Drink water regularly, even if you don't feel thirsty.",
+    "Avoid strenuous activities during peak afternoon heat."
+  ];
+
+  if (selected.includes('Diuretics') || selected.includes('Diabetes')) {
+    emoji = "🐸";
+    title = "You are: The Desert Frog";
+    desc = "Like the desert frog, maintaining hydration is your top priority. Your medications mean your body loses fluid faster or struggles with blood sugar in the heat.";
+    tips = ["Drink an extra glass of water every hour.","Check your blood sugar levels more frequently.","Never wait until you feel thirsty to drink."];
+  } else if (selected.includes('Antidepressants') || selected.includes('Antihistamines') || selected.includes('Antipsychotics') || selected.includes('Opioid pain medication')) {
+    emoji = "🦡";
+    title = "You are: The Wombat";
+    desc = "Like the clever wombat, you need to seek cool shelters. Your medications can suppress your sweat reflex or impair temperature regulation, meaning your body struggles to cool itself naturally.";
+    tips = ["Stay in air-conditioned or shaded environments during peak hours.","Use wet towels on your neck and wrists to cool your blood directly.","Watch closely for dizziness or confusion."];
+  } else if (selected.includes('Blood pressure') || selected.includes('Heart medication')) {
+    emoji = "🐨";
+    title = "You are: The Koala";
+    desc = "Like the koala hugging a cool tree, you need to avoid exertion to keep your heart rate steady. Your cardiovascular system works much harder in the heat to pump blood to your skin.";
+    tips = ["Avoid all sudden or strenuous physical exertion.","Rest frequently if you must be outdoors.","Stand up slowly to avoid dizzy spells (blood pressure drops)."];
+  }
+
+  // Append med-specific tips for every selected medication
+  selected.filter(m => MED_EXTRA[m]).forEach(m => tips.push(MED_EXTRA[m]));
+
+  document.getElementById('profileEmoji').textContent = emoji;
+  document.getElementById('profileTitle').textContent = title;
+  document.getElementById('profileDesc').textContent = desc;
+  document.getElementById('profileTips').innerHTML = tips.map(t => `<li style="margin-bottom:5px;">${t}</li>`).join('');
+
+  document.getElementById('medStep1').style.display = 'none';
+  document.getElementById('medStep2').style.display = 'block';
+}
+
+function closeMed() {
+  document.getElementById('medOverlay').classList.remove('show');
+
+  const selected = [...document.querySelectorAll('.med-btn.on')].map(b => b.dataset.med);
+
+  // Score weights per medication
+  const MED_SCORE = {'Blood pressure':10,'Diuretics':12,'Antidepressants':15,'Diabetes':12,'Antihistamines':8,'Heart medication':14,'Antipsychotics':18,'Opioid pain medication':16};
+  const baseWeather = 40, baseTime = 10;
+  const medContrib = Math.min(selected.reduce((s,m) => s + (MED_SCORE[m]||0), 0), 30);
+  const total = Math.min(baseWeather + baseTime + medContrib, 100);
+  const scoreColor = total >= 75 ? '#f2994a' : total >= 50 ? '#f2c94c' : '#6fcf97';
+  const scoreLabel = total >= 75 ? 'High Risk' : total >= 50 ? 'Moderate Risk' : 'Low Risk';
+
+  // Update ribbon score label + bar
+  const lbl = document.getElementById('ribbonScoreLabel');
+  const bar = document.getElementById('ribbonScoreBar');
+  if (lbl) { lbl.textContent = `${scoreLabel} (${total}/100)`; lbl.style.color = scoreColor; }
+  if (bar) { bar.style.width = total + '%'; bar.style.background = scoreColor; }
+
+  // Update tooltip breakdown
+  const ttMed = document.getElementById('tt-med');
+  const ttTotal = document.getElementById('tt-total');
+  if (ttMed) ttMed.textContent = medContrib > 0 ? '+' + medContrib : '+0';
+  if (ttTotal) { ttTotal.textContent = total; ttTotal.style.color = scoreColor; }
+
+  // Update insight text
+  const msg = total >= 75
+    ? "Your medications significantly increase your heat sensitivity today — stay indoors during peak hours and monitor how you feel closely."
+    : total >= 50
+    ? "Your medications add to your heat risk today — take extra precautions and drink water regularly."
+    : "Conditions are comfortable. Keep water with you and enjoy your day.";
+  document.getElementById('insightText').textContent = msg;
+
+  // Show/update med pill
+  const pill = document.getElementById('medPill');
+  const pillCount = document.getElementById('medPillCount');
+  if (pill && pillCount) {
+    if (selected.length > 0) {
+      pill.style.display = 'inline-flex';
+      pillCount.textContent = selected.length;
+    } else {
+      pill.style.display = 'none';
+    }
+  }
+
+  // ── Inline Quick Tips (appears inside the risk card) ──
+  const tipsBox = document.getElementById('medQuickTips');
+  const tipsList = document.getElementById('medQuickTipsList');
+  if (tipsBox && tipsList) {
+    if (selected.length > 0) {
+      const tipItems = selected
+        .filter(m => MED_TIPS[m])
+        .map(m => `<li style="margin-bottom:5px;"><strong style="color:rgba(255,220,100,0.9);">${m}:</strong> ${MED_TIPS[m]}</li>`);
+      tipsList.innerHTML = tipItems.join('');
+      tipsBox.style.display = 'block';
+    } else {
+      tipsBox.style.display = 'none';
+    }
+  }
+}
+
+// ── tour — focused on user journey, not layout
+const STEPS=[
+  {
+    id:'ribbonScoreLabel',
+    title:'Your heat safety score',
+    body:'A 0–100 score based on today\'s temperature, heat level, and time of day. Hover the ? to see exactly how it\'s calculated.',
+    arrow:'up'
+  },
+  {
+    id:'profileBtn',
+    title:'Personalise your score',
+    body:'Tell us which medications you take — some reduce your body\'s ability to handle heat. Your score and advice will update to reflect your profile.',
+    arrow:'up'
+  },
+  {
+    id:'safeCard',
+    title:'Plan your day',
+    body:'See the safest times to go out and when to stay cool indoors. The forecast updates these windows automatically.',
+    arrow:'left'
+  },
+  {
+    id:'spacesNavTab',
+    title:'Find a cool space',
+    body:'When you need somewhere to cool down, tap here to open the map — libraries, gardens, and community centres near you.',
+    arrow:'down'
+  },
+];
+let tourStep=0;
+const layer=document.getElementById('tourLayer');
+const glow=document.getElementById('hlGlow');
+const bord=document.getElementById('hlBorder');
+const tip=document.getElementById('tipBox');
+const tipArr=document.getElementById('tipArrow');
+
+function positionTour(){
+  const s=STEPS[tourStep];
+  const el=document.getElementById(s.id);
+  if(!el){endTour();return;}
+
+  if(s.id==='safeCard'){
+    document.getElementById('sec1').scrollIntoView({behavior:'smooth'});
+    setTimeout(positionTourNow,700);
+    return;
+  }
+  if(s.id==='spacesNavTab'){
+    document.getElementById('sec0').scrollIntoView({behavior:'smooth'});
+    setTimeout(positionTourNow,700);
+    return;
+  }
+  if(s.id==='ribbonScoreLabel'||s.id==='profileBtn'){
+    document.getElementById('sec0').scrollIntoView({behavior:'smooth'});
+    setTimeout(positionTourNow,700);
+    return;
+  }
+  positionTourNow();
+}
+
+function positionTourNow(){
+  const s=STEPS[tourStep];
+  const el=document.getElementById(s.id);
+  if(!el){endTour();return;}
+
+  const r=el.getBoundingClientRect();
+  const pad=6;
+  [glow,bord].forEach(e=>{
+    e.style.top=(r.top-pad)+'px';
+    e.style.left=(r.left-pad)+'px';
+    e.style.width=(r.width+pad*2)+'px';
+    e.style.height=(r.height+pad*2)+'px';
+  });
+
+  const tW=260;
+  const tipH=220;
+  const margin=16;
+  const vW=window.innerWidth;
+  const vH=window.innerHeight;
+
+  // Decide placement: prefer below element if space, else above
+  // Never overlap the highlighted element
+  let tL, tT, arrowPos;
+
+  const spaceBelow = vH - r.bottom - margin;
+  const spaceAbove = r.top - margin - 70;
+  const spaceRight = vW - r.right - margin;
+  const spaceLeft  = r.left - margin;
+
+  if(s.id==='spacesNavTab'){
+    // nav tab at top — place below
+    tT = r.bottom + margin;
+    tL = r.left + r.width/2 - tW/2;
+    arrowPos = 'up';
+  } else if(s.id==='ribbonScoreLabel'){
+    // ribbon is at bottom of section 1 — place above it
+    tT = r.top - tipH - margin;
+    tL = r.left + r.width/2 - tW/2;
+    arrowPos = 'down';
+  } else if(s.id==='profileBtn'){
+    // button on the right — place to the left
+    tL = r.left - tW - margin;
+    if(tL < 12) tL = r.right + margin;
+    tT = r.top + r.height/2 - tipH/2;
+    arrowPos = 'right';
+  } else if(s.id==='safeCard'){
+    tL = r.left - tW - margin;
+    tT = r.top;
+    arrowPos = 'right';
+  } else if(spaceAbove >= tipH){
+    // above
+    tT = r.top - tipH - margin;
+    tL = r.left + r.width/2 - tW/2;
+    arrowPos = 'down';
+  } else if(spaceRight >= tW){
+    // right
+    tL = r.right + margin;
+    tT = r.top + r.height/2 - tipH/2;
+    arrowPos = 'left';
+  } else {
+    // left
+    tL = r.left - tW - margin;
+    tT = r.top + r.height/2 - tipH/2;
+    arrowPos = 'right';
+  }
+
+  // clamp within viewport
+  tL = Math.max(12, Math.min(tL, vW-tW-12));
+  tT = Math.max(70, Math.min(tT, vH-tipH-12));
+
+  tip.style.top  = tT+'px';
+  tip.style.left = tL+'px';
+  tip.style.width= tW+'px';
+
+  // arrow direction
+  tipArr.className='tip-arrow '+(arrowPos==='down'?'down':arrowPos==='right'?'right-side':arrowPos==='left'?'left-side':'up');
+  tipArr.style.top='';tipArr.style.left='';tipArr.style.right='';tipArr.style.bottom='';
+  if(arrowPos==='down'){
+    tipArr.style.bottom='-5px';
+    tipArr.style.left=Math.max(14,Math.min(r.left+r.width/2-tL-6,tW-30))+'px';
+  } else if(arrowPos==='right'){
+    tipArr.style.right='-5px';
+    const arrowTop = s.id==='safeCard'
+      ? 18
+      : Math.max(14, Math.min(r.top - tT + r.height/2 - 6, tipH-20));
+    tipArr.style.top = arrowTop + 'px';
+  } else if(arrowPos==='left'){
+    tipArr.style.left='-5px';
+    tipArr.style.top='18px';
+  } else {
+    // up
+    tipArr.style.top='-5px';
+    tipArr.style.left=Math.max(14,Math.min(r.left+r.width/2-tL-6,tW-30))+'px';
+  }
+
+  document.getElementById('tipStep').textContent=(tourStep+1)+' of '+STEPS.length;
+  document.getElementById('tipTitle').textContent=s.title;
+  document.getElementById('tipBody').textContent=s.body;
+  const dots=document.getElementById('tipDots');
+  dots.innerHTML='';
+  STEPS.forEach((_,i)=>{
+    const d=document.createElement('div');
+    d.className='tip-dot'+(i===tourStep?' on':'');
+    dots.appendChild(d);
+  });
+  document.querySelector('.tip-next').textContent=tourStep===STEPS.length-1?'Done':'Next';
+}
+
+function startTour(){
+  if(sessionStorage.getItem('coolsafer_tour_seen')) return;
+  layer.classList.add('active');tourStep=0;positionTour();
+}
+function nextStep(){tourStep>=STEPS.length-1?endTour():(tourStep++,positionTour());}
+function endTour(){layer.classList.remove('active');sessionStorage.setItem('coolsafer_tour_seen','1');}
+
+// ── LOCATION display
+let _suburb = 'Melbourne';
+function setSuburb(name){
+  _suburb = name;
+  const el = document.getElementById('navLocation');
+  if(el) el.textContent = name.toUpperCase() + ' · ' + new Date().toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'}).toUpperCase();
+}
+function requestGPS(){
+  if(navigator.geolocation){
+    navigator.geolocation.getCurrentPosition(async pos=>{
+      // Store in both variable names for compatibility
+      window._userLat=pos.coords.latitude;
+      window._userLng=pos.coords.longitude;
+      // updateDistances caches into _uLat/_uLng used by centerOnMyLocation
+      updateDistances(pos.coords.latitude, pos.coords.longitude);
+      closeLocModal();
+    }, ()=>{ closeLocModal(); });
+  } else { closeLocModal(); }
+}
+function submitPostcode(){
+  const pc=document.getElementById('postcodeInput').value.trim();
+  if(pc.length>=4){
+    window._userPostcode=pc;
+    fetch(`https://nominatim.openstreetmap.org/search?postalcode=${pc}&country=Australia&format=json&accept-language=en&addressdetails=1`)
+      .then(r=>r.json())
+      .then(d=>{
+        if(d&&d[0]){
+          const addr=d[0].address||{};
+          const name=addr.suburb||addr.neighbourhood||addr.town||addr.city_district||addr.city||addr.county||d[0].display_name.split(',')[0].trim();
+          setSuburb(name);
+        }
+      }).catch(()=>{});
+    closeLocModal();
+  }
+}
+function closeLocModal(){
+  document.getElementById('locModal').style.display='none';
+  // initMap is triggered by showPage('spaces') when user navigates there
+}
+var _pci=document.getElementById('postcodeInput'); if(_pci) _pci.addEventListener('keydown',e=>{if(e.key==='Enter')submitPostcode();});
+
+// ── GREETING
+function updateGreeting(){
+  const h=new Date().getHours();
+  const g=h<12?'Good morning':h<17?'Good afternoon':'Good evening';
+  const el=document.getElementById('greeting');
+  if(el) el.textContent=g;
+}
+updateGreeting();
+
+// ── FONT SIZE
+// Uses a <style> block to override key font sizes at each level.
+// sm = ~90%, md = 100% (default), lg = ~118%
+const CHART_TICK = {sm:9, md:10, lg:13};
+const FONT_RULES = {
+  sm: `
+    .s1-slogan{font-size:38px!important}
+    .s1-temp{font-size:88px!important}
+    .s1-desc,.s1-insight-text,.med-tip-item,.s1-stat-val.md{font-size:14px!important}
+    .s1-stat-val.lg{font-size:38px!important}
+    .nav-tab,.nav-right{font-size:13px!important}
+    .chart-legend-item{font-size:12px!important}
+    .heat-toggle-title,.heat-toggle-sub{font-size:12px!important}
+    .tw-desc,.tw-place-name,.tw-place-sub,.g-card-body{font-size:13px!important}
+    .tw-hours{font-size:17px!important}
+    .s4-nurse-title,.s4-warn-title,.noc-title{font-size:16px!important}
+    .s4-nurse-desc,.s4-check-text,.s4-symptom-desc,.s4-symptom-name{font-size:12px!important}
+    .s4-cta-num{font-size:18px!important}
+    .s3-title,.s4-title,.s2-title{font-size:30px!important}
+    .s1-greeting{font-size:22px!important}
+    /* Find Cool Spaces */
+    .sidebar-title,.vd-name,.ai-section-title{font-size:16px!important}
+    .loc-name,.popup-name{font-size:14px!important}
+    .loc-addr,.loc-cat,.loc-open,.vd-addr,.vd-cat{font-size:12px!important}
+    .cat-btn{font-size:13px!important}
+    .activity-name,.activity-why,.ai-best-time-text,.ai-tip-text{font-size:14px!important}
+    /* Why It Matters */
+    .why-heading{font-size:32px!important}
+    .s4-nurse-eye,.s4-warn-eye{font-size:10px!important}
+    .s4-sub{font-size:14px!important}
+    .heat-toggle-label{font-size:11px!important}
+    .my-loc-btn{font-size:13px!important}
+    .legend-item{font-size:11px!important}
+    .loc-open{font-size:11px!important}
+    .tw-badge{font-size:10px!important}
+    .tw-place-label{font-size:10px!important}
+    .s2-meta{font-size:11px!important}
+    .s1-stat-label{font-size:13px!important}
+    .tw-checklist-heading { font-size: 10px!important }
+    .tw-check-text, .s4-check-text { font-size: 12px!important }
+  `,
+  md: `
+    .s1-slogan{font-size:46px!important}
+    .s1-temp{font-size:108px!important}
+    .s1-desc,.s1-insight-text,.med-tip-item{font-size:16px!important}
+    .s1-stat-val.lg{font-size:44px!important}
+    .s1-stat-val.md{font-size:22px!important}
+    .nav-tab,.nav-right{font-size:16px!important}
+    .chart-legend-item{font-size:14px!important}
+    .heat-toggle-title,.heat-toggle-sub{font-size:13px!important}
+    .tw-desc,.tw-place-sub,.g-card-body{font-size:15px!important}
+    .tw-place-name{font-size:15px!important}
+    .tw-hours{font-size:20px!important}
+    .s4-nurse-title,.s4-warn-title{font-size:17px!important}
+    .s4-check-text{font-size:14px!important}
+    .s4-cta-num{font-size:22px!important}
+    .s3-title,.s4-title,.s2-title{font-size:36px!important}
+    .s1-greeting{font-size:28px!important}
+    /* Find Cool Spaces */
+    .sidebar-title,.vd-name,.ai-section-title{font-size:18px!important}
+    .loc-name,.popup-name{font-size:16px!important}
+    .loc-addr,.loc-cat,.loc-open,.vd-addr,.vd-cat{font-size:13px!important}
+    .cat-btn{font-size:15px!important}
+    .activity-name,.activity-why,.ai-best-time-text,.ai-tip-text{font-size:16px!important}
+    /* Why It Matters */
+    .why-heading{font-size:40px!important}
+    .s4-nurse-eye,.s4-warn-eye{font-size:11px!important}
+    .s4-sub{font-size:16px!important}
+    .heat-toggle-label{font-size:13px!important}
+    .my-loc-btn{font-size:15px!important}
+    .legend-item{font-size:13px!important}
+    .loc-open{font-size:13px!important}
+    .tw-badge{font-size:12px!important}
+    .tw-place-label{font-size:11px!important}
+    .s2-meta{font-size:13px!important}
+    .s1-stat-label{font-size:15px!important}
+    .tw-checklist-heading { font-size: 11px!important } 
+    .tw-check-text, .s4-check-text { font-size: 14px!important }
+  `,
+  lg: `
+    .s1-slogan{font-size:58px!important}
+    .s1-temp{font-size:136px!important}
+    .s1-desc,.s1-insight-text,.med-tip-item{font-size:20px!important}
+    .s1-stat-val.lg{font-size:58px!important}
+    .s1-stat-val.md{font-size:30px!important}
+    .nav-tab,.nav-right{font-size:19px!important}
+    .chart-legend-item{font-size:17px!important}
+    .heat-toggle-title,.heat-toggle-sub{font-size:16px!important}
+    .tw-desc,.tw-place-sub,.g-card-body{font-size:18px!important}
+    .tw-place-name{font-size:18px!important}
+    .tw-hours{font-size:25px!important}
+    .s4-nurse-title,.s4-warn-title{font-size:22px!important}
+    .s4-check-text{font-size:17px!important}
+    .s4-cta-num{font-size:28px!important}
+    .s3-title,.s4-title,.s2-title{font-size:44px!important}
+    .s1-greeting{font-size:36px!important}
+    /* Find Cool Spaces */
+    .sidebar-title,.vd-name,.ai-section-title{font-size:22px!important}
+    .loc-name,.popup-name{font-size:19px!important}
+    .loc-addr,.loc-cat,.loc-open,.vd-addr,.vd-cat{font-size:16px!important}
+    .cat-btn{font-size:18px!important}
+    .activity-name,.activity-why,.ai-best-time-text,.ai-tip-text{font-size:19px!important}
+    /* Why It Matters */
+    .why-heading{font-size:50px!important}
+    /* global body text bump */
+    body{font-size:18px!important}
+    .s4-nurse-eye,.s4-warn-eye{font-size:13px!important}
+    .s4-sub{font-size:19px!important}
+    .heat-toggle-label{font-size:16px!important}
+    .my-loc-btn{font-size:18px!important}
+    .legend-item{font-size:16px!important}
+    .loc-open{font-size:16px!important}
+    .tw-badge{font-size:14px!important}
+    .tw-place-label{font-size:13px!important}
+    .s2-meta{font-size:16px!important}
+    .s1-stat-label{font-size:18px!important}
+    .tw-checklist-heading { font-size: 14px!important } 
+    .tw-check-text, .s4-check-text { font-size: 17px!important }
+  `
+};
+let _fontStyleEl = document.getElementById('font-size-overrides');
+if(!_fontStyleEl){
+  _fontStyleEl = document.createElement('style');
+  _fontStyleEl.id = 'font-size-overrides';
+  document.head.appendChild(_fontStyleEl);
+}
+// capture baseline inline font-sizes once (before any scaling)
+let _inlineBaseSizes = null;
+function captureInlineSizes(){
+  _inlineBaseSizes = [];
+  document.querySelectorAll('[style*="font-size"]').forEach(el=>{
+    const m = el.getAttribute('style') && el.getAttribute('style').match(/font-size\s*:\s*([\d.]+)px/);
+    if(m) _inlineBaseSizes.push({el, base: parseFloat(m[1])});
+  });
+}
+const SCALE_MAP = {sm:0.85, md:1.0, lg:1.22};
+function setFontSize(size, btn){
+  // use font-size on root instead of zoom to avoid scaling chart
+  if(!_inlineBaseSizes) captureInlineSizes();
+  const scale = SCALE_MAP[size] || 1.0;
+  _fontStyleEl.textContent = FONT_RULES[size] || '';
+  // scale inline font-size styles (Why It Matters, etc.)
+  _inlineBaseSizes.forEach(({el, base})=>{
+    const cur = el.getAttribute('style') || '';
+    el.setAttribute('style', cur.replace(/font-size\s*:\s*[\d.]+px/, 'font-size:'+(base*scale).toFixed(1)+'px'));
+  });
+  document.querySelectorAll('.font-toggle-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  localStorage.setItem('cs_fontsize', size);
+  if(typeof buildChart==='function'){ buildChart(CHART_TICK[size]||10); if(typeof buildTimeWindows==='function') buildTimeWindows(); }
+}
+(function(){
+  const saved = localStorage.getItem('cs_fontsize') || 'md';
+  const btns = document.querySelectorAll('.font-toggle-btn');
+  const sizeMap = ['sm','md','lg'];
+  const idx = sizeMap.indexOf(saved);
+  setFontSize(saved, btns[idx >= 0 ? idx : 1]);
+})();
+
+// ── DYNAMIC S2 TIME WINDOWS
+function buildTimeWindows(){
+  var nowH=CHART_START_HOUR;
+  var THRESH=32;
+  var uLat=window._uLat||(-37.812), uLng=window._uLng||(144.963);
+
+  // Find peak from CHART_TEMPS
+  var peakStartIdx=-1, peakEndIdx=-1;
+  for(var i=0;i<CHART_TEMPS.length;i++){
+    if(CHART_TEMPS[i]>=THRESH){
+      if(peakStartIdx===-1) peakStartIdx=i;
+      peakEndIdx=i+1;
+    }
+  }
+  var hasPeak=peakStartIdx!==-1;
+  var peakStartAbs=hasPeak?nowH+peakStartIdx:-1;
+  var peakEndAbs=hasPeak?nowH+peakEndIdx:-1;
+
+  // Chart: green fill for safe, orange fill for peak
+  if(chartInstance){
+    while(chartInstance.data.datasets.length>2) chartInstance.data.datasets.pop();
+    // green fill for safe zone
+    chartInstance.data.datasets.push({
+      label:'Safe zone',
+      data:CHART_TEMPS.map(function(t,i){return(!hasPeak||i<=peakStartIdx||i>=peakEndIdx-1)?t:null;}),
+      borderColor:'transparent',backgroundColor:'rgba(42,125,79,0.12)',
+      pointRadius:0,fill:'origin',tension:0.4,spanGaps:false
+    });
+    // orange fill for peak zone
+    if(hasPeak){
+      chartInstance.data.datasets.push({
+        label:'Peak zone',
+        data:CHART_TEMPS.map(function(t,i){return(i>=peakStartIdx&&i<peakEndIdx)?t:null;}),
+        borderColor:'transparent',backgroundColor:'rgba(184,114,0,0.22)',
+        pointRadius:0,fill:'origin',tension:0.4,spanGaps:false
+      });
+    }
+    chartInstance.update('none');
+  }
+
+  // Populate UV and peak temp in safe card
+  var maxTemp=Math.max.apply(null,CHART_TEMPS);
+  var maxIdx=CHART_TEMPS.indexOf(maxTemp);
+  var peakTempEl=document.getElementById('safePeakTemp');
+  var peakLabelEl=document.getElementById('safePeakLabel');
+  if(peakTempEl) peakTempEl.textContent=Math.round(maxTemp)+'°C';
+  if(peakLabelEl) peakLabelEl.textContent='at '+fmtHour(nowH+maxIdx);
+
+  // Update safe card time
+  var safeTimeEl=document.getElementById('safeTime');
+  if(safeTimeEl) safeTimeEl.textContent=hasPeak?fmtHour(peakEndAbs)+' onwards':'All day';
+
+  // Update peak card
+  var peakCard=document.getElementById('peakCard');
+  var peakTimeEl=document.getElementById('peakTime');
+  if(peakCard) peakCard.style.display=hasPeak?'':'none';
+  if(peakTimeEl&&hasPeak) peakTimeEl.textContent=fmtHour(peakStartAbs)+' \u2014 '+fmtHour(peakEndAbs);
+
+  // Venue distances
+  function dl(v){var d=haversine(uLat,uLng,v.lat,v.lng);return d<1?Math.round(d*1000)+'m away':d.toFixed(1)+' km away';}
+
+  var safeAbs=hasPeak?peakEndAbs:nowH+3;
+  var safeVenue=(typeof nearestOpenByType==='function'?nearestOpenByType(uLat,uLng,'outdoor',safeAbs):null)||(typeof nearestByType==='function'?nearestByType(uLat,uLng,'outdoor'):null);
+  if(safeVenue){
+    var n=document.getElementById('safeVenueName'); if(n) n.textContent=safeVenue.name;
+    var s=document.getElementById('safeVenueSub'); if(s){ try{s.textContent=safeVenue.cat+' \u00b7 '+dl(safeVenue);}catch(e){s.textContent=safeVenue.cat;} }
+    var b=document.getElementById('safeBtn'); if(b) b.onclick=function(){goToVenue(safeVenue.name,safeVenue.cat,safeVenue.name+', Melbourne');};
+  }
+
+  if(hasPeak){
+    var pkVenue=nearestOpenByType(uLat,uLng,'indoor',peakStartAbs)||nearestByType(uLat,uLng,'indoor');
+    if(pkVenue){
+      var pn=document.getElementById('peakVenueName'); if(pn) pn.textContent=pkVenue.name;
+      var ps=document.getElementById('peakVenueSub'); if(ps){ try{ps.textContent=pkVenue.cat+' \u00b7 '+dl(pkVenue);}catch(e){ps.textContent=pkVenue.cat;} }
+      var pb=document.getElementById('peakBtn'); if(pb) pb.onclick=function(){goToVenue(pkVenue.name,pkVenue.cat,pkVenue.name+', Melbourne');};
+    }
+  }
+}
+
+// Call after VENUE_DATA is defined — see below
+
+
+
+
+// ══ LOCATION SYSTEM ══
+
+function haversine(lat1,lng1,lat2,lng2){
+  const R=6371,dLat=(lat2-lat1)*Math.PI/180,dLng=(lng2-lng1)*Math.PI/180;
+  const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+
+function updateDistances(lat,lng){
+  window._uLat=lat; window._uLng=lng;
+  const items=[...document.querySelectorAll('.loc-item[data-lat]')];
+  items.forEach(item=>{
+    const d=haversine(lat,lng,parseFloat(item.dataset.lat),parseFloat(item.dataset.lng));
+    item.dataset.dist=d;
+    const el=item.querySelector('.loc-dist');
+    if(el) el.textContent=(d<1?Math.round(d*1000)+'m':d.toFixed(1)+' km')+' away';
+  });
+  // re-sort list
+  const list=document.querySelector('.loc-list');
+  if(list){
+    items.sort((a,b)=>parseFloat(a.dataset.dist)-parseFloat(b.dataset.dist));
+    items.forEach(i=>list.appendChild(i));
+  }
+  // update nav label via reverse geocode
+  // Local postcode→suburb lookup (no API needed, always accurate)
+  const POSTCODES={
+    3000:'Melbourne CBD',3001:'Melbourne CBD',3002:'East Melbourne',3003:'West Melbourne',
+    3004:'St Kilda Rd',3005:'World Trade Centre',3006:'Southbank',3008:'Docklands',
+    3010:'University of Melbourne',3011:'Footscray',3012:'Newport',3013:'Yarraville',
+    3014:'Williamstown',3015:'Williamstown North',3016:'Williamstown',
+    3018:'Altona',3019:'Laverton',3020:'Sunshine',3021:'Sunshine North',
+    3023:'Deer Park',3024:'Point Cook',3025:'Altona North',3028:'Altona Meadows',
+    3029:'Hoppers Crossing',3030:'Werribee',3031:'Flemington',3032:'Ascot Vale',
+    3033:'Essendon',3034:'Avondale Heights',3036:'Tullamarine',3037:'Sydenham',
+    3038:'Taylors Lakes',3039:'Moonee Ponds',3040:'Pascoe Vale South',
+    3041:'Coburg',3042:'Airport West',3043:'Gladstone Park',3044:'Pascoe Vale',
+    3045:'Melbourne Airport',3046:'Glenroy',3047:'Broadmeadows',3048:'Coolaroo',
+    3049:'Meadow Heights',3050:'Royal Melbourne Hospital',3051:'North Melbourne',
+    3052:'Parkville',3053:'Carlton',3054:'Carlton North',3055:'Brunswick West',
+    3056:'Brunswick',3057:'Brunswick East',3058:'Coburg North',3059:'Coburg',
+    3060:'Fawkner',3061:'Campbellfield',3062:'Somerton',3063:'Attwood',
+    3064:'Craigieburn',3065:'Fitzroy',3066:'Collingwood',3067:'Abbotsford',
+    3068:'Clifton Hill',3070:'Northcote',3071:'Thornbury',3072:'Preston',
+    3073:'Reservoir',3074:'Reservoir',3075:'Thomastown',3076:'Epping',
+    3078:'Fairfield',3079:'Alphington',3081:'Heidelberg West',3082:'Mill Park',
+    3083:'Bundoora',3084:'Heidelberg',3085:'Macleod',3086:'Plenty',
+    3087:'Yarrambat',3088:'Greensborough',3089:'Diamond Creek',3090:'Watsonia',
+    3091:'Doreen',3093:'Lower Plenty',3094:'Montmorency',3095:'Eltham',
+    3096:'Research',3097:'Kangaroo Ground',3099:'St Andrews',
+    3101:'Kew',3102:'Kew East',3103:'Balwyn',3104:'Balwyn North',
+    3105:'Bulleen',3106:'Templestowe',3107:'Templestowe Lower',3108:'Doncaster',
+    3109:'Doncaster East',3111:'Blackburn',3113:'Warrandyte',3114:'Park Orchards',
+    3115:'Wonga Park',3116:'Chirnside Park',3121:'Richmond',3122:'Hawthorn',
+    3123:'Hawthorn East',3124:'Camberwell',3125:'Hartwell',3126:'Canterbury',
+    3127:'Surrey Hills',3128:'Box Hill',3129:'Box Hill North',3130:'Nunawading',
+    3131:'Forest Hill',3132:'Mitcham',3133:'Ringwood',3134:'Heathmont',
+    3135:'Ringwood East',3136:'Croydon',3137:'Kilsyth',3138:'Mooroolbark',
+    3139:'Lilydale',3140:'Yering',3141:'South Yarra',3142:'Toorak',
+    3143:'Armadale',3144:'Malvern',3145:'Malvern East',3146:'Glen Iris',
+    3147:'Ashburton',3148:'Chadstone',3149:'Mount Waverley',3150:'Glen Waverley',
+    3151:'Burwood East',3152:'Knox',3153:'Bayswater',3154:'The Basin',
+    3155:'Boronia',3156:'Ferntree Gully',3158:'Upper Ferntree Gully',
+    3159:'Belgrave Heights',3160:'Emerald',3161:'Prahran',3162:'Caulfield',
+    3163:'Caulfield South',3165:'Oakleigh',3166:'Oakleigh South',
+    3167:'Huntingdale',3168:'Monash',3169:'Springvale',3170:'Mulgrave',
+    3171:'Springvale South',3172:'Dingley Village',3173:'Keysborough',
+    3174:'Noble Park',3175:'Dandenong',3176:'Scoresby',3177:'Rowville',
+    3178:'Rowville',3179:'Ferntree Gully',3180:'Knoxfield',3181:'Prahran',
+    3182:'St Kilda',3183:'Balaclava',3184:'St Kilda West',3185:'Elwood',
+    3186:'Brighton',3187:'Brighton East',3188:'Hampton',3189:'Moorabbin',
+    3190:'Highett',3191:'Sandringham',3192:'Black Rock',3193:'Beaumaris',
+    3194:'Mentone',3195:'Parkdale',3196:'Cheltenham',3197:'Patterson Lakes',
+    3198:'Frankston',3199:'Frankston South',3200:'Seaford',3201:'Carrum Downs',
+    3202:'Edithvale',3204:'McKinnon',3205:'Port Melbourne',3206:'Albert Park',
+    3207:'Port Melbourne',3212:'Werribee South',3220:'Geelong',
+  };
+
+  if(window._uPostcode && POSTCODES[parseInt(window._uPostcode)]){
+    const name=POSTCODES[parseInt(window._uPostcode)];
+    const navEl=document.getElementById('navLocation');
+    if(navEl) navEl.textContent=name.toUpperCase()+' · '+navEl.textContent.split('·')[1].trim();
+  } else {
+    // fallback: reverse geocode with English
+    fetch('https://nominatim.openstreetmap.org/reverse?lat='+lat+'&lon='+lng+'&format=json&zoom=14&accept-language=en')
+      .then(r=>r.json()).then(d=>{
+        const s=d.address?.suburb||d.address?.neighbourhood||d.address?.city_district||d.address?.town||'Melbourne';
+        const navEl=document.getElementById('navLocation');
+        if(navEl) navEl.textContent=s.toUpperCase()+' · '+navEl.textContent.split('·')[1].trim();
+      }).catch(()=>{});
+  }
+  // update s2 venue recommendations
+  updateS2Recs(lat,lng);
+}
+
+async function geocodePostcode(pc){
+  try{
+    const r=await fetch('https://nominatim.openstreetmap.org/search?postalcode='+pc+'&country=Australia&format=json&limit=1&accept-language=en');
+    const d=await r.json();
+    if(d&&d[0]) return{lat:parseFloat(d[0].lat),lng:parseFloat(d[0].lon)};
+  }catch(e){}
+  return null;
+}
+
+function closeLocOverlay(){ document.getElementById('locOverlay').style.display='none'; startTour(); }
+
+function doGPS(){
+  const btn=document.getElementById('locGpsBtn');
+  btn.textContent='Locating…'; btn.disabled=true;
+  navigator.geolocation.getCurrentPosition(pos=>{
+    closeLocOverlay();
+    updateDistances(pos.coords.latitude,pos.coords.longitude);
+  }, ()=>{
+    btn.textContent='Use my current location'; btn.disabled=false;
+    alert('Location denied. Please try entering your postcode instead.');
+  });
+}
+
+async function doPostcode(){
+  const pc=document.getElementById('locPcInput').value.trim();
+  if(pc.length<4) return;
+  const btn=document.querySelector('.loc-pc-btn');
+  btn.textContent='…'; btn.disabled=true;
+  const coords=await geocodePostcode(pc);
+  btn.textContent='Go'; btn.disabled=false;
+  if(coords){ window._uPostcode=pc; closeLocOverlay(); updateDistances(coords.lat,coords.lng); }
+  else alert('Postcode not found. Please try another.');
+}
+
+var _lpi=document.getElementById('locPcInput'); if(_lpi) _lpi.addEventListener('keydown',e=>{ if(e.key==='Enter') doPostcode(); });
+
+// ══ HANDLE LOC-ITEM CLICK ══
+function handleLocClick(el){
+  openVenue(el.dataset.name, el.dataset.cat||'', el.dataset.addr||'');
+}
+
+// ══ S2 VENUE RECOMMENDATIONS — functions only, data declared at top of script ══
+function nearestByType(lat,lng,type){
+  const filtered=VENUE_DATA.filter(v=>v.type===type);
+  return filtered.sort((a,b)=>haversine(lat,lng,a.lat,a.lng)-haversine(lat,lng,b.lat,b.lng))[0];
+}
+function isOpenAt(name,absH){
+  const hrs=VENUE_HOURS[name]; if(!hrs) return true;
+  const h24=absH%24; return h24>=hrs[0]&&h24<hrs[1];
+}
+function nearestOpenByType(lat,lng,type,targetAbsH){
+  let candidates=VENUE_DATA.filter(v=>v.type===type&&isOpenAt(v.name,targetAbsH));
+  if(!candidates.length) candidates=VENUE_DATA.filter(v=>v.type===type);
+  return candidates.sort((a,b)=>haversine(lat,lng,a.lat,a.lng)-haversine(lat,lng,b.lat,b.lng))[0];
+}
+
+buildTimeWindows(); // initial call — no GPS yet, just does chart fill
+// ══ US1: handleNoneBtn ══
+function handleNoneBtn(el){
+  const wasOn=el.classList.contains('on');
+  document.querySelectorAll('.med-btn').forEach(b=>b.classList.remove('on'));
+  if(!wasOn) el.classList.add('on');
+}
+
+// ══ US2: Tomorrow Alert ══
+
+
+// ══ US3: DO / AVOID panels ══
+(function buildDoAvoid(){
+  const ADVICE={
+    low:{
+      label:'Low Risk',
+      cards:[
+        {cat:'DO THIS', title:'Stay Hydrated',       body:'Drink water regularly — aim for a glass every hour. Your body needs fluid to regulate heat, even when you don\'t feel thirsty.'},
+        {cat:'DO THIS', title:'Time It Right',        body:'Plan outdoor activities before 11 AM or after 4 PM when temperatures are cooler and UV levels drop.'},
+        {cat:'AVOID',   title:'Peak Sun Hours',       body:'Avoid prolonged exposure to direct sun during midday. Even on moderate days, UV and heat can build up quickly.'},
+        {cat:'AVOID',   title:'Alcohol &amp; Heavy Meals', body:'Alcohol and protein-heavy meals both impair your body\'s ability to stay cool — keep it light today.'},
+      ]
+    },
+    moderate:{
+      label:'Moderate Risk',
+      cards:[
+        {cat:'DO THIS', title:'Seek Cool Spaces',     body:'Spend the hottest hours (11 AM–3 PM) indoors or in shade. Libraries, shopping centres and community halls are free to use.'},
+        {cat:'DO THIS', title:'Cool Your Pulse Points', body:'Apply a damp cloth to your neck and wrists. Cooling blood at these points lowers your core temperature fast.'},
+        {cat:'AVOID',   title:'Midday Exercise',      body:'Skip outdoor workouts between 10 AM and 4 PM. Even light exertion in the heat significantly increases strain on your body.'},
+        {cat:'AVOID',   title:'Alcohol &amp; Caffeine',   body:'Both dehydrate you faster. On warm days your fluid loss is already elevated — don\'t add to it.'},
+      ]
+    },
+    high:{
+      label:'High Risk',
+      cards:[
+        {cat:'DO THIS', title:'Stay Indoors',         body:'Remain in air-conditioned spaces as much as possible. If you have no AC at home, find a local cooling centre now.'},
+        {cat:'DO THIS', title:'Drink Constantly',     body:'Drink water every 30 minutes even if you do not feel thirsty. Apply cold, wet towels to your neck, wrists and ankles.'},
+        {cat:'AVOID',   title:'Going Outdoors',       body:'Avoid any outdoor activity during daylight hours. The heat is severe enough to cause rapid deterioration — stay inside.'},
+        {cat:'AVOID',   title:'Waiting for Symptoms', body:'Do not wait until you feel dizzy or confused. Call Nurse-on-Call (1300 606 024) at the first sign of heat illness.'},
+      ]
+    },
+    extreme:{
+      label:'Extreme Risk',
+      cards:[
+        {cat:'DO THIS', title:'Do Not Go Outside',    body:'Stay home all day. If you have no air conditioning, call your local council now for an emergency cooling centre location.'},
+        {cat:'DO THIS', title:'Keep Cool Constantly', body:'Wet your hair and clothing. Keep all blinds closed. Call 000 immediately if anyone shows signs of heat stroke.'},
+        {cat:'AVOID',   title:'All Outdoor Activity', body:'The risk is life-threatening. Even a short trip outside in extreme heat can cause rapid heat stroke with no warning.'},
+        {cat:'AVOID',   title:'Being Alone',          body:'Ask someone to check on you regularly. Extreme heat affects judgement quickly — you may not realise how unwell you are.'},
+      ]
+    }
+  };
+
+  const IMAGES={
+    low:    ['https://images.unsplash.com/photo-1548839140-29a749e1cf4d?w=700&q=80','https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?w=700&q=80','https://images.unsplash.com/photo-1512069772995-ec65ed45afd6?w=700&q=80','https://plus.unsplash.com/premium_photo-1728176933865-3c2221defa69?q=80&w=700'],
+    moderate:['https://images.unsplash.com/photo-1548839140-29a749e1cf4d?w=700&q=80','https://images.unsplash.com/photo-1602932213623-cc17e9541bb4?q=80&w=700','https://images.unsplash.com/photo-1512069772995-ec65ed45afd6?w=700&q=80','https://plus.unsplash.com/premium_photo-1728176933865-3c2221defa69?q=80&w=700'],
+    high:   ['https://images.unsplash.com/photo-1548839140-29a749e1cf4d?w=700&q=80','https://images.unsplash.com/photo-1602932213623-cc17e9541bb4?q=80&w=700','https://images.unsplash.com/photo-1504701954957-2010ec3bcec1?w=700&q=80','https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=700&q=80'],
+    extreme:['https://images.unsplash.com/photo-1548839140-29a749e1cf4d?w=700&q=80','https://images.unsplash.com/photo-1602932213623-cc17e9541bb4?q=80&w=700','https://images.unsplash.com/photo-1504701954957-2010ec3bcec1?w=700&q=80','https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=700&q=80'],
+  };
+
+  function getRiskLevel(maxTemp){
+    if(maxTemp>=40) return 'extreme';
+    if(maxTemp>=35) return 'high';
+    if(maxTemp>=28) return 'moderate';
+    return 'low';
+  }
+
+  function renderDoAvoid(){
+    const maxTemp=Math.max.apply(null,CHART_TEMPS);
+    const level=getRiskLevel(maxTemp);
+    const data=ADVICE[level];
+    const imgs=IMAGES[level];
+    const subEl=document.getElementById('doAvoidSub');
+    if(subEl) subEl.textContent=data.label+' conditions today ('+Math.round(maxTemp)+'°C peak) — hover any card for advice.';
+    data.cards.forEach(function(c,i){
+      const catEl=document.getElementById('gcCat'+i);
+      const titleEl=document.getElementById('gcTitle'+i);
+      const bodyEl=document.getElementById('gcBody'+i);
+      const imgEl=document.getElementById('gcImg'+i);
+      if(catEl) catEl.textContent=c.cat.replace('&amp;','&');
+      if(titleEl) titleEl.innerHTML=c.title;
+      if(bodyEl) bodyEl.innerHTML=c.body;
+      if(imgEl) imgEl.style.backgroundImage="url('"+imgs[i]+"')";
+    });
+  }
+  renderDoAvoid();
+  window._rerenderDoAvoid=renderDoAvoid;
+})();
+
+
+function updateS2Recs(lat,lng){
+  buildTimeWindows(); // called again after GPS
+  return; // legacy below
+
+  // Update "Go here" buttons in time windows with nearest venue
+  document.querySelectorAll('.tw-go-btn').forEach(btn=>{
+    const win=btn.closest('.tw');
+    const isSafe=win&&win.classList.contains('safe-win');
+    const venue=nearestByType(lat,lng,isSafe?'outdoor':'indoor');
+    if(!venue) return;
+    const dist=haversine(lat,lng,venue.lat,venue.lng);
+    const distLabel=dist<1?Math.round(dist*1000)+'m':dist.toFixed(1)+' km';
+    btn.querySelector('span').textContent=(isSafe?'Go here: ':'Cool space: ')+venue.name+' · '+distLabel;
+    btn.onclick=()=>goToVenue(venue.name,venue.cat,venue.name+', Melbourne');
+  });
+}
+
+// Show modal on load
+window.addEventListener('load',()=>{
+  document.getElementById('locOverlay').style.display='flex';
+});
+
+</script>
+
+
+
+<!-- ── Location modal ── -->
+<div class="loc-overlay" id="locOverlay">
+  <div class="loc-box">
+    <div class="loc-icon"><svg viewBox="0 0 22 22"><circle cx="11" cy="9" r="3"/><path d="M11 2a7 7 0 017 7c0 5-7 11-7 11S4 14 4 9a7 7 0 017-7z"/></svg></div>
+    <div class="loc-title">Where are you?</div>
+    <div class="loc-sub">We need your location to show nearby cool spaces and personalise your heat risk.</div>
+    <button class="loc-gps-btn" id="locGpsBtn" onclick="doGPS()">Use my current location</button>
+    <div class="loc-divider"><span>or</span></div>
+    <div class="loc-pc-row">
+      <input class="loc-pc-input" id="locPcInput" type="text" inputmode="numeric" maxlength="4" placeholder="Enter postcode (e.g. 3000)"/>
+      <button class="loc-pc-btn" onclick="doPostcode()">Go</button>
+    </div>
+  </div>
+</div>
+
+</body></html>

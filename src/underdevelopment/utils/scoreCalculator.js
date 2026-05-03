@@ -9,6 +9,7 @@ const HIGH_RISK_MEDS = [
   'Heart medication',
   'Diabetes medication',
   'Antipsychotics',
+  'Opioid pain medication',
 ]
 
 const LOW_RISK_MEDS = ['Antihistamines', 'Antidepressants']
@@ -28,6 +29,8 @@ export const MED_ADVICE = {
     'Some antihistamines reduce sweating. Wear light clothing and stay hydrated.',
   Antidepressants:
     'Some antidepressants affect how your body handles heat. Take extra care to stay cool and drink water.',
+  'Opioid pain medication':
+    'Opioids can impair your ability to sense heat and increase your risk of overheating. Stay in a cool environment and check in with someone regularly.',
 }
 
 function formatHour(hour) {
@@ -57,13 +60,19 @@ export function calculateHeatSafetyScore({ apparentTemp, hour, medications }) {
   else timeMultiplier = 1.35
 
   // Step 3: Medication multiplier
-  const activeMeds = medications.filter((m) => m !== 'None of the above')
+  const activeMeds = medications
   let medicationMultiplier = 1.0
   if (activeMeds.some((m) => HIGH_RISK_MEDS.includes(m))) medicationMultiplier = 1.3
   else if (activeMeds.some((m) => LOW_RISK_MEDS.includes(m))) medicationMultiplier = 1.15
 
-  // Step 4: Final score
+  // Step 4: Final score + additive breakdown (weatherPts + timePts + medPts = score)
+  const afterTime = Math.min(100, Math.round(baseScore * timeMultiplier))
   const score = Math.min(100, Math.round(baseScore * timeMultiplier * medicationMultiplier))
+  const breakdown = {
+    weatherPts: baseScore,
+    timePts: afterTime - baseScore,
+    medPts: score - afterTime,
+  }
 
   // Step 5: Risk label
   let riskLabel
@@ -126,5 +135,5 @@ export function calculateHeatSafetyScore({ apparentTemp, hour, medications }) {
     }
   }
 
-  return { score, riskLabel, factors, adviceLines }
+  return { score, riskLabel, factors, adviceLines, breakdown }
 }

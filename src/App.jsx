@@ -4,9 +4,20 @@ import PasswordGate from './PasswordGate'
 import HomePageDev from './underdevelopment/pages/HomePage'
 import MapPageDev from './underdevelopment/pages/MapPage'
 import VenueDetailPage from './underdevelopment/pages/VenueDetailPage'
+import WhyItMattersPage from './underdevelopment/pages/WhyItMattersPage'
+import FontSizeToggle from './underdevelopment/components/layout/FontSizeToggle'
 
 import HomePageV1 from './version1/pages/HomePage'
 import MapPageV1 from './version1/pages/MapPage'
+
+function DevLayout({ children }) {
+  return (
+    <>
+      <FontSizeToggle />
+      {children}
+    </>
+  )
+}
 
 export default function App() {
   return (
@@ -14,37 +25,41 @@ export default function App() {
       <Routes>
         <Route path="/" element={
           <PasswordGate storageKey="auth_dev">
-            <HomePageDev />
+            <DevLayout><HomePageDev /></DevLayout>
           </PasswordGate>
         } />
         <Route path="/map" element={
           <PasswordGate storageKey="auth_dev">
-            <MapPageDev />
+            <DevLayout><MapPageDev /></DevLayout>
+          </PasswordGate>
+        } />
+        <Route path="/why" element={
+          <PasswordGate storageKey="auth_dev">
+            <DevLayout><WhyItMattersPage /></DevLayout>
           </PasswordGate>
         } />
 
         <Route path="/underdevelopment" element={
           <PasswordGate storageKey="auth_dev">
-            <HomePageDev />
+            <DevLayout><HomePageDev /></DevLayout>
           </PasswordGate>
         } />
         <Route path="/underdevelopment/map" element={
           <PasswordGate storageKey="auth_dev">
-            <MapPageDev />
+            <DevLayout><MapPageDev /></DevLayout>
           </PasswordGate>
         } />
 
         <Route path="/venue/:id" element={
           <PasswordGate storageKey="auth_dev">
-            <VenueDetailPage />
+            <DevLayout><VenueDetailPage /></DevLayout>
           </PasswordGate>
         } />
         <Route path="/underdevelopment/venue/:id" element={
           <PasswordGate storageKey="auth_dev">
-            <VenueDetailPage />
+            <DevLayout><VenueDetailPage /></DevLayout>
           </PasswordGate>
         } />
-
 
         <Route path="/version1" element={
           <PasswordGate storageKey="auth_v1">

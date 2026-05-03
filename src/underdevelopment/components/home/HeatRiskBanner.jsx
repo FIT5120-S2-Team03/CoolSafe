@@ -71,7 +71,7 @@ export default function HeatRiskBanner({ onCoordsReady }) {
         className="relative w-full flex items-center justify-center bg-[#1e293b]"
         style={{ height: '531px' }}
       >
-        <p className="font-['Public_Sans'] text-[20px] text-white text-center px-6">
+        <p className="font-sans text-[1.25rem] text-white text-center px-6">
           Unable to load weather data. Please try again.
         </p>
       </div>
@@ -85,7 +85,7 @@ export default function HeatRiskBanner({ onCoordsReady }) {
         style={{ height: '531px' }}
       >
         <div className="flex flex-col items-center gap-4 px-6 w-full max-w-[400px]">
-          <p className="font-['Lexend'] text-[16px] text-white text-center">
+          <p className="font-sans text-base text-white text-center">
             Enter your postcode to get local heat conditions
           </p>
           <form
@@ -100,12 +100,12 @@ export default function HeatRiskBanner({ onCoordsReady }) {
               value={postcode}
               onChange={(e) => setPostcode(e.target.value)}
               placeholder="e.g. 3000"
-              className="flex-1 bg-transparent text-white placeholder:text-white/60 rounded-lg px-4 text-[16px] font-['Lexend'] outline-none min-h-[48px]"
+              className="flex-1 bg-transparent text-white placeholder:text-white/60 rounded-lg px-4 text-base font-sans outline-none min-h-[48px]"
               style={{ border: '1px solid rgba(255,255,255,0.5)' }}
             />
             <button
               type="submit"
-              className="bg-white text-[#1e293b] font-['Public_Sans'] font-bold text-[16px] px-6 rounded-lg min-h-[48px]"
+              className="bg-white text-[#1e293b] font-sans font-bold text-base px-6 rounded-lg min-h-[48px]"
             >
               Search
             </button>
@@ -166,9 +166,9 @@ export default function HeatRiskBanner({ onCoordsReady }) {
       key={`${keyPrefix}-${i}`}
       className="inline-flex shrink-0 items-center whitespace-nowrap pr-12"
       style={{
-        fontFamily: "'Public Sans', sans-serif",
+        fontFamily: "'DM Sans', sans-serif",
         fontWeight: 600,
-        fontSize: '18px',
+        fontSize: '1.125rem',
         color: 'rgba(15, 23, 42, 0.92)',
         letterSpacing: '0.02em',
       }}
@@ -255,15 +255,15 @@ export default function HeatRiskBanner({ onCoordsReady }) {
         {/* Temperature */}
         <div className="flex flex-col items-center gap-2">
           <p
-            className="font-['Public_Sans'] font-black text-white"
-            style={{ fontSize: '96px', letterSpacing: '-4.8px', lineHeight: 1 }}
+            className="font-serif text-white"
+            style={{ fontSize: '6rem', letterSpacing: '-4.8px', lineHeight: 1 }}
           >
             HEAT IS {Math.round(temp)}°C
           </p>
           {feelsLike != null && (
             <p
-              className="font-['Public_Sans'] text-white/85"
-              style={{ fontWeight: 500, fontSize: '22px', letterSpacing: '0.02em' }}
+              className="font-sans text-white/85"
+              style={{ fontWeight: 500, fontSize: '1.375rem', letterSpacing: '0.02em' }}
             >
               Feels like {Math.round(feelsLike)}°C
             </p>

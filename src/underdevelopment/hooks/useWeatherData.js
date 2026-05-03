@@ -7,7 +7,7 @@ export function useWeatherData() {
   const [hourly, setHourly] = useState(null)
   const [daily, setDaily] = useState(null)
   const [locationName, setLocationName] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState(false)
   const [gpsBlocked, setGpsBlocked] = useState(false)
 
@@ -79,6 +79,13 @@ export function useWeatherData() {
       setLoading(false)
       return
     }
+    // GPS triggered manually via requestGps()
+  }, [])
+
+  function requestGps() {
+    setLoading(true)
+    setError(false)
+    setGpsBlocked(false)
     navigator.geolocation.getCurrentPosition(
       (pos) => fetchWeather(pos.coords.latitude, pos.coords.longitude),
       () => {
@@ -86,7 +93,7 @@ export function useWeatherData() {
         setLoading(false)
       }
     )
-  }, [])
+  }
 
   async function fetchByPostcode(postcode) {
     setLoading(true)
@@ -114,6 +121,7 @@ export function useWeatherData() {
     loading,
     error,
     gpsBlocked,
+    requestGps,
     fetchByPostcode,
     lat: coords?.lat ?? null,
     lng: coords?.lng ?? null,

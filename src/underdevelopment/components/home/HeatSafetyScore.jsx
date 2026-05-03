@@ -84,7 +84,7 @@ export default function HeatSafetyScore({ apparentTemp, hour, selectedMedication
     medications: selectedMedications,
   })
 
-  const activeMeds = selectedMedications.filter((m) => m !== 'None of the above')
+  const activeMeds = selectedMedications
   const hasMeds = activeMeds.length > 0
 
   const [adviceOpacity, setAdviceOpacity] = useState(1)
@@ -129,7 +129,7 @@ export default function HeatSafetyScore({ apparentTemp, hour, selectedMedication
               <text
                 x="70" y="70" textAnchor="middle" dominantBaseline="central"
                 fill={riskLabel.color}
-                style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: 42, transition: 'fill 0.3s' }}
+                style={{ fontFamily: "'DM Mono', monospace", fontWeight: 500, fontSize: 42, transition: 'fill 0.3s' }}
               >
                 {score}
               </text>
@@ -168,7 +168,7 @@ export default function HeatSafetyScore({ apparentTemp, hour, selectedMedication
             <div className="flex items-center justify-between" style={{ marginBottom: 10 }}>
               <span className={TYPOGRAPHY.h3}>What This Means For You</span>
               {hasMeds && (
-                <span style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: FONT_SIZE.small, color: '#166534', background: '#dcfce7', borderRadius: 9999, padding: '2px 8px' }}>
+                <span style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: FONT_SIZE.small, color: '#166534', background: '#dcfce7', borderRadius: 9999, padding: '2px 8px' }}>
                   PERSONALISED
                 </span>
               )}
@@ -211,7 +211,7 @@ export default function HeatSafetyScore({ apparentTemp, hour, selectedMedication
             style={{ background: '#eff6ff', padding: '12px 16px', borderRadius: 8 }}
           >
             <span
-              style={{ fontFamily: 'Lexend', fontWeight: 500, fontSize: FONT_SIZE.small, color: '#0056d2' }}
+              style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 500, fontSize: FONT_SIZE.small, color: '#0056d2' }}
               className="group-hover:!text-[#003d99] transition-colors"
             >
               💊 <span style={{ textDecoration: 'underline' }}>Add your medications to get more personalised advice</span>

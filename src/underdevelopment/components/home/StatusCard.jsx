@@ -7,7 +7,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { getAqiInfo } from '../../utils/riskLevel'
 import { MED_ADVICE } from '../../utils/scoreCalculator'
-import bgVideo from '../../../assets/bg-video-1.mp4'
+import bgVideo from '../../../assets/8939276-uhd_3840_2160_25fps.mp4'
 
 const RISK_ACCENT = {
   Low:      { rgb: '111,207,151' },
@@ -111,7 +111,7 @@ export default function StatusCard({
       </div>
 
       {/* Top — Slogan + weather data */}
-      <div style={{ flex: 1, position: 'relative', zIndex: 2, display: 'flex', alignItems: 'center', padding: '0 0 0 300px' }}>
+      <div style={{ flex: 1, position: 'relative', zIndex: 2, display: 'flex', alignItems: 'center', padding: '0 0 180px 220px' }}>
         <div>
           <div style={{ fontFamily: "'DM Serif Display',Georgia,serif", fontSize: 'clamp(1.75rem,3.5vw,3rem)', color: '#fff', letterSpacing: '-2px', lineHeight: 1.1, marginBottom: 12 }}>
             Know the heat.<br />Enjoy your day.
@@ -156,7 +156,7 @@ export default function StatusCard({
           <div style={{ display: 'flex', alignItems: 'stretch', flex: 1, minWidth: 0 }}>
 
             {/* Score + insight + badges */}
-            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '16px 32px 16px 48px', minWidth: 320, maxWidth: 450, flexShrink: 0, gap: 8, overflowY: 'hidden' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '16px 32px 16px 48px', minWidth: 320, maxWidth: hasMeds ? 450 : 'calc(100% - 260px)', flexShrink: 0, gap: 8, overflowY: 'hidden' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
                 <span style={{ fontFamily: "'DM Sans',sans-serif", fontSize: '0.9375rem', fontWeight: 800, color: riskLabel.color, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                   {riskLabel.label}

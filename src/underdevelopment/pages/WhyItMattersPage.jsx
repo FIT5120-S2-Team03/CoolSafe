@@ -92,7 +92,7 @@ export default function WhyItMattersPage() {
             borderRadius: 14,
             overflow: 'hidden',
             minHeight: 240,
-            backgroundImage: 'url(https://images.unsplash.com/photo-1471193945509-9ad0617afabf?w=600&q=80)',
+            backgroundImage: 'url(https://cff2.earth.com/uploads/2025/08/04091510/older-adults-heat-waves-1400x850.jpg)',
             backgroundSize: 'cover',
             backgroundPosition: 'center',
           }} />

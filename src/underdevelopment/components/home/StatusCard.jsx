@@ -7,7 +7,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { getAqiInfo } from '../../utils/riskLevel'
 import { MED_ADVICE } from '../../utils/scoreCalculator'
-import bgVideo from '../../../assets/bg-video-1.mp4'
+import bgVideo from '../../../assets/8939276-uhd_3840_2160_25fps.mp4'
 
 const RISK_ACCENT = {
   Low:      { rgb: '111,207,151' },
@@ -110,8 +110,8 @@ export default function StatusCard({
         />
       </div>
 
-      {/* Top — Slogan (always visible behind the location modal) */}
-      <div style={{ flex: '0 0 64vh', position: 'relative', zIndex: 2, display: 'flex', alignItems: 'flex-end', padding: '0 30px 24px' }}>
+      {/* Top — Slogan + weather data */}
+      <div style={{ flex: 1, position: 'relative', zIndex: 2, display: 'flex', alignItems: 'center', padding: '0 0 180px 220px' }}>
         <div>
           <div style={{ fontFamily: "'DM Serif Display',Georgia,serif", fontSize: 'clamp(1.75rem,3.5vw,3rem)', color: '#fff', letterSpacing: '-2px', lineHeight: 1.1, marginBottom: 12 }}>
             Know the heat.<br />Enjoy your day.
@@ -120,6 +120,25 @@ export default function StatusCard({
             Heat is the deadliest natural hazard in Australia.{' '}
             <Link to="/why" style={{ color: '#6fcf97', textDecoration: 'underline' }}>Read why</Link>
           </div>
+          {/* Weather data moved here */}
+          {current && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 20, marginTop: 24 }}>
+              <div style={{ lineHeight: 1 }}>
+                <div style={{ fontFamily: "'DM Serif Display',Georgia,serif", fontSize: 'clamp(2.5rem,4vw,3.5rem)', color: '#fff', letterSpacing: '-3px' }}>
+                  {Math.round(current.apparentTemp)}°C
+                </div>
+                <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: '0.6875rem', fontWeight: 600, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: 4 }}>
+                  Feels Like
+                </div>
+              </div>
+              <div style={{ width: 1, background: 'rgba(255,255,255,0.2)', height: 40, flexShrink: 0 }} />
+              <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: '0.8125rem', color: 'rgba(255,255,255,0.55)', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <span>☼ Peak today {daily?.todayMax != null ? `${Math.round(daily.todayMax)}°C` : '—'}</span>
+                <span>☁ AQI {aqi != null ? aqi : '—'} · {aqiInfo ? aqiInfo.label : '—'}</span>
+                <span>☂ UV Index {uvInfo ? `${uvInfo.index} · ${uvInfo.label}` : '—'}</span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -131,118 +150,91 @@ export default function StatusCard({
         </div>
 
       ) : current ? (
-        <div style={{ flex: 1, position: 'relative', zIndex: 2, minHeight: 0, background: 'rgba(8,16,26,0.88)', backdropFilter: 'blur(32px)', WebkitBackdropFilter: 'blur(32px)', borderTop: '1px solid rgba(255,255,255,0.1)', padding: '22px 64px 26px', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+        <div style={{ flex: '0 0 auto', position: 'relative', zIndex: 2, background: 'rgba(8,16,26,0.88)', backdropFilter: 'blur(32px)', WebkitBackdropFilter: 'blur(32px)', borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'stretch', overflow: 'hidden', minHeight: 180 }}>
 
-          {/* Three-column grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr 220px', gap: 28, alignItems: 'stretch', flex: 1, minHeight: 0 }}>
+          {/* ── Left: Risk score + insight + med tips ── */}
+          <div style={{ display: 'flex', alignItems: 'stretch', flex: 1, minWidth: 0 }}>
 
-            {/* ── Left: Weather data ── */}
-            <div style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, padding: 20, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 12 }}>
-              <div>
-                <div style={{ fontFamily: "'DM Serif Display',Georgia,serif", fontSize: '3.625rem', color: '#fff', lineHeight: 1, letterSpacing: '-3px' }}>
-                  {Math.round(current.apparentTemp)}°C
+            {/* Score + insight + badges */}
+            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '16px 32px 16px 48px', minWidth: 320, maxWidth: hasMeds ? 450 : 'calc(100% - 260px)', flexShrink: 0, gap: 8, overflowY: 'hidden' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                <span style={{ fontFamily: "'DM Sans',sans-serif", fontSize: '0.9375rem', fontWeight: 800, color: riskLabel.color, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                  {riskLabel.label}
+                </span>
+                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '0.8125rem', color: `rgba(${accent.rgb},0.6)` }}>
+                  {score} / 100
+                </span>
+                <div style={{ width: 80, height: 3, background: 'rgba(255,255,255,0.1)', borderRadius: 2, overflow: 'hidden', flexShrink: 0 }}>
+                  <div style={{ width: `${score}%`, height: '100%', background: riskLabel.color, borderRadius: 2, transition: 'width 0.5s ease' }} />
                 </div>
-                <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: '0.75rem', fontWeight: 600, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: 6 }}>
-                  Feels Like
-                </div>
+                <button
+                  ref={tooltipBtnRef}
+                  onMouseEnter={handleTooltipEnter}
+                  onMouseLeave={() => setShowScoreTooltip(false)}
+                  style={{ width: 20, height: 20, borderRadius: '50%', border: '1.5px solid rgba(255,255,255,0.3)', background: 'transparent', cursor: 'pointer', color: 'rgba(255,255,255,0.55)', fontSize: '0.6875rem', fontFamily: "'DM Sans',sans-serif", fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, padding: 0 }}
+                >?</button>
               </div>
-              <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {[
-                  { label: 'Peak today',  value: daily?.todayMax != null ? `${Math.round(daily.todayMax)}°C` : '—',   color: '#fff' },
-                  { label: 'Air quality', value: aqi != null ? `AQI ${aqi}` : '—',                                    color: aqiInfo?.color ?? '#fff' },
-                  { label: 'UV Index',    value: uvInfo ? `${uvInfo.index} · ${uvInfo.label}` : '—',                  color: uvInfo?.index >= 6 ? '#f2c94c' : '#fff' },
-                ].map(({ label, value, color }) => (
-                  <div key={label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span style={{ fontFamily: "'DM Sans',sans-serif", fontSize: '0.8125rem', color: 'rgba(255,255,255,0.45)' }}>{label}</span>
-                    <span style={{ fontFamily: "'DM Sans',sans-serif", fontSize: '0.8125rem', fontWeight: 600, color }}>{value}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* ── Center: Risk score ── */}
-            <div style={{ background: `rgba(${accent.rgb},0.07)`, border: `1px solid rgba(${accent.rgb},0.2)`, borderRadius: 16, padding: '24px 32px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 14, overflow: 'hidden' }}>
-
-              {/* Score label + progress bar + ? button */}
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12, flexWrap: 'wrap' }}>
-                  <span style={{ width: 9, height: 9, borderRadius: '50%', background: riskLabel.color, display: 'inline-block', flexShrink: 0 }} />
-                  <span style={{ fontFamily: "'DM Sans',sans-serif", fontSize: '1.1875rem', fontWeight: 800, color: riskLabel.color, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                    {riskLabel.label}
-                  </span>
-                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '0.9375rem', color: `rgba(${accent.rgb},0.6)` }}>
-                    {score} / 100
-                  </span>
-                  <button
-                    ref={tooltipBtnRef}
-                    onMouseEnter={handleTooltipEnter}
-                    onMouseLeave={() => setShowScoreTooltip(false)}
-                    style={{ marginLeft: 'auto', width: 22, height: 22, borderRadius: '50%', border: '1.5px solid rgba(255,255,255,0.3)', background: 'transparent', cursor: 'pointer', color: 'rgba(255,255,255,0.55)', fontSize: '0.75rem', fontFamily: "'DM Sans',sans-serif", fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, padding: 0 }}
-                  >
-                    ?
-                  </button>
-                </div>
-                <div style={{ height: 6, background: 'rgba(255,255,255,0.08)', borderRadius: 3, overflow: 'hidden' }}>
-                  <div style={{ width: `${score}%`, height: '100%', background: riskLabel.color, borderRadius: 3, transition: 'width 0.5s ease' }} />
-                </div>
-              </div>
-
-              {/* Insight text */}
-              <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: '1rem', color: 'rgba(255,255,255,0.9)', fontWeight: 500, lineHeight: 1.55 }}>
+              <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: '0.875rem', color: 'rgba(255,255,255,0.85)', fontWeight: 500, lineHeight: 1.5 }}>
                 {adviceLines[0] ?? ''}
               </div>
-
-              {/* medQuickTips */}
-              <div style={{ display: hasMeds ? 'block' : 'none', background: 'rgba(255,199,80,0.1)', border: '1px solid rgba(255,199,80,0.25)', borderRadius: 12, padding: '14px 16px' }}>
-                <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: '0.6875rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'rgba(255,199,80,0.85)', marginBottom: 8 }}>
-                  💊 Quick Tips for you
-                </div>
-                <ul style={{ fontFamily: "'DM Sans',sans-serif", fontSize: '0.8125rem', color: 'rgba(255,255,255,0.8)', lineHeight: 1.6, paddingLeft: 16, margin: 0 }}>
-                  {medTips.map((tip, i) => <li key={i}>{tip}</li>)}
-                </ul>
-              </div>
-
               {/* Badges */}
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 20, background: `rgba(${accent.rgb},0.12)`, border: `1px solid rgba(${accent.rgb},0.25)`, fontFamily: "'DM Sans',sans-serif", fontSize: '0.75rem', fontWeight: 600, color: riskLabel.color }}>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 20, background: `rgba(${accent.rgb},0.12)`, border: `1px solid rgba(${accent.rgb},0.25)`, fontFamily: "'DM Sans',sans-serif", fontSize: '0.6875rem', fontWeight: 600, color: riskLabel.color }}>
                   ✓ Heat: {risk?.level ?? '—'}
                 </span>
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 20, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', fontFamily: "'DM Sans',sans-serif", fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)' }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 20, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', fontFamily: "'DM Sans',sans-serif", fontSize: '0.6875rem', color: 'rgba(255,255,255,0.6)' }}>
                   ☁ Air: {aqiInfo ? aqiInfo.label : '—'}
                 </span>
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 20, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', fontFamily: "'DM Sans',sans-serif", fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)' }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 20, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', fontFamily: "'DM Sans',sans-serif", fontSize: '0.6875rem', color: 'rgba(255,255,255,0.6)' }}>
                   ☀ UV: {uvInfo ? uvInfo.label : '—'}
                 </span>
               </div>
             </div>
 
-            {/* ── Right: CTA card ── */}
-            <div
-              onClick={onOpenMedModal}
-              onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.9' }}
-              onMouseLeave={(e) => { e.currentTarget.style.opacity = '1' }}
-              style={{ background: '#1852B4', borderRadius: 16, padding: 20, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 14, cursor: 'pointer', transition: 'opacity 0.2s' }}
-            >
-              <div>
-                <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: '0.6875rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.55)', marginBottom: 10 }}>
-                  Personalise
-                </div>
-                <div style={{ fontFamily: "'DM Serif Display',Georgia,serif", fontSize: '1.375rem', color: '#fff', letterSpacing: '-0.5px', lineHeight: 1.2 }}>
-                  Get your personal risk profile
+            {/* Med tips — only when meds selected */}
+            {hasMeds && (
+              <div style={{ display: 'flex', alignSelf: 'stretch', flex: 1, minWidth: 0, padding: '0 24px 0 32px', borderLeft: '2px solid rgba(255,199,80,0.65)', overflow: 'hidden' }}>
+                <div style={{ width: '100%', padding: '0', overflowY: 'auto', scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,199,80,0.2) transparent', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', paddingTop: '20px', maxHeight: '100%', overflowY: 'auto' }}>
+                  <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: '0.6875rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.09em', color: 'rgba(255,199,80,0.85)', marginBottom: 8 }}>
+                    💊 Quick tips for you
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                    {medTips.map((tip, i) => (
+                      <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                        <span style={{ color: 'rgba(255,199,80,0.6)', flexShrink: 0, marginTop: 1 }}>·</span>
+                        <span style={{ fontFamily: "'DM Sans',sans-serif", fontSize: '0.8125rem', color: 'rgba(255,255,255,0.72)', lineHeight: 1.6 }}>{tip}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
-              <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: '0.8125rem', color: 'rgba(255,255,255,0.65)', lineHeight: 1.5 }}>
-                Add your health profile and medications for a score tailored to you.
-              </div>
-              <button
-                onClick={(e) => { e.stopPropagation(); onOpenMedModal() }}
-                style={{ background: '#fff', color: '#1852B4', border: 'none', padding: '12px 16px', borderRadius: 10, fontFamily: "'DM Sans',sans-serif", fontSize: '0.875rem', fontWeight: 700, cursor: 'pointer', width: '100%', textAlign: 'center' }}
-              >
-                Edit Personal Profile →
-              </button>
-            </div>
-
+            )}
           </div>
+
+          {/* ── Right: Personalise — split-colour panel ── */}
+          <div
+            onClick={onOpenMedModal}
+            onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.9' }}
+            onMouseLeave={(e) => { e.currentTarget.style.opacity = '1' }}
+            style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 6, padding: '20px 24px', flexShrink: 0, width: 260, background: 'rgba(26,86,219,0.75)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderLeft: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer', transition: 'opacity 0.2s' }}
+          >
+            <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: '0.625rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.55)' }}>
+              Personalise
+            </div>
+            <div style={{ fontFamily: "'DM Serif Display',Georgia,serif", fontSize: '1.125rem', color: '#fff', letterSpacing: '-0.5px', lineHeight: 1.25 }}>
+              Get your personal risk profile
+            </div>
+            <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)', lineHeight: 1.45 }}>
+              Add your medications for a score tailored to you.
+            </div>
+            <button
+              onClick={(e) => { e.stopPropagation(); onOpenMedModal() }}
+              style={{ background: '#fff', color: '#1852B4', border: 'none', padding: '9px 14px', borderRadius: 8, fontFamily: "'DM Sans',sans-serif", fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}
+            >
+              Edit Personal Profile <span>→</span>
+            </button>
+          </div>
+
         </div>
 
       ) : gpsBlocked ? (

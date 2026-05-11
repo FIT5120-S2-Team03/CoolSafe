@@ -23,7 +23,6 @@ import MapPageV1 from './version1/pages/MapPage'
 import HomePageV2 from './version2/pages/HomePage'
 import MapPageV2 from './version2/pages/MapPage'
 
-
 function DevLayout({ children }) {
   return (
     <>

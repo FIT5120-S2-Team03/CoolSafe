@@ -7,7 +7,11 @@ import { useState, useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { getAqiInfo } from '../../utils/riskLevel'
 import { MED_ADVICE } from '../../utils/scoreCalculator'
+<<<<<<< HEAD
 import bgVideo from '../../../assets/bg-video-1.mp4'
+=======
+import bgVideo from '../../../assets/8939276-uhd_3840_2160_25fps.mp4'
+>>>>>>> feature/epic6-share
 
 const RISK_ACCENT = {
   Low:      { rgb: '111,207,151' },
@@ -110,8 +114,13 @@ export default function StatusCard({
         />
       </div>
 
+<<<<<<< HEAD
       {/* Top — Slogan (always visible behind the location modal) */}
       <div style={{ flex: '0 0 64vh', position: 'relative', zIndex: 2, display: 'flex', alignItems: 'flex-end', padding: '0 30px 24px' }}>
+=======
+      {/* Top — Slogan + weather data */}
+      <div style={{ flex: 1, position: 'relative', zIndex: 2, display: 'flex', alignItems: 'center', padding: '0 0 180px 220px' }}>
+>>>>>>> feature/epic6-share
         <div>
           <div style={{ fontFamily: "'DM Serif Display',Georgia,serif", fontSize: 'clamp(1.75rem,3.5vw,3rem)', color: '#fff', letterSpacing: '-2px', lineHeight: 1.1, marginBottom: 12 }}>
             Know the heat.<br />Enjoy your day.
@@ -120,6 +129,7 @@ export default function StatusCard({
             Heat is the deadliest natural hazard in Australia.{' '}
             <Link to="/why" style={{ color: '#6fcf97', textDecoration: 'underline' }}>Read why</Link>
           </div>
+<<<<<<< HEAD
         </div>
       </div>
 
@@ -243,6 +253,123 @@ export default function StatusCard({
             </div>
 
           </div>
+=======
+          {/* Weather data moved here */}
+          {current && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 20, marginTop: 24 }}>
+              <div style={{ lineHeight: 1 }}>
+                <div style={{ fontFamily: "'DM Serif Display',Georgia,serif", fontSize: 'clamp(2.5rem,4vw,3.5rem)', color: '#fff', letterSpacing: '-3px' }}>
+                  {Math.round(current.apparentTemp)}°C
+                </div>
+                <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: '0.6875rem', fontWeight: 600, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: 4 }}>
+                  Feels Like
+                </div>
+              </div>
+              <div style={{ width: 1, background: 'rgba(255,255,255,0.2)', height: 40, flexShrink: 0 }} />
+              <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: '0.8125rem', color: 'rgba(255,255,255,0.55)', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <span>☼ Peak today {daily?.todayMax != null ? `${Math.round(daily.todayMax)}°C` : '—'}</span>
+                <span>☁ AQI {aqi != null ? aqi : '—'} · {aqiInfo ? aqiInfo.label : '—'}</span>
+                <span>☂ UV Index {uvInfo ? `${uvInfo.index} · ${uvInfo.label}` : '—'}</span>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Bottom — conditional on data state */}
+      {loading ? (
+        <div style={{ flex: 1, position: 'relative', zIndex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(8,16,26,0.88)', backdropFilter: 'blur(32px)', WebkitBackdropFilter: 'blur(32px)', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+          <style>{`@keyframes cs-spin{to{transform:rotate(360deg);}}`}</style>
+          <div style={{ width: 48, height: 48, borderRadius: '50%', border: '4px solid rgba(255,255,255,0.2)', borderTopColor: '#fff', animation: 'cs-spin 1s linear infinite' }} />
+        </div>
+
+      ) : current ? (
+        <div style={{ flex: '0 0 auto', position: 'relative', zIndex: 2, background: 'rgba(8,16,26,0.88)', backdropFilter: 'blur(32px)', WebkitBackdropFilter: 'blur(32px)', borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'stretch', overflow: 'hidden', minHeight: 180 }}>
+
+          {/* ── Left: Risk score + insight + med tips ── */}
+          <div style={{ display: 'flex', alignItems: 'stretch', flex: 1, minWidth: 0 }}>
+
+            {/* Score + insight + badges */}
+            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '16px 32px 16px 48px', minWidth: 320, maxWidth: hasMeds ? 450 : 'calc(100% - 260px)', flexShrink: 0, gap: 8, overflowY: 'hidden' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                <span style={{ fontFamily: "'DM Sans',sans-serif", fontSize: '0.9375rem', fontWeight: 800, color: riskLabel.color, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                  {riskLabel.label}
+                </span>
+                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '0.8125rem', color: `rgba(${accent.rgb},0.6)` }}>
+                  {score} / 100
+                </span>
+                <div style={{ width: 80, height: 3, background: 'rgba(255,255,255,0.1)', borderRadius: 2, overflow: 'hidden', flexShrink: 0 }}>
+                  <div style={{ width: `${score}%`, height: '100%', background: riskLabel.color, borderRadius: 2, transition: 'width 0.5s ease' }} />
+                </div>
+                <button
+                  ref={tooltipBtnRef}
+                  onMouseEnter={handleTooltipEnter}
+                  onMouseLeave={() => setShowScoreTooltip(false)}
+                  style={{ width: 20, height: 20, borderRadius: '50%', border: '1.5px solid rgba(255,255,255,0.3)', background: 'transparent', cursor: 'pointer', color: 'rgba(255,255,255,0.55)', fontSize: '0.6875rem', fontFamily: "'DM Sans',sans-serif", fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, padding: 0 }}
+                >?</button>
+              </div>
+              <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: '0.875rem', color: 'rgba(255,255,255,0.85)', fontWeight: 500, lineHeight: 1.5 }}>
+                {adviceLines[0] ?? ''}
+              </div>
+              {/* Badges */}
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 20, background: `rgba(${accent.rgb},0.12)`, border: `1px solid rgba(${accent.rgb},0.25)`, fontFamily: "'DM Sans',sans-serif", fontSize: '0.6875rem', fontWeight: 600, color: riskLabel.color }}>
+                  ✓ Heat: {risk?.level ?? '—'}
+                </span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 20, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', fontFamily: "'DM Sans',sans-serif", fontSize: '0.6875rem', color: 'rgba(255,255,255,0.6)' }}>
+                  ☁ Air: {aqiInfo ? aqiInfo.label : '—'}
+                </span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 20, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', fontFamily: "'DM Sans',sans-serif", fontSize: '0.6875rem', color: 'rgba(255,255,255,0.6)' }}>
+                  ☀ UV: {uvInfo ? uvInfo.label : '—'}
+                </span>
+              </div>
+            </div>
+
+            {/* Med tips — only when meds selected */}
+            {hasMeds && (
+              <div style={{ display: 'flex', alignSelf: 'stretch', flex: 1, minWidth: 0, padding: '0 24px 0 32px', borderLeft: '2px solid rgba(255,199,80,0.65)', overflow: 'hidden' }}>
+                <div style={{ width: '100%', padding: '0', overflowY: 'auto', scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,199,80,0.2) transparent', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', paddingTop: '20px', maxHeight: '100%', overflowY: 'auto' }}>
+                  <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: '0.6875rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.09em', color: 'rgba(255,199,80,0.85)', marginBottom: 8 }}>
+                    💊 Quick tips for you
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                    {medTips.map((tip, i) => (
+                      <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                        <span style={{ color: 'rgba(255,199,80,0.6)', flexShrink: 0, marginTop: 1 }}>·</span>
+                        <span style={{ fontFamily: "'DM Sans',sans-serif", fontSize: '0.8125rem', color: 'rgba(255,255,255,0.72)', lineHeight: 1.6 }}>{tip}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* ── Right: Personalise — split-colour panel ── */}
+          <div
+            onClick={onOpenMedModal}
+            onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.9' }}
+            onMouseLeave={(e) => { e.currentTarget.style.opacity = '1' }}
+            style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 6, padding: '20px 24px', flexShrink: 0, width: 260, background: 'rgba(26,86,219,0.75)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderLeft: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer', transition: 'opacity 0.2s' }}
+          >
+            <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: '0.625rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.55)' }}>
+              Personalise
+            </div>
+            <div style={{ fontFamily: "'DM Serif Display',Georgia,serif", fontSize: '1.125rem', color: '#fff', letterSpacing: '-0.5px', lineHeight: 1.25 }}>
+              Get your personal risk profile
+            </div>
+            <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)', lineHeight: 1.45 }}>
+              Add your medications for a score tailored to you.
+            </div>
+            <button
+              onClick={(e) => { e.stopPropagation(); onOpenMedModal() }}
+              style={{ background: '#fff', color: '#1852B4', border: 'none', padding: '9px 14px', borderRadius: 8, fontFamily: "'DM Sans',sans-serif", fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}
+            >
+              Edit Personal Profile <span>→</span>
+            </button>
+          </div>
+
+>>>>>>> feature/epic6-share
         </div>
 
       ) : gpsBlocked ? (
@@ -274,8 +401,13 @@ export default function StatusCard({
 
       ) : null}
 
+<<<<<<< HEAD
       {/* Scroll hint — only when data is loaded */}
       {current && (
+=======
+      {/* Scroll hint — only when data is loaded and no meds selected */}
+      {current && !hasMeds && (
+>>>>>>> feature/epic6-share
         <div
           onClick={() => document.getElementById('sec1')?.scrollIntoView({ behavior: 'smooth' })}
           style={{ position: 'absolute', bottom: 24, left: '50%', transform: 'translateX(-50%)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, cursor: 'pointer', zIndex: 10 }}

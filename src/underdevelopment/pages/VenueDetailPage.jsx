@@ -80,10 +80,7 @@ export default function VenueDetailPage() {
   const [routeCoords, setRouteCoords] = useState([])
   const [routeLoading, setRouteLoading] = useState(false)
   const [routeError, setRouteError] = useState('')
-<<<<<<< HEAD
-=======
   const [shareModalOpen, setShareModalOpen] = useState(false)
->>>>>>> feature/epic6-share
 
   useEffect(() => {
     if (!navigator.geolocation) return

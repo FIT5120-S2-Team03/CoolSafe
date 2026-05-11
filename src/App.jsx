@@ -20,12 +20,10 @@ import FontSizeToggle from './underdevelopment/components/layout/FontSizeToggle'
 import HomePageV1 from './version1/pages/HomePage'
 import MapPageV1 from './version1/pages/MapPage'
 
-<<<<<<< HEAD
-=======
 import HomePageV2 from './version2/pages/HomePage'
 import MapPageV2 from './version2/pages/MapPage'
 
->>>>>>> feature/epic6-share
+
 function DevLayout({ children }) {
   return (
     <>

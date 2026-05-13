@@ -25,6 +25,7 @@ import useFountains from '../../hooks/useFountains'
 import useHVI from '../../hooks/useHVI'
 import { CATEGORY_COLORS } from '../../utils/categoryMapping'
 import { getWalkingMinutes } from '../../utils/haversine'
+import mockLocation from '../../data/mockLocation.json'
 
 const locationPinIcon = L.divIcon({
   className: '',
@@ -246,7 +247,9 @@ export default function CoolSpacesMap({ selectedCategory, flyTo, showHVI, openVe
   const mapRef = useRef(null)
   const [selectedVenue, setSelectedVenue] = useState(null)
   const [pinPos, setPinPos] = useState(null)
-  const [userLocation, setUserLocation] = useState(null)
+  const [userLocation, setUserLocation] = useState(
+    mockLocation.enabled ? { lat: mockLocation.lat, lng: mockLocation.lng } : null
+  )
   const [routeCoords, setRouteCoords] = useState([])
   const [routeLoading, setRouteLoading] = useState(false)
   const [routeError, setRouteError] = useState('')
@@ -289,6 +292,13 @@ export default function CoolSpacesMap({ selectedCategory, flyTo, showHVI, openVe
   }
 
   function handleMyLocation() {
+    if (mockLocation.enabled) {
+      const { lat, lng } = mockLocation
+      setUserLocation({ lat, lng })
+      mapRef.current?.flyTo([lat, lng], 16)
+      return
+    }
+
     if (!navigator.geolocation) {
       window.alert('Geolocation is not supported by your browser.')
       return
@@ -308,6 +318,10 @@ export default function CoolSpacesMap({ selectedCategory, flyTo, showHVI, openVe
   }
 
   function getCurrentLocation() {
+    if (mockLocation.enabled) {
+      return Promise.resolve({ lat: mockLocation.lat, lng: mockLocation.lng })
+    }
+
     return new Promise((resolve, reject) => {
       if (!navigator.geolocation) {
         reject(new Error('Geolocation is not supported by your browser.'))

@@ -20,6 +20,7 @@ import useCoolSpaces from '../hooks/useCoolSpaces'
 import { getRiskLevel } from '../utils/riskLevel'
 import { calculateHeatSafetyScore } from '../utils/scoreCalculator'
 import { getWalkingMinutes } from '../utils/haversine'
+import mockLocation from '../data/mockLocation.json'
 
 export default function HomePage() {
   const {
@@ -33,7 +34,7 @@ export default function HomePage() {
 
   const [selectedMedications, setSelectedMedications] = useState([])
   const [showMedModal, setShowMedModal]               = useState(false)
-  const [showLocModal, setShowLocModal]               = useState(() => !localStorage.getItem('coolsafe_coords'))
+  const [showLocModal, setShowLocModal]               = useState(() => !mockLocation.enabled && !localStorage.getItem('coolsafe_coords'))
   const [locPostcode, setLocPostcode]                 = useState('')
 
   // Close location modal once data arrives (covers mock-mode auto-load)

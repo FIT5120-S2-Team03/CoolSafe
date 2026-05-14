@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import L from 'leaflet'
 import { MapContainer, TileLayer, Marker, Polyline, Pane, useMap } from 'react-leaflet'
 import Navbar from '../components/layout/Navbar'
@@ -70,6 +70,10 @@ function MapBoundsController({ routeCoords, venueLat, venueLng }) {
 export default function VenueDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const isShareView = searchParams.get('share') === 'true'
+  const shareLat = parseFloat(searchParams.get('from_lat'))
+  const shareLng = parseFloat(searchParams.get('from_lng'))
 
   const { venue, loading, error } = useVenue(id)
 
@@ -83,21 +87,26 @@ export default function VenueDetailPage() {
   const [shareModalOpen, setShareModalOpen] = useState(false)
 
   useEffect(() => {
-    if (!navigator.geolocation) return
+    if (isShareView || !navigator.geolocation) return
     navigator.geolocation.getCurrentPosition(
       (pos) => setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
       () => setLocationDenied(true)
     )
-  }, [])
+  }, [isShareView])
 
   useEffect(() => {
-    if (!userLocation || !venue) return
+    if (isShareView || !userLocation || !venue) return
     if (routeMode === 'fastest') {
       fetchFastestRoute(userLocation)
     } else {
       setRouteCoords([])
     }
-  }, [userLocation, routeMode, venue])
+  }, [userLocation, routeMode, venue, isShareView])
+
+  useEffect(() => {
+    if (!isShareView || !venue || isNaN(shareLat) || isNaN(shareLng)) return
+    fetchFastestRoute({ lat: shareLat, lng: shareLng })
+  }, [isShareView, venue])
 
   async function fetchFastestRoute(from) {
     try {
@@ -161,6 +170,40 @@ export default function VenueDetailPage() {
   const walkMins = userLocation
     ? getWalkingMinutes(userLocation.lat, userLocation.lng, venue.lat, venue.lng)
     : null
+  const shareWalkMins = !isNaN(shareLat) && !isNaN(shareLng)
+    ? getWalkingMinutes(shareLat, shareLng, venue.lat, venue.lng)
+    : null
+
+  if (isShareView) {
+    return (
+      <div style={{ height: '100dvh', display: 'flex', flexDirection: 'column', background: '#fff' }}>
+        <div style={{ padding: '14px 16px', background: '#fff', borderBottom: '1px solid #e2e8f0', flexShrink: 0 }}>
+          <h2 style={{ margin: 0, fontFamily: "'Public Sans', sans-serif", fontWeight: 800, fontSize: '1.1rem', color: '#0f172a' }}>{venue.name}</h2>
+          <p style={{ margin: '3px 0 0', fontFamily: "'Lexend', sans-serif", color: '#64748b', fontSize: '0.82rem' }}>
+            {[venue.suburb, shareWalkMins ? `~${shareWalkMins} min walk` : null].filter(Boolean).join(' · ')}
+          </p>
+          {routeLoading && (
+            <p style={{ margin: '3px 0 0', fontFamily: "'Lexend', sans-serif", color: '#94a3b8', fontSize: '0.78rem' }}>Loading route…</p>
+          )}
+        </div>
+        <div style={{ flex: 1, minHeight: 0 }}>
+          <MapContainer center={[venue.lat, venue.lng]} zoom={15} style={{ height: '100%', width: '100%' }} zoomControl={true}>
+            <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" attribution="&copy; OpenStreetMap contributors &copy; CARTO" />
+            <Marker position={[venue.lat, venue.lng]} icon={venuePinIcon} />
+            {!isNaN(shareLat) && !isNaN(shareLng) && (
+              <Marker position={[shareLat, shareLng]} icon={userPinIcon} />
+            )}
+            {routeCoords.length > 0 && (
+              <Polyline positions={routeCoords} pathOptions={{ color: '#003fa4', weight: 6, opacity: 0.85 }} />
+            )}
+            {routeCoords.length > 0 && (
+              <MapBoundsController routeCoords={routeCoords} venueLat={venue.lat} venueLng={venue.lng} />
+            )}
+          </MapContainer>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col min-h-screen" style={{ background: '#f8fafc' }}>
@@ -348,6 +391,7 @@ export default function VenueDetailPage() {
         venueId={venue.id}
         venueName={venue.name}
         routeType={routeMode}
+        userLocation={userLocation}
       />
     </div>
   )

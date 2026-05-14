@@ -29,7 +29,7 @@ export default function useHVI() {
     let cancelled = false
     async function load() {
       try {
-        const res = await fetch('https://coolsafe-api.onrender.com/api/hvi')
+        const res = await fetch('https://coolsafe.onrender.com/api/hvi')
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
         const json = await res.json()
         if (!cancelled) { setHviData(json); writeCache(json) }

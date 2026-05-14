@@ -7,6 +7,7 @@ import Footer from '../components/layout/Footer'
 import { getWalkingMinutes } from '../utils/haversine'
 import useVenue from '../hooks/useVenue'
 import ShareRouteModal from '../components/venue/ShareRouteModal'
+import mockLocation from '../data/mockLocation.json'
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
@@ -83,6 +84,10 @@ export default function VenueDetailPage() {
   const [shareModalOpen, setShareModalOpen] = useState(false)
 
   useEffect(() => {
+    if (mockLocation.enabled) {
+      setUserLocation({ lat: mockLocation.lat, lng: mockLocation.lng })
+      return
+    }
     if (!navigator.geolocation) return
     navigator.geolocation.getCurrentPosition(
       (pos) => setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
@@ -117,6 +122,12 @@ export default function VenueDetailPage() {
   }
 
   function requestLocation() {
+    if (mockLocation.enabled) {
+      setUserLocation({ lat: mockLocation.lat, lng: mockLocation.lng })
+      setLocationDenied(false)
+      setShowDeniedAlert(false)
+      return
+    }
     if (!navigator.geolocation) return
     navigator.geolocation.getCurrentPosition(
       (pos) => {

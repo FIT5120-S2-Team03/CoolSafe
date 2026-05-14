@@ -387,7 +387,7 @@ export default function AIFinderModal({
 
       <div style={{
         position: 'fixed',
-        bottom: 100, right: 28, zIndex: 89,
+        bottom: 100, right: 28, zIndex: 1099,
         width: 380,
         maxWidth: 'calc(100vw - 32px)',
         maxHeight: 'calc(100vh - 140px)',

@@ -90,7 +90,6 @@ Return ONLY a raw JSON object (no markdown, no prose, nothing outside the braces
       "venue_id": "<id from list>",
       "venue": "<exact name from list>",
       "activity": "<specific event, class, or heat-relief feature found via search>",
-      "date_time": "<time confirmed for today, or null>",
       "address": "<exact address from list>",
       "walking_minutes": <number from list>,
       "is_free": true or false,
@@ -137,13 +136,14 @@ export function useAIRecommend() {
       const lng = userLng ?? MELBOURNE_LNG
 
       
-
-      // 在 useAIRecommend 内部优化过滤逻辑
       const allVenues = (venues ?? [])
         .filter(v => {
+          const cat = (v.category || '').toLowerCase();
+          const sub = (v.sub_theme || '').toLowerCase();
+          if (cat === 'fountain' || sub.includes('drinking fountain')) return false;
+
           if (!v.lat || !v.lng) return false;
 
-          // 1. 逻辑预过滤：减少 AI 负担
           if (intent === 'easy_walk' && getWalkingMinutes(lat, lng, v.lat, v.lng) > 10) return false;
 
           if (intent === 'quiet_sit') {
@@ -152,7 +152,6 @@ export function useAIRecommend() {
           }
     
           if (intent === 'cool_down') {
-      // 仅保留可能有强空调的地点
             const category = (v.category || v.sub_theme || '').toLowerCase();
             const coolSpots = ['library', 'centre', 'gallery', 'museum', 'pool', 'mall'];
             return coolSpots.some(spot => category.includes(spot));
@@ -166,7 +165,7 @@ export function useAIRecommend() {
           walking_minutes: getWalkingMinutes(lat, lng, v.lat, v.lng)
         }))
         .sort((a, b) => a._km - b._km)
-        .slice(0, 5); // 限制在 5 个，AI 搜索压力减半
+        .slice(0, 5); 
 
       console.log('[AIRecommend] venues sent to Gemini:', allVenues.length)
 
@@ -188,7 +187,7 @@ export function useAIRecommend() {
           contents: [{ role: 'user', parts: [{ text: prompt }] }],
           tools: [{ google_search: {} }],
           generationConfig: {
-            temperature: 0.2 // 降低随机性，提高速度
+            temperature: 0.2
           }
         }),
       })

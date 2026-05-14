@@ -163,9 +163,6 @@ function PlaceCard({ event, onGo }) {
       </div>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, fontSize: 12, color: C.textSecondary, marginTop: 2 }}>
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-          <WalkIcon color={C.green} /> {event.walking_minutes} min walk
-        </span>
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
           <CoinIcon color={isFree ? C.green : C.textSecondary} />
           <span style={{ fontWeight: isFree ? 600 : 500, color: isFree ? C.green : C.textSecondary }}>{event.cost}</span>
         </span>

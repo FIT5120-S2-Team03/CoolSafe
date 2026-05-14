@@ -24,6 +24,9 @@ export default {
         'risk-extreme': '#dc2626',
       },
       fontFamily: {
+        serif: ['"DM Serif Display"', 'Georgia', 'serif'],
+        sans: ['"DM Sans"', 'sans-serif'],
+        mono: ['"DM Mono"', 'monospace'],
         heading: ["'Public Sans'", 'sans-serif'],
         body: ["'Lexend'", 'sans-serif'],
         data: ["'Inter'", 'sans-serif'],

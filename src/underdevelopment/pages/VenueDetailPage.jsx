@@ -1,13 +1,25 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import L from 'leaflet'
-import { MapContainer, TileLayer, Marker } from 'react-leaflet'
+import { MapContainer, TileLayer, Marker, Polyline, Pane, useMap } from 'react-leaflet'
 import Navbar from '../components/layout/Navbar'
 import Footer from '../components/layout/Footer'
 import { getWalkingMinutes } from '../utils/haversine'
 import useVenue from '../hooks/useVenue'
+import ShareRouteModal from '../components/venue/ShareRouteModal'
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+
+const userPinIcon = L.divIcon({
+  className: '',
+  iconSize: [28, 36],
+  iconAnchor: [14, 36],
+  html: `<svg width="28" height="36" viewBox="0 0 28 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M14 0C6.268 0 0 6.268 0 14c0 9.9 14 22 14 22S28 23.9 28 14C28 6.268 21.732 0 14 0z" fill="#64748b"/>
+    <circle cx="14" cy="14" r="6" fill="white"/>
+    <circle cx="14" cy="14" r="3.5" fill="#64748b"/>
+  </svg>`,
+})
 
 const venuePinIcon = L.divIcon({
   className: '',
@@ -43,6 +55,18 @@ function getHoursDisplay(openingHours) {
   return { todayName, todayHours, upcoming }
 }
 
+function MapBoundsController({ routeCoords, venueLat, venueLng }) {
+  const map = useMap()
+  useEffect(() => {
+    if (routeCoords.length > 0) {
+      map.fitBounds(L.latLngBounds(routeCoords), { padding: [40, 40] })
+    } else {
+      map.setView([venueLat, venueLng], 16)
+    }
+  }, [routeCoords])
+  return null
+}
+
 export default function VenueDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -53,6 +77,10 @@ export default function VenueDetailPage() {
   const [locationDenied, setLocationDenied] = useState(false)
   const [showDeniedAlert, setShowDeniedAlert] = useState(false)
   const [routeMode, setRouteMode] = useState('fastest')
+  const [routeCoords, setRouteCoords] = useState([])
+  const [routeLoading, setRouteLoading] = useState(false)
+  const [routeError, setRouteError] = useState('')
+  const [shareModalOpen, setShareModalOpen] = useState(false)
 
   useEffect(() => {
     if (!navigator.geolocation) return
@@ -61,6 +89,32 @@ export default function VenueDetailPage() {
       () => setLocationDenied(true)
     )
   }, [])
+
+  useEffect(() => {
+    if (!userLocation || !venue) return
+    if (routeMode === 'fastest') {
+      fetchFastestRoute(userLocation)
+    } else {
+      setRouteCoords([])
+    }
+  }, [userLocation, routeMode, venue])
+
+  async function fetchFastestRoute(from) {
+    try {
+      setRouteLoading(true)
+      setRouteError('')
+      const url = `https://router.project-osrm.org/route/v1/foot/${from.lng},${from.lat};${venue.lng},${venue.lat}?overview=full&geometries=geojson`
+      const res = await fetch(url)
+      if (!res.ok) throw new Error(`Route request failed: HTTP ${res.status}`)
+      const data = await res.json()
+      if (!data.routes || data.routes.length === 0) throw new Error('No route found.')
+      setRouteCoords(data.routes[0].geometry.coordinates.map(([lng, lat]) => [lat, lng]))
+    } catch (err) {
+      setRouteError(err.message)
+    } finally {
+      setRouteLoading(false)
+    }
+  }
 
   function requestLocation() {
     if (!navigator.geolocation) return
@@ -231,7 +285,7 @@ export default function VenueDetailPage() {
 
             {/* Route toggle */}
             <div style={{ display: 'flex', background: '#f1f5f9', borderRadius: 50, padding: 4, marginBottom: 16 }}>
-              {[{ key: 'fastest', label: '⚡ Fastest Route' }, { key: 'coolest', label: '🌲 Coolest Route' }].map(({ key, label }) => (
+              {[{ key: 'fastest', label: routeLoading && routeMode === 'fastest' ? '⚡ Loading…' : '⚡ Fastest Route' }, { key: 'coolest', label: '🌲 Coolest Route' }].map(({ key, label }) => (
                 <button key={key} onClick={() => setRouteMode(key)}
                   style={{ flex: 1, padding: '10px 16px', borderRadius: 50, border: 'none', cursor: 'pointer', background: routeMode === key ? '#fff' : 'transparent', color: routeMode === key ? '#003fa4' : '#64748b', fontWeight: routeMode === key ? 700 : 400, boxShadow: routeMode === key ? '0 1px 4px rgba(0,0,0,0.1)' : 'none', fontFamily: "'Lexend', sans-serif", fontSize: 14, minHeight: 48, transition: 'all 0.15s ease' }}
                 >
@@ -240,17 +294,44 @@ export default function VenueDetailPage() {
               ))}
             </div>
 
+            {routeError && (
+              <p style={{ fontFamily: "'Lexend', sans-serif", fontSize: 13, color: '#dc2626', marginBottom: 12 }}>{routeError}</p>
+            )}
+
             {/* Inline map */}
             <div style={{ borderRadius: 12, overflow: 'hidden', height: 300 }}>
               <MapContainer center={[venue.lat, venue.lng]} zoom={16} style={{ width: '100%', height: '100%' }} zoomControl={false}>
                 <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" attribution="&copy; OpenStreetMap contributors &copy; CARTO" />
+                <MapBoundsController routeCoords={routeCoords} venueLat={venue.lat} venueLng={venue.lng} />
+                <Pane name="detail-route" style={{ zIndex: 450 }}>
+                  {routeCoords.length > 0 && (
+                    <Polyline positions={routeCoords} pathOptions={{ color: '#003fa4', weight: 6, opacity: 0.85 }} />
+                  )}
+                </Pane>
                 <Marker position={[venue.lat, venue.lng]} icon={venuePinIcon} />
+                {userLocation && (
+                  <Marker position={[userLocation.lat, userLocation.lng]} icon={userPinIcon} />
+                )}
               </MapContainer>
             </div>
           </div>
 
+          {/* Share This Route with Family button */}
+          <button onClick={() => setShareModalOpen(true)}
+            style={{ width: '100%', background: '#fff', color: '#16a34a', border: '2px solid #16a34a', borderRadius: 12, padding: '18px 0', fontSize: 18, fontWeight: 700, fontFamily: "'Public Sans', sans-serif", cursor: 'pointer', minHeight: 48, marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" />
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" /><line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+            </svg>
+            Share This Route with Family
+          </button>
+          <p style={{ fontFamily: "'Lexend', sans-serif", fontSize: 13, color: '#64748b', textAlign: 'center', margin: '0 0 20px' }}>
+            Let your family know where you're going
+          </p>
+
           {/* View on Full Map button */}
-          <button onClick={() => navigate('/map', { state: { flyTo: { lat: venue.lat, lng: venue.lng } } })}
+          <button onClick={() => navigate('/map', { state: { flyTo: { lat: venue.lat, lng: venue.lng }, openVenueId: venue.id } })}
             style={{ width: '100%', background: '#003fa4', color: '#fff', border: 'none', borderRadius: 12, padding: '18px 0', fontSize: 18, fontWeight: 700, fontFamily: "'Public Sans', sans-serif", cursor: 'pointer', minHeight: 48, marginBottom: 40 }}
           >
             View on Full Map →
@@ -260,6 +341,14 @@ export default function VenueDetailPage() {
       </main>
 
       <Footer />
+
+      <ShareRouteModal
+        isOpen={shareModalOpen}
+        onClose={() => setShareModalOpen(false)}
+        venueId={venue.id}
+        venueName={venue.name}
+        routeType={routeMode}
+      />
     </div>
   )
 }

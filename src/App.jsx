@@ -4,18 +4,16 @@ import useFountains from './underdevelopment/hooks/useFountains'
 import useHVI from './underdevelopment/hooks/useHVI'
 
 // Kicks off background fetches so map data is cached before the user navigates there.
-// useCoolSpaces is already called on the home page so it doesn't need to be here.
 function Prefetch() {
   useFountains()
   useHVI()
   return null
 }
 
+import LandingPage from './underdevelopment/pages/LandingPage'
 import HomePageDev from './underdevelopment/pages/HomePage'
 import MapPageDev from './underdevelopment/pages/MapPage'
 import VenueDetailPage from './underdevelopment/pages/VenueDetailPage'
-import WhyItMattersPage from './underdevelopment/pages/WhyItMattersPage'
-import FontSizeToggle from './underdevelopment/components/layout/FontSizeToggle'
 
 import HomePageV1 from './version1/pages/HomePage'
 import MapPageV1 from './version1/pages/MapPage'
@@ -24,12 +22,7 @@ import HomePageV2 from './version2/pages/HomePage'
 import MapPageV2 from './version2/pages/MapPage'
 
 function DevLayout({ children }) {
-  return (
-    <>
-      <FontSizeToggle />
-      {children}
-    </>
-  )
+  return children
 }
 
 export default function App() {
@@ -37,23 +30,42 @@ export default function App() {
     <BrowserRouter>
       <Prefetch />
       <Routes>
+
+        {/* ── Landing page — logo always navigates here ── */}
         <Route path="/" element={
+          <PasswordGate storageKey="auth_dev">
+            <DevLayout><LandingPage /></DevLayout>
+          </PasswordGate>
+        } />
+
+        {/* ── Today / heat risk page ── */}
+        <Route path="/today" element={
           <PasswordGate storageKey="auth_dev">
             <DevLayout><HomePageDev /></DevLayout>
           </PasswordGate>
         } />
+
+        {/* ── Map page (kept as-is) ── */}
         <Route path="/map" element={
           <PasswordGate storageKey="auth_dev">
             <DevLayout><MapPageDev /></DevLayout>
           </PasswordGate>
         } />
-        <Route path="/why" element={
+
+        {/* ── Venue detail ── */}
+        <Route path="/venue/:id" element={
           <PasswordGate storageKey="auth_dev">
-            <DevLayout><WhyItMattersPage /></DevLayout>
+            <DevLayout><VenueDetailPage /></DevLayout>
           </PasswordGate>
         } />
 
+        {/* ── /underdevelopment aliases (backwards-compatible) ── */}
         <Route path="/underdevelopment" element={
+          <PasswordGate storageKey="auth_dev">
+            <DevLayout><LandingPage /></DevLayout>
+          </PasswordGate>
+        } />
+        <Route path="/underdevelopment/today" element={
           <PasswordGate storageKey="auth_dev">
             <DevLayout><HomePageDev /></DevLayout>
           </PasswordGate>
@@ -63,18 +75,13 @@ export default function App() {
             <DevLayout><MapPageDev /></DevLayout>
           </PasswordGate>
         } />
-
-        <Route path="/venue/:id" element={
-          <PasswordGate storageKey="auth_dev">
-            <DevLayout><VenueDetailPage /></DevLayout>
-          </PasswordGate>
-        } />
         <Route path="/underdevelopment/venue/:id" element={
           <PasswordGate storageKey="auth_dev">
             <DevLayout><VenueDetailPage /></DevLayout>
           </PasswordGate>
         } />
 
+        {/* ── Version 1 ── */}
         <Route path="/version1" element={
           <PasswordGate storageKey="auth_v1">
             <HomePageV1 />
@@ -86,6 +93,7 @@ export default function App() {
           </PasswordGate>
         } />
 
+        {/* ── Version 2 ── */}
         <Route path="/version2" element={
           <PasswordGate storageKey="auth_v2">
             <HomePageV2 />
@@ -96,6 +104,7 @@ export default function App() {
             <MapPageV2 />
           </PasswordGate>
         } />
+
       </Routes>
     </BrowserRouter>
   )

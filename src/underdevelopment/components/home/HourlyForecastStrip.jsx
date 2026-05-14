@@ -6,20 +6,20 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-/* ── helpers ── */
-function fmtH(h) {
+/* ── helpers (exported so HomePage can import them directly) ── */
+export function fmtH(h) {
   if (h === 0)  return '12AM'
   if (h < 12)   return `${h}AM`
   if (h === 12) return '12PM'
   return `${h - 12}PM`
 }
 
-function todayStr() {
+export function todayStr() {
   const d = new Date()
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
-function getWindows(hourly) {
+export function getWindows(hourly) {
   if (!hourly) return null
   const today = todayStr()
   const slots = hourly.time
@@ -55,26 +55,24 @@ function getWindows(hourly) {
   }
 }
 
-/* ── Catmull-Rom to bezier path ── */
-function catmullRomPath(pts) {
-  if (pts.length < 2) return ''
-  const d = [`M ${pts[0].x.toFixed(1)} ${pts[0].y.toFixed(1)}`]
-  for (let i = 0; i < pts.length - 1; i++) {
-    const p0 = pts[Math.max(0, i - 1)]
-    const p1 = pts[i]
-    const p2 = pts[i + 1]
-    const p3 = pts[Math.min(pts.length - 1, i + 2)]
-    const cp1x = p1.x + (p2.x - p0.x) / 6
-    const cp1y = p1.y + (p2.y - p0.y) / 6
-    const cp2x = p2.x - (p3.x - p1.x) / 6
-    const cp2y = p2.y - (p3.y - p1.y) / 6
-    d.push(`C ${cp1x.toFixed(1)} ${cp1y.toFixed(1)} ${cp2x.toFixed(1)} ${cp2y.toFixed(1)} ${p2.x.toFixed(1)} ${p2.y.toFixed(1)}`)
-  }
-  return d.join(' ')
+/* ── Bar colour by temperature ── */
+function barColor(temp) {
+  if (temp >= 36) return '#8B0000'
+  if (temp >= 33) return '#C94B1A'
+  if (temp >= 29) return '#B87200'
+  return '#4A6741'
 }
 
-/* ── Editorial temperature chart ── */
-function TempChart({ hourly }) {
+/* ── Temp label ── */
+function tempLabel(temp) {
+  if (temp >= 36) return 'Dangerous'
+  if (temp >= 33) return 'Hot'
+  if (temp >= 29) return 'Warm'
+  return 'Comfortable'
+}
+
+/* ── Bar chart temperature chart ── */
+export function TempChart({ hourly }) {
   const [hoveredIdx, setHoveredIdx] = useState(null)
 
   if (!hourly) return (
@@ -89,30 +87,28 @@ function TempChart({ hourly }) {
 
   const W = 560, H = 260
   const PAD = { top: 20, right: 12, bottom: 32, left: 44 }
-  const THRESHOLD = 32
 
   const temps = slots.map((s) => s.temp)
-  const rawMin = Math.min(...temps, THRESHOLD - 2)
-  const rawMax = Math.max(...temps, THRESHOLD + 2)
+  const rawMin = Math.min(...temps)
+  const rawMax = Math.max(...temps)
   const minT   = Math.floor((rawMin - 2) / 4) * 4
   const maxT   = Math.ceil((rawMax + 2) / 4) * 4
 
   const cW  = W - PAD.left - PAD.right
   const cH  = H - PAD.top  - PAD.bottom
-  const getX = (i) => PAD.left + (i / (slots.length - 1)) * cW
-  const getY = (t) => PAD.top  + cH * (1 - (t - minT) / (maxT - minT))
+  const getY = (t) => PAD.top + cH * (1 - (t - minT) / (maxT - minT))
+  const baseY = getY(minT)
+
+  const slotW   = cW / slots.length
+  const barW    = slotW * 0.68
 
   // Y-axis grid labels every 4°C
   const yLabels = []
   for (let t = minT; t <= maxT; t += 4) yLabels.push(t)
 
-  const pts      = slots.map((s, i) => ({ x: getX(i), y: getY(s.temp) }))
-  const linePath = catmullRomPath(pts)
-  const areaPath = `${linePath} L ${getX(slots.length - 1).toFixed(1)} ${H - PAD.bottom} L ${PAD.left} ${H - PAD.bottom} Z`
+  const nowH   = new Date().getHours()
+  const nowIdx = slots.findIndex((s) => parseInt(s.t.slice(11, 13)) === nowH)
 
-  const threshY    = getY(THRESHOLD)
-  const nowH       = new Date().getHours()
-  const nowIdx     = slots.findIndex((s) => parseInt(s.t.slice(11, 13)) === nowH)
   const xLabelSlots = slots.filter((_, i) => i % 3 === 0)
 
   return (
@@ -127,22 +123,20 @@ function TempChart({ hourly }) {
       {yLabels.map((t) => {
         const y = getY(t)
         if (y < PAD.top - 4 || y > H - PAD.bottom + 4) return null
-        const isThresh = t === THRESHOLD
         return (
           <g key={t}>
             <line
               x1={PAD.left} y1={y.toFixed(1)}
               x2={W - PAD.right} y2={y.toFixed(1)}
-              stroke={isThresh ? 'rgba(232,93,26,0.15)' : 'rgba(0,0,0,0.07)'}
+              stroke="rgba(0,0,0,0.07)"
               strokeWidth="1"
             />
             <text
               x={PAD.left - 6} y={(y + 4).toFixed(1)}
               textAnchor="end"
-              fill={isThresh ? '#E85D1A' : '#A8A8A8'}
+              fill="#A8A8A8"
               fontSize="10.5"
               fontFamily="'DM Sans',sans-serif"
-              fontWeight={isThresh ? '600' : '400'}
             >
               {t}°
             </text>
@@ -150,79 +144,81 @@ function TempChart({ hourly }) {
         )
       })}
 
-      {/* Warm tan fill */}
-      <path d={areaPath} fill="#D4B896" fillOpacity="0.42" />
+      {/* Bars */}
+      {slots.map((s, i) => {
+        const barX = PAD.left + i * slotW + (slotW - barW) / 2
+        const barTop = getY(s.temp)
+        const barH = baseY - barTop
+        const color = barColor(s.temp)
+        const isNow = i === nowIdx
+        const isHovered = i === hoveredIdx
+        const opacity = isNow ? 1 : isHovered ? 1 : 0.72
+        return (
+          <rect
+            key={i}
+            x={barX.toFixed(1)}
+            y={barTop.toFixed(1)}
+            width={barW.toFixed(1)}
+            height={Math.max(0, barH).toFixed(1)}
+            rx="4" ry="4"
+            fill={color}
+            opacity={opacity}
+            style={{ transition: 'opacity 0.15s' }}
+          />
+        )
+      })}
 
-      {/* Heat threshold dashed line */}
-      {threshY >= PAD.top && threshY <= H - PAD.bottom && (
-        <line
-          x1={PAD.left} y1={threshY.toFixed(1)}
-          x2={W - PAD.right} y2={threshY.toFixed(1)}
-          stroke="#E85D1A" strokeWidth="1.5"
-          strokeDasharray="7 4" opacity="0.9"
-        />
-      )}
-
-      {/* Smooth temperature curve */}
-      <path
-        d={linePath}
-        fill="none" stroke="#1852B4" strokeWidth="2.2"
-        strokeLinecap="round" strokeLinejoin="round"
-      />
-
-      {/* Data points */}
-      {pts.map((p, i) => (
-        <circle
-          key={i}
-          cx={p.x.toFixed(1)} cy={p.y.toFixed(1)}
-          r={i === nowIdx || i === hoveredIdx ? '5' : '3.5'}
-          fill={i === hoveredIdx ? '#2563EB' : '#1852B4'}
-          stroke={i === nowIdx || i === hoveredIdx ? '#fff' : 'none'}
-          strokeWidth={i === nowIdx || i === hoveredIdx ? '2' : '0'}
-        />
-      ))}
-
-      {/* Invisible hover targets (larger hit area) */}
-      {pts.map((p, i) => (
-        <circle
-          key={`hit-${i}`}
-          cx={p.x.toFixed(1)} cy={p.y.toFixed(1)}
-          r="14"
-          fill="transparent"
-          style={{ cursor: 'pointer' }}
-          onMouseEnter={() => setHoveredIdx(i)}
-          onMouseLeave={() => setHoveredIdx(null)}
-        />
-      ))}
+      {/* Invisible wide rect overlay per bar slot for hover detection */}
+      {slots.map((s, i) => {
+        const slotX = PAD.left + i * slotW
+        return (
+          <rect
+            key={`hit-${i}`}
+            x={slotX.toFixed(1)}
+            y={PAD.top}
+            width={slotW.toFixed(1)}
+            height={cH}
+            fill="transparent"
+            style={{ cursor: 'pointer' }}
+            onMouseEnter={() => setHoveredIdx(i)}
+            onMouseLeave={() => setHoveredIdx(null)}
+          />
+        )
+      })}
 
       {/* Hover tooltip */}
       {hoveredIdx != null && (() => {
-        const p   = pts[hoveredIdx]
-        const s   = slots[hoveredIdx]
-        const h   = parseInt(s.t.slice(11, 13))
+        const s    = slots[hoveredIdx]
+        const i    = hoveredIdx
+        const barX = PAD.left + i * slotW + (slotW - barW) / 2
+        const barTop = getY(s.temp)
+        const h    = parseInt(s.t.slice(11, 13))
         const temp = Math.round(s.temp)
-        const TW  = 82, TH = 50, TR = 7
-        let tx = p.x - TW / 2
-        const ty = p.y < H * 0.45 ? p.y + 14 : p.y - TH - 14
+        const label = tempLabel(s.temp)
+        const TW = 96, TH = 58, TR = 7
+        let tx = barX + barW / 2 - TW / 2
+        const ty = barTop < PAD.top + TH + 14 ? barTop + 8 : barTop - TH - 8
         tx = Math.max(PAD.left, Math.min(W - PAD.right - TW, tx))
         return (
           <g pointerEvents="none">
             <rect x={tx} y={ty} width={TW} height={TH} rx={TR} ry={TR} fill="rgba(17,24,39,0.96)" />
-            <text x={tx + TW / 2} y={ty + 17} textAnchor="middle" fill="white" fontSize="12" fontFamily="'DM Sans',sans-serif" fontWeight="700">
+            <text x={tx + TW / 2} y={ty + 16} textAnchor="middle" fill="white" fontSize="11" fontFamily="'DM Sans',sans-serif" fontWeight="700">
               {fmtH(h)}
             </text>
-            <rect x={tx + 11} y={ty + 27} width={9} height={9} rx="2" ry="2" fill="#1852B4" />
-            <text x={tx + 25} y={ty + 36} fill="rgba(255,255,255,0.9)" fontSize="11" fontFamily="'DM Sans',sans-serif" fontWeight="500">
+            <text x={tx + TW / 2} y={ty + 32} textAnchor="middle" fill="rgba(255,255,255,0.9)" fontSize="11" fontFamily="'DM Sans',sans-serif" fontWeight="500">
               {temp}°C
+            </text>
+            <text x={tx + TW / 2} y={ty + 48} textAnchor="middle" fill="rgba(255,255,255,0.55)" fontSize="9.5" fontFamily="'DM Sans',sans-serif">
+              {label}
             </text>
           </g>
         )
       })()}
 
-      {/* X-axis time labels */}
+      {/* X-axis hour labels every 3 slots */}
       {xLabelSlots.map((s) => {
         const idx = slots.indexOf(s)
-        const x   = getX(idx)
+        const x   = PAD.left + idx * slotW + slotW / 2
         const h   = parseInt(s.t.slice(11, 13))
         return (
           <text
@@ -241,7 +237,7 @@ function TempChart({ hourly }) {
 }
 
 /* ── Tomorrow Alert ── */
-function TomorrowAlert({ daily }) {
+export function TomorrowAlert({ daily }) {
   if (!daily || daily.tomorrowMax == null) return null
   const { tomorrowMax, todayMax } = daily
 

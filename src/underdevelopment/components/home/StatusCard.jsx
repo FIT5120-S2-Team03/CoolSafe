@@ -4,7 +4,6 @@
  * location modal. The glass panel is only shown once current data is available.
  */
 import { useState, useRef, useEffect } from 'react'
-import { Link } from 'react-router-dom'
 import { getAqiInfo } from '../../utils/riskLevel'
 import { MED_ADVICE } from '../../utils/scoreCalculator'
 import bgVideo from '../../../assets/8939276-uhd_3840_2160_25fps.mp4'
@@ -117,8 +116,7 @@ export default function StatusCard({
             Know the heat.<br />Enjoy your day.
           </div>
           <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: '0.9375rem', color: 'rgba(255,255,255,0.5)', lineHeight: 1.6 }}>
-            Heat is the deadliest natural hazard in Australia.{' '}
-            <Link to="/why" style={{ color: '#6fcf97', textDecoration: 'underline' }}>Read why</Link>
+            Heat is the deadliest natural hazard in Australia.
           </div>
           {/* Weather data moved here */}
           {current && (

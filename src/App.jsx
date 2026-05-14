@@ -16,6 +16,7 @@ import MapPageDev from './underdevelopment/pages/MapPage'
 import VenueDetailPage from './underdevelopment/pages/VenueDetailPage'
 import WhyItMattersPage from './underdevelopment/pages/WhyItMattersPage'
 import FontSizeToggle from './underdevelopment/components/layout/FontSizeToggle'
+import AIFinderButton from './underdevelopment/components/ai/AIFinderButton'
 
 import HomePageV1 from './version1/pages/HomePage'
 import MapPageV1 from './version1/pages/MapPage'
@@ -27,6 +28,7 @@ function DevLayout({ children }) {
   return (
     <>
       <FontSizeToggle />
+      <AIFinderButton />
       {children}
     </>
   )

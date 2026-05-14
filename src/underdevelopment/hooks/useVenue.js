@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'https://coolsafe-api.onrender.com'
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'https://coolsafe.onrender.com'
 
 export default function useVenue(id) {
   const [venue, setVenue] = useState(null)

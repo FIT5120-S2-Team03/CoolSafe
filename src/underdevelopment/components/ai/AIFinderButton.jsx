@@ -25,6 +25,7 @@ export default function AIFinderButton() {
   const [view, setView]                   = useState('pick')
   const [selectedIntent, setSelectedIntent] = useState(null)
   const [extraNote, setExtraNote]         = useState('')
+  const [excludedIds, setExcludedIds]     = useState([])
 
   const { lat, lng, hourly, locationName } = useWeatherData()
   const { venues }                         = useCoolSpaces()
@@ -39,11 +40,30 @@ export default function AIFinderButton() {
       userLng: lng,
       venues,
       weatherData: { hourly, locationName },
+      excludeIds: excludedIds,
+    })
+    setView('results')
+  }
+
+  async function handleShowDifferent(currentResults) {
+    const shownIds = (currentResults?.events ?? []).map(e => e.venue_id).filter(Boolean)
+    const nextExcluded = [...excludedIds, ...shownIds]
+    setExcludedIds(nextExcluded)
+    setView('loading')
+    await recommend({
+      intent: selectedIntent,
+      extraNote: extraNote.trim(),
+      userLat: lat,
+      userLng: lng,
+      venues,
+      weatherData: { hourly, locationName },
+      excludeIds: nextExcluded,
     })
     setView('results')
   }
 
   function handleRefine() {
+    setExcludedIds([])
     setView('pick')
   }
 
@@ -125,6 +145,7 @@ export default function AIFinderButton() {
           extraNote={extraNote}
           onExtraNote={setExtraNote}
           onFind={handleFind}
+          onShowDifferent={() => handleShowDifferent(results)}
           onRefine={handleRefine}
           results={results}
           error={error}

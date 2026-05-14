@@ -91,12 +91,8 @@ Return ONLY a raw JSON object (no markdown, no prose, nothing outside the braces
       "venue": "<exact name from list>",
       "activity": "<specific event, class, or heat-relief feature found via search>",
       "address": "<exact address from list>",
-      "walking_minutes": <number from list>,
       "is_free": true or false,
       "cost": "<Free / $X / Free with Seniors Card>",
-      "seniors_discount": true or false,
-      "accessible": true or false,
-      "why_suitable": "<max 10 words: why this suits elderly visitors in the heat>",
       "disclaimer": "AI recommendation · Call ahead to confirm"
     }
   ],
@@ -107,15 +103,14 @@ Return ONLY a raw JSON object (no markdown, no prose, nothing outside the braces
 - Return 3 events, each from a DIFFERENT venue. Never duplicate a venue.
 - ELDERLY SUITABILITY: Only recommend activities appropriate for people aged 65+. Exclude events targeting children, teenagers, or young adults — e.g. workshops for under-18s, youth programs, school holiday activities, high-intensity fitness classes.
 - The user's need is "${INTENT_LABELS[intent]}". Every recommended venue MUST directly satisfy this specific need. Exclude venues that do not clearly match even if nearby.
-- For "Something to do today": at least 2 of the 3 results must have a real confirmed event today, not just permanent features.
-- For "Quiet place to sit": do NOT recommend shopping centres or markets under any circumstances.
+- ALWAYS return exactly 3 events, each from a DIFFERENT venue. Never return fewer than 3 — if strict criteria cannot be met, relax them and use the venue's best permanent feature instead.
+- For "Something to do today": prefer venues with a confirmed event today, but if fewer than 3 have confirmed events, fill the remaining slots with strong permanent features (e.g. free exhibition, air-conditioned reading room).
 - For "Close enough to walk": do NOT recommend any venue with walking_minutes greater than 10.
 - Prioritise: (1) a real event or class confirmed running today, (2) if none found, a specific permanent feature e.g. "Free air-conditioned reading room open until 8 PM". Never use vague descriptions like "visit the venue".
 - Use id, name, address, and walking_minutes EXACTLY as given in the list above.
 - Prefer venues that are closer (lower walking_minutes) when quality is equal.
-- Check if Seniors Card discounts apply to the cost.
 - All text fields must be under 20 words.
-- If a venue is closed today, exclude it.`
+- Prefer open venues, but only exclude a venue if you have explicitly confirmed it is closed today.`
 }
 
 export function useAIRecommend() {
@@ -123,7 +118,7 @@ export function useAIRecommend() {
   const [loading, setLoading] = useState(false)
   const [error, setError]     = useState(null)
 
-  const recommend = useCallback(async ({ intent, extraNote, userLat, userLng, venues, weatherData }) => {
+  const recommend = useCallback(async ({ intent, extraNote, userLat, userLng, venues, weatherData, excludeIds = [] }) => {
     const apiKey = import.meta.env.VITE_GEMINI_API_KEY
     if (!apiKey) { setError('Gemini API key not configured.'); return }
 
@@ -136,25 +131,60 @@ export function useAIRecommend() {
       const lng = userLng ?? MELBOURNE_LNG
 
       
+      const excludeSet = new Set(excludeIds.map(String))
+
       const allVenues = (venues ?? [])
         .filter(v => {
+          if (excludeSet.has(String(v.id))) return false;
+
           const cat = (v.category || '').toLowerCase();
           const sub = (v.sub_theme || '').toLowerCase();
+          const vname = (v.name || '').toLowerCase();
           if (cat === 'fountain' || sub.includes('drinking fountain')) return false;
 
           if (!v.lat || !v.lng) return false;
 
-          if (intent === 'easy_walk' && getWalkingMinutes(lat, lng, v.lat, v.lng) > 10) return false;
+          if (intent === 'easy_walk') {
+            return getWalkingMinutes(lat, lng, v.lat, v.lng) <= 10;
+          }
+
+          if (intent === 'cool_down') {
+            // Indoor venues likely to have air conditioning
+            const INDOOR_SUBTYPES = [
+              'art gallery/museum', 'theatre live', 'cinema', 'library',
+              'indoor recreation facility', 'gymnasium/health club',
+              'function/conference/exhibition centre', 'aquarium',
+              'observation tower/wheel', 'major sports & recreation facility',
+            ]
+            return INDOOR_SUBTYPES.includes(sub) || vname.includes('library')
+          }
+
+          if (intent === 'something_to_do') {
+            // Venues that host scheduled events or activities
+            const EVENT_SUBTYPES = [
+              'art gallery/museum', 'theatre live', 'cinema',
+              'indoor recreation facility', 'function/conference/exhibition centre',
+              'aquarium', 'observation tower/wheel', 'major sports & recreation facility',
+            ]
+            return EVENT_SUBTYPES.includes(sub)
+          }
+
+          if (intent === 'free_nearby') {
+            // Exclude venues that almost always charge entry
+            const PAID_SUBTYPES = [
+              'theatre live', 'major sports & recreation facility',
+              'gymnasium/health club', 'aquarium', 'observation tower/wheel',
+            ]
+            return !PAID_SUBTYPES.includes(sub)
+          }
 
           if (intent === 'quiet_sit') {
-            const category = (v.category || v.sub_theme || '').toLowerCase();
-            if (category.includes('shopping') || category.includes('market')) return false;
-          }
-    
-          if (intent === 'cool_down') {
-            const category = (v.category || v.sub_theme || '').toLowerCase();
-            const coolSpots = ['library', 'centre', 'gallery', 'museum', 'pool', 'mall'];
-            return coolSpots.some(spot => category.includes(spot));
+            // Calm, low-noise spaces only
+            const QUIET_SUBTYPES = [
+              'library', 'art gallery/museum',
+              'informal outdoor facility (park/garden/reserve)',
+            ]
+            return QUIET_SUBTYPES.includes(sub) || vname.includes('library')
           }
 
           return true;
@@ -165,7 +195,7 @@ export function useAIRecommend() {
           walking_minutes: getWalkingMinutes(lat, lng, v.lat, v.lng)
         }))
         .sort((a, b) => a._km - b._km)
-        .slice(0, 5); 
+        .slice(0, 10);
 
       console.log('[AIRecommend] venues sent to Gemini:', allVenues.length)
 
@@ -187,7 +217,7 @@ export function useAIRecommend() {
           contents: [{ role: 'user', parts: [{ text: prompt }] }],
           tools: [{ google_search: {} }],
           generationConfig: {
-            temperature: 0.2
+            temperature: 0.5
           }
         }),
       })

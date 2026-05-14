@@ -144,37 +144,54 @@ function SkeletonCard() {
   )
 }
 
+function PriceChip({ cost }) {
+  const isFree = cost?.toLowerCase() === 'free'
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: 4,
+      padding: '3px 10px', borderRadius: 999, flexShrink: 0,
+      fontSize: 11, fontWeight: 700, fontFamily: SANS,
+      background: isFree ? '#e8f5ee' : C.bgWarm,
+      color: isFree ? C.green : C.textSecondary,
+      border: `1px solid ${isFree ? '#b8deca' : C.border}`,
+    }}>
+      {isFree && <CheckIcon size={10} />}
+      {isFree ? 'FREE' : cost}
+    </span>
+  )
+}
+
 function PlaceCard({ event, onGo }) {
-  const isFree = event.cost?.toLowerCase() === 'free'
   return (
     <div style={{
-      background: C.surface,
-      border: `1px solid ${C.border}`,
-      borderRadius: 14,
-      padding: '16px 18px',
-      display: 'flex', flexDirection: 'column', gap: 8,
+      background: C.surface, border: `1px solid ${C.border}`,
+      borderRadius: 14, padding: '14px 16px',
+      display: 'flex', flexDirection: 'column', gap: 10,
     }}>
-      <div style={{ fontFamily: SERIF, fontSize: 22, fontWeight: 400, color: C.ink, letterSpacing: '-0.01em', lineHeight: 1.15 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+        <div style={{
+          fontSize: 14, fontWeight: 700, color: C.terracotta,
+          textTransform: 'uppercase', letterSpacing: '0.1em',
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+        }}>
+          {event.venue}
+        </div>
+        <PriceChip cost={event.cost} />
+      </div>
+      <div style={{
+        fontFamily: SERIF, fontSize: 20, fontWeight: 400, color: C.ink,
+        letterSpacing: '-0.015em', lineHeight: 1.1,
+      }}>
         {event.activity}
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-        <div style={{ fontSize: 13, fontWeight: 600, color: C.terracotta }}>{event.venue}</div>
-        <div style={{ fontSize: 12, color: C.textMuted, lineHeight: 1.45, fontFamily: MONO }}>{event.address}</div>
+      <div style={{ fontSize: 12, color: C.textMuted, lineHeight: 1.45, fontFamily: MONO }}>
+        {event.address}
       </div>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, fontSize: 12, color: C.textSecondary, marginTop: 2 }}>
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-          <CoinIcon color={isFree ? C.green : C.textSecondary} />
-          <span style={{ fontWeight: isFree ? 600 : 500, color: isFree ? C.green : C.textSecondary }}>{event.cost}</span>
-        </span>
-      </div>
-      {event.why_suitable && (
-        <div style={{ fontSize: 12.5, color: C.textSecondary, lineHeight: 1.5 }}>{event.why_suitable}</div>
-      )}
       <button
         type="button"
         onClick={onGo}
         style={{
-          marginTop: 8, alignSelf: 'stretch',
+          marginTop: 4, alignSelf: 'stretch',
           display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
           background: C.ink, border: 'none', color: '#fff',
           fontSize: 14, fontWeight: 500, padding: '11px 18px',
@@ -331,7 +348,7 @@ export default function AIFinderModal({
   view,
   selectedIntent, onSelectIntent,
   extraNote, onExtraNote,
-  onFind, onRefine,
+  onFind, onShowDifferent, onRefine,
   results, error,
 }) {
   const navigate = useNavigate()
@@ -462,7 +479,7 @@ export default function AIFinderModal({
               ))}
               <button
                 type="button"
-                onClick={onFind}
+                onClick={onShowDifferent}
                 style={{
                   marginTop: 4, padding: 11,
                   background: 'transparent', border: `1px solid ${C.borderStrong}`,

@@ -3,7 +3,6 @@ import { useNavigate, useParams } from 'react-router-dom'
 import L from 'leaflet'
 import { MapContainer, TileLayer, Marker, Polyline, Pane, useMap } from 'react-leaflet'
 import Navbar from '../components/layout/Navbar'
-import Footer from '../components/layout/Footer'
 import { getWalkingMinutes } from '../utils/haversine'
 import useVenue from '../hooks/useVenue'
 import ShareRouteModal from '../components/venue/ShareRouteModal'
@@ -138,7 +137,6 @@ export default function VenueDetailPage() {
         <div style={{ width: 40, height: 40, border: '4px solid #e2e8f0', borderTopColor: '#003fa4', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </main>
-      <Footer />
     </div>
   )
 
@@ -153,7 +151,6 @@ export default function VenueDetailPage() {
           </button>
         </div>
       </main>
-      <Footer />
     </div>
   )
 
@@ -339,8 +336,6 @@ export default function VenueDetailPage() {
 
         </div>
       </main>
-
-      <Footer />
 
       <ShareRouteModal
         isOpen={shareModalOpen}

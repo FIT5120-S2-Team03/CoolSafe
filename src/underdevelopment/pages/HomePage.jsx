@@ -14,8 +14,11 @@
  */
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
+import L from 'leaflet'
+import { MapContainer, TileLayer, Marker } from 'react-leaflet'
 import Navbar from '../components/layout/Navbar'
 import MedicationsSection from '../components/home/MedicationsSection'
+import LocationModal from '../components/location/LocationModal'
 import {
   TempChart,
   getWindows,
@@ -48,10 +51,152 @@ const SCORE_COLOR = {
 
 // UV index derived from risk level (no dedicated API call needed)
 const UV_BY_RISK = {
-  Low:      { index: 2,  label: 'Low' },
-  Moderate: { index: 4,  label: 'Moderate' },
-  High:     { index: 7,  label: 'High' },
-  Extreme:  { index: 10, label: 'Very High' },
+  Low:      { index: 2,  label: 'Low',       color: '#6B7A3A' },
+  Moderate: { index: 4,  label: 'Moderate',  color: '#B87200' },
+  High:     { index: 7,  label: 'High',      color: '#C94B1A' },
+  Extreme:  { index: 10, label: 'Very High', color: '#8B0000' },
+}
+
+const MED_ADVICE = {
+  'Blood pressure medication':
+    'Some blood pressure medicines can affect circulation and temperature regulation. Watch for dizziness and keep plans gentle in heat.',
+  'Diuretics / water tablets':
+    'Diuretics can increase fluid loss. Drink regularly and watch for signs of dehydration.',
+  Antidepressants:
+    'Some antidepressants can affect sweating or temperature control. Take extra care if you feel unusually hot or unwell.',
+  'Diabetes medication':
+    'Heat can affect blood sugar and some diabetes medicines. Check levels more often and keep medication stored safely.',
+  Antihistamines:
+    'Some antihistamines can reduce sweating or make overheating easier to miss.',
+  'Heart medication':
+    'Some heart medicines affect circulation. Avoid exertion in hotter hours and seek medical advice if you feel unwell.',
+  Antipsychotics:
+    'Some antipsychotic medicines can affect heat regulation or awareness of overheating.',
+  'Pain relievers (NSAIDs)':
+    'Regular NSAIDs, such as ibuprofen or naproxen, can be harder on the kidneys when fluids are low. Keep hydrated and ask a doctor or pharmacist if you use them often.',
+}
+
+const MED_LABELS = {
+  'Blood pressure medication': 'Blood pressure',
+  'Diuretics / water tablets': 'Water pills',
+  Antidepressants: 'Antidepressants',
+  'Diabetes medication': 'Diabetes',
+  Antihistamines: 'Antihistamines',
+  'Heart medication': 'Heart meds',
+  Antipsychotics: 'Antipsychotics',
+  'Pain relievers (NSAIDs)': 'Pain relievers',
+}
+
+const AI_QUESTIONS = [
+  {
+    key: 'type',
+    title: 'What kind of place are you looking for?',
+    options: [
+      ['library', 'Library'],
+      ['shopping', 'Shopping centre'],
+      ['community', 'Community centre'],
+      ['park', 'Shaded park / garden'],
+      ['cafe', 'Cafe or food court'],
+      ['any', 'No preference'],
+    ],
+  },
+  {
+    key: 'travel',
+    title: 'How do you prefer to get there?',
+    options: [['walking', 'Walking'], ['transit', 'Public transport'], ['driving', 'Driving'], ['any', 'No preference']],
+  },
+  {
+    key: 'vibe',
+    title: 'What kind of atmosphere suits you?',
+    options: [['quiet', 'Quiet and calm'], ['social', 'Social and lively'], ['activities', 'Activities or events'], ['any', 'No preference']],
+  },
+  {
+    key: 'access',
+    title: 'Any accessibility needs?',
+    options: [['wheelchair', 'Wheelchair accessible'], ['seating', 'Plenty of seating'], ['toilets', 'Accessible toilets'], ['parking', 'Nearby parking'], ['none', 'None needed']],
+  },
+]
+
+const ROUTINE_META = {
+  morning: {
+    title: 'A lovely window. Use it.',
+    bg: 'linear-gradient(180deg,#FAEEDA 0%,#F6E4B7 100%)',
+    svg: (
+      <svg viewBox="0 0 400 160" preserveAspectRatio="xMidYMid slice" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} aria-hidden="true">
+        <circle cx="320" cy="120" fill="#F2DDB3" r="70" />
+        <circle cx="320" cy="120" fill="#D49A3A" r="48" />
+        <path d="M0 130 Q80 110 160 125 T320 120 L400 125 L400 160 L0 160 Z" fill="#6B7A3A" />
+        <path d="M0 140 Q100 130 200 138 T400 135 L400 160 L0 160 Z" fill="#4F5A2B" />
+        <path d="M90 60 Q95 55 100 60 Q105 55 110 60" fill="none" stroke="#221E1A" strokeLinecap="round" strokeWidth="2" />
+        <path d="M140 75 Q145 70 150 75 Q155 70 160 75" fill="none" stroke="#221E1A" strokeLinecap="round" strokeWidth="2" />
+      </svg>
+    ),
+  },
+  midday: {
+    title: 'Stay cool while heat is loudest.',
+    bg: 'linear-gradient(180deg,#FAEEDA 0%,#F6D0BD 100%)',
+    svg: (
+      <svg viewBox="0 0 400 160" preserveAspectRatio="xMidYMid slice" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} aria-hidden="true">
+        <circle cx="200" cy="60" fill="#FAEEDA" r="44" />
+        <circle cx="200" cy="60" fill="#B85A3C" r="32" />
+        <g stroke="#B85A3C" strokeLinecap="round" strokeWidth="3">
+          <line x1="200" x2="200" y1="0" y2="14" />
+          <line x1="140" x2="156" y1="60" y2="60" />
+          <line x1="244" x2="260" y1="60" y2="60" />
+          <line x1="158" x2="168" y1="18" y2="28" />
+          <line x1="242" x2="232" y1="18" y2="28" />
+        </g>
+        <path d="M0 130 Q50 122 100 130 T200 130 T300 130 T400 130 L400 160 L0 160 Z" fill="#D4783A" />
+        <path d="M0 140 Q50 132 100 140 T200 140 T300 140 T400 140 L400 160 L0 160 Z" fill="#A8503E" />
+      </svg>
+    ),
+  },
+  evening: {
+    title: 'Wind down and reset your space.',
+    bg: 'linear-gradient(180deg,#B9B0A1 0%,#8FA3B1 100%)',
+    svg: (
+      <svg viewBox="0 0 400 160" preserveAspectRatio="xMidYMid slice" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} aria-hidden="true">
+        <path d="M0 0 L400 0 L400 100 L0 100 Z" fill="#B9B0A1" />
+        <circle cx="100" cy="50" fill="#FAF6EE" r="22" />
+        <circle cx="108" cy="46" fill="#B9B0A1" r="22" />
+        <circle cx="280" cy="35" fill="#FAF6EE" r="2" />
+        <circle cx="340" cy="55" fill="#FAF6EE" r="1.5" />
+        <circle cx="220" cy="25" fill="#FAF6EE" r="1.8" />
+        <path d="M0 100 Q60 80 120 95 Q180 75 240 92 Q300 78 360 90 Q380 88 400 95 L400 160 L0 160 Z" fill="#5B7A8C" />
+        <path d="M0 120 Q80 105 160 118 T320 115 L400 120 L400 160 L0 160 Z" fill="#3F5564" />
+      </svg>
+    ),
+  },
+}
+
+function scoreColour(score) {
+  if (score >= 75) return '#B85A3C'
+  if (score >= 50) return '#D49A3A'
+  return '#6B7A3A'
+}
+
+function peakTempBadgeInfo(maxTemp) {
+  if (maxTemp == null) return { label: '—', color: FAINT }
+  if (maxTemp >= 35) return { label: 'Very hot', color: '#8B0000' }
+  if (maxTemp >= 30) return { label: 'Hot', color: '#C94B1A' }
+  if (maxTemp >= 24) return { label: 'Warm', color: '#B87200' }
+  return { label: 'Mild', color: '#6B7A3A' }
+}
+
+function aqiBadgeColor(info) {
+  if (!info) return FAINT
+  if (info.label === 'Good' || info.label === 'Fair') return '#6B7A3A'
+  if (info.label === 'Moderate') return '#B87200'
+  if (info.label === 'Poor') return '#C94B1A'
+  return '#8B0000'
+}
+
+function scoreVerdict(score, hasMed, band) {
+  if (!hasMed) return heatCopy(band).baseVerdict
+  if (score >= 90 || band === 'extreme') return 'Stay indoors'
+  if (score >= 75) return 'Take action'
+  if (score >= 50) return 'Be careful'
+  return 'Mostly safe'
 }
 
 // ── Heat band — derived from daily max temperature ────────────────────────────
@@ -132,38 +277,38 @@ function getPeriodContent(period, band) {
   const content = {
     morning: {
       mild: {
-        do: ["Drink water when you wake up — even mild days need hydration.", "Check the hourly chart before planning outdoor time."],
-        avoid: ["Don't skip hydration just because the day feels comfortable."],
+        do: ["Drink a full glass of water before you start anything else.", "Check the hourly chart before planning errands or time outside."],
+        avoid: ["Avoid rushing into the day before checking how you feel."],
       },
       warm: {
-        do: ["Use this cooler window for errands or a walk.", "Drink water before you leave home."],
-        avoid: ["Don't leave outdoor plans until after 11 AM when it warms up."],
+        do: ["Drink a full glass of water before you start anything else.", "Check the hourly chart before planning errands or time outside."],
+        avoid: ["Avoid rushing into the day before checking how you feel."],
       },
       hot: {
-        do: ["Run errands or walk before 10 AM.", "Drink water before you leave.", "Know where you'll cool down later."],
+        do: ["Drink a full glass of water before you start anything else.", "Check the hourly chart before planning errands or time outside."],
         avoid: ["Avoid rushing into the day before checking how you feel."],
       },
       extreme: {
-        do: ["Only go out if absolutely necessary — keep it brief.", "Drink water before you leave.", "Know your nearest cool space."],
-        avoid: ["Don't stay outdoors past 9 AM on extreme days."],
+        do: ["Drink a full glass of water before you start anything else.", "Check the hourly chart before planning errands or time outside."],
+        avoid: ["Avoid rushing into the day before checking how you feel."],
       },
     },
     midday: {
       mild: {
-        do: ["Light errands are fine — keep water nearby.", "A short walk or outdoor time is perfectly safe."],
-        avoid: ["Avoid prolonged direct sun exposure in the middle of the day."],
+        do: ["Take a short pause and drink water before your next task.", "Keep blinds, windows, or fans set for comfort."],
+        avoid: ["Pushing through tiredness or dizziness."],
       },
       warm: {
-        do: ["Stay indoors or find shade during the warmest hours.", "Drink water every hour."],
-        avoid: ["Avoid strenuous activity outdoors during midday."],
+        do: ["Take a short pause and drink water before your next task.", "Keep blinds, windows, or fans set for comfort."],
+        avoid: ["Pushing through tiredness or dizziness."],
       },
       hot: {
-        do: ["Stay indoors or find a cool space with air conditioning.", "Drink a glass of water every hour.", "Close blinds to keep your home cool."],
-        avoid: ["Avoid going outdoors during peak heat hours.", "Don't skip meals — eating helps your body regulate temperature."],
+        do: ["Take a short pause and drink water before your next task.", "Keep blinds, windows, or fans set for comfort."],
+        avoid: ["Pushing through tiredness or dizziness."],
       },
       extreme: {
-        do: ["Stay inside all day.", "Drink water every 30 minutes.", "Close all blinds and curtains."],
-        avoid: ["Never go outdoors during midday in extreme heat.", "Don't wait to feel thirsty before drinking water."],
+        do: ["Take a short pause and drink water before your next task.", "Keep blinds, windows, or fans set for comfort."],
+        avoid: ["Pushing through tiredness or dizziness."],
       },
     },
     evening: {
@@ -189,7 +334,7 @@ function getPeriodContent(period, band) {
   const eyebrows = {
     morning: 'Morning · 6–11 am',
     midday: 'Midday · 11 am – 4 pm',
-    evening: 'Evening · 4–8 pm',
+    evening: 'Evening · 4–9 pm',
   }
 
   return {
@@ -209,35 +354,81 @@ function periodAvg(hourly, fromH, toH) {
   return slots.reduce((sum, s) => sum + s.temp, 0) / slots.length
 }
 
+function periodRange(hourly, fromH, toH, fallback) {
+  if (!hourly) return fallback
+  const today = todayStr()
+  const slots = hourly.time
+    .map((t, i) => ({ h: parseInt(t.slice(11, 13)), temp: hourly.apparent_temperature[i], date: t.slice(0, 10) }))
+    .filter((s) => s.date === today && s.h >= fromH && s.h < toH && Number.isFinite(s.temp))
+  if (!slots.length) return fallback
+  const temps = slots.map((s) => Math.round(s.temp))
+  const min = Math.min(...temps)
+  const max = Math.max(...temps)
+  return min === max ? `${min}°` : `${min}-${max}°`
+}
+
+function tomorrowOutlook(maxTemp) {
+  if (maxTemp == null) return 'Checking forecast...'
+  if (maxTemp >= 35) return 'High risk persists.'
+  if (maxTemp >= 30) return 'Warm conditions continue.'
+  if (maxTemp >= 24) return 'Milder, but keep checking in.'
+  return 'Cooler conditions expected.'
+}
+
 // ── Venue type helpers ────────────────────────────────────────────────────────
 
-function venueTypeKind(type = '') {
-  const t = type.toLowerCase()
-  if (t.includes('gallery') || t.includes('museum')) return 'gallery'
-  if (t.includes('park') || t.includes('garden') || t.includes('reserve') || t.includes('informal outdoor')) return 'park'
-  if (t.includes('library')) return 'library'
-  if (t.includes('shopping') || t.includes('community') || t.includes('centre') || t.includes('retail')) return 'community'
+function venueTypeSource(venueOrType = '') {
+  if (typeof venueOrType === 'string') return venueOrType
+  return [
+    venueOrType.name,
+    venueOrType.type,
+    venueOrType.category,
+    venueOrType.sub_theme,
+    venueOrType.subTheme,
+    venueOrType.theme,
+  ].filter(Boolean).join(' ')
+}
+
+function isFountainVenue(venue) {
+  return venueTypeSource(venue).toLowerCase().includes('fountain')
+}
+
+function venueTypeKind(venueOrType = '') {
+  const t = venueTypeSource(venueOrType).toLowerCase()
+  if (t.includes('gallery') || t.includes('museum') || t.includes('arts & culture')) return 'gallery'
+  if (t.includes('park') || t.includes('garden') || t.includes('reserve') || t.includes('informal outdoor') || t.includes('recreation')) return 'park'
+  if (t.includes('library') || t.includes('learning')) return 'library'
+  if (t.includes('shopping') || t.includes('community') || t.includes('centre') || t.includes('retail') || t.includes('visitor info') || t.includes('support')) return 'community'
   return 'default'
 }
 
-function venueTypeLabel(type = '') {
-  const kind = venueTypeKind(type)
+function venueTypeLabel(venueOrType = '') {
+  const source = venueTypeSource(venueOrType)
+  const kind = venueTypeKind(venueOrType)
   if (kind === 'gallery') return 'Art Gallery / Museum'
   if (kind === 'park') return 'Park / Garden / Reserve'
   if (kind === 'library') return 'Library'
   if (kind === 'community') {
-    const t = type.toLowerCase()
+    const t = source.toLowerCase()
     return (t.includes('shopping') || t.includes('retail')) ? 'Shopping Centre' : 'Community Centre'
   }
-  return type || 'Public space'
+  return source || 'Public space'
 }
 
 const VENUE_KIND_COLOR = {
   gallery:   '#8A3F28',
-  park:      '#4A6741',
-  library:   '#2A5F7A',
-  community: '#7A6B28',
-  default:   '#5A5048',
+  park:      '#4F5A2B',
+  library:   '#1E465A',
+  community: '#8A5A12',
+  default:   '#6E6358',
+}
+
+const VENUE_KIND_PILL = {
+  gallery:   { background: '#F3ECDC', color: '#8A3F28' },
+  park:      { background: '#D9DEC0', color: '#4F5A2B' },
+  library:   { background: '#CFDDE5', color: '#1E465A' },
+  community: { background: '#F2DDB3', color: '#8A5A12' },
+  default:   { background: '#F0EDE8', color: '#5A5048' },
 }
 
 function getDistanceKm(lat1, lng1, lat2, lng2) {
@@ -277,7 +468,6 @@ export default function HomePage() {
   const [selectedMedications, setSelectedMedications] = useState([])
   const [showMedModal, setShowMedModal] = useState(false)
   const [showLocModal, setShowLocModal] = useState(() => !localStorage.getItem('coolsafe_coords'))
-  const [locPostcode, setLocPostcode]   = useState('')
   const [showScoreInfo, setShowScoreInfo] = useState(false)
   const [activePeriod, setActivePeriod] = useState(() => {
     const h = new Date().getHours()
@@ -287,11 +477,23 @@ export default function HomePage() {
   })
   const [selectedSymptoms, setSelectedSymptoms] = useState(new Set())
   const [toastMsg, setToastMsg] = useState('')
+  const [activeMedAdvice, setActiveMedAdvice] = useState(null)
+  const [showAiPanel, setShowAiPanel] = useState(false)
+  const [aiStep, setAiStep] = useState(0)
+  const [aiPrefs, setAiPrefs] = useState({})
+  const [aiHasResult, setAiHasResult] = useState(false)
   const scoreInfoRef = useRef(null)
   const toastTimerRef = useRef(null)
 
   // Close location modal as soon as weather data arrives
   useEffect(() => { if (current) setShowLocModal(false) }, [current])
+
+  useEffect(() => {
+    if (!selectedMedications.length) setActiveMedAdvice(null)
+    else if (!activeMedAdvice || !selectedMedications.includes(activeMedAdvice)) {
+      setActiveMedAdvice(selectedMedications[0])
+    }
+  }, [activeMedAdvice, selectedMedications])
 
   // Score tooltip is now hover-based — no click-outside handler needed
 
@@ -308,6 +510,7 @@ export default function HomePage() {
   const risk    = useMemo(() => current ? getRiskLevel(current.temp) : null, [current])
   const uvInfo  = risk ? UV_BY_RISK[risk.level] : null
   const aqiInfo = aqi != null ? getAqiInfo(aqi) : null
+  const peakBadge = peakTempBadgeInfo(daily?.todayMax)
 
   const scoreData = useMemo(() => {
     if (!current) return null
@@ -321,12 +524,14 @@ export default function HomePage() {
   const score      = scoreData?.score ?? 0
   const riskLabel  = scoreData?.riskLabel ?? { label: 'Loading…', color: SCORE_COLOR.Low }
   const breakdown  = scoreData?.breakdown ?? null
-  const scoreColor = SCORE_COLOR[risk?.level] ?? SCORE_COLOR.Low
+  const scoreColor = scoreColour(score)
+  const canDismissLocationModal = Boolean(locationName || localStorage.getItem('coolsafe_coords'))
 
   // Nearest cool venues sorted by distance
   const nearestVenues = useMemo(() => {
     if (!venues?.length || lat == null || lng == null) return []
     return venues
+      .filter((v) => !isFountainVenue(v))
       .map((v) => {
         const distKm = getDistanceKm(lat, lng, v.lat, v.lng)
         return { ...v, distKm, walkMins: getWalkingMinutes(lat, lng, v.lat, v.lng) }
@@ -346,6 +551,25 @@ export default function HomePage() {
 
   const band = heatBand(daily?.todayMax)
   const copy = heatCopy(band)
+  const hasMedications = selectedMedications.length > 0
+  const activeMed = activeMedAdvice && selectedMedications.includes(activeMedAdvice)
+    ? activeMedAdvice
+    : selectedMedications.find((m) => MED_ADVICE[m])
+  const medicationCardTitle = hasMedications
+    ? (score >= 75 ? 'Your medications need extra care today.' : 'Your medications may add risk today.')
+    : 'Tell us your medications for accuracy.'
+  const medicationCardDesc = hasMedications && activeMed
+    ? MED_ADVICE[activeMed]
+    : 'Some pills reduce sweating or increase fluid loss. Add them to see if you need extra care.'
+  const heroSlogan = hasMedications
+    ? (score >= 75
+      ? { before: 'Stay', accent: 'indoors today.' }
+      : { before: 'Take it', accent: 'easy today.' })
+    : copy.slogan
+  const heroDesc = hasMedications
+    ? 'Your medications may add heat risk today. See your personalised plan below.'
+    : copy.desc
+  const verdict = scoreVerdict(score, hasMedications, band)
 
   const bestWindow = useMemo(() => bestMorningWindow(hourly), [hourly])
 
@@ -370,12 +594,69 @@ export default function HomePage() {
     return top
   }, [selectedSymptoms])
 
+  const symptomBanner = maxSeverity === '000'
+    ? {
+      key: '000',
+      bg: '#F1D6CE',
+      border: '#B85A3C',
+      iconBg: '#B85A3C',
+      icon: 'emergency',
+      title: 'Medical Emergency',
+      text: 'These may be critical signs of heat stroke. Do not wait. Call emergency services immediately.',
+      textColor: '#8A3F28',
+      href: 'tel:000',
+      cta: 'Call 000 Now',
+    }
+    : maxSeverity === 'nurse'
+      ? {
+        key: 'nurse',
+        bg: '#CFDDE5',
+        border: '#5B7A8C',
+        iconBg: '#5B7A8C',
+        icon: 'medical_services',
+        title: 'Seek medical advice',
+        text: 'These may be signs of heat exhaustion. Rest in a cool place, sip water, and call Nurse-On-Call for guidance.',
+        textColor: '#1E465A',
+        href: 'tel:1300606024',
+        cta: 'Call 1300 60 60 24',
+      }
+      : {
+        key: 'default',
+        bg: '#F3ECDC',
+        border: RULE,
+        title: null,
+        text: 'Select any symptoms above to see recommended actions.',
+        textColor: MUTED,
+      }
+
   const toggleSymptom = (id) =>
     setSelectedSymptoms((prev) => {
       const next = new Set(prev)
       next.has(id) ? next.delete(id) : next.add(id)
       return next
     })
+
+  const periodRanges = useMemo(() => {
+    return {
+      morning: periodRange(hourly, 6, 11, '17-22°'),
+      midday: periodRange(hourly, 11, 16, '24-31°'),
+      evening: periodRange(hourly, 16, 20, '20-25°'),
+    }
+  }, [hourly])
+
+  const aiMatches = useMemo(() => {
+    const selectedType = aiPrefs.type
+    const typeFiltered = nearestVenues.filter((v) => {
+      if (!selectedType || selectedType === 'any') return true
+      const kind = venueTypeKind(v)
+      if (selectedType === 'shopping') return venueTypeLabel(v).toLowerCase().includes('shopping')
+      if (selectedType === 'community') return kind === 'community'
+      if (selectedType === 'park') return kind === 'park'
+      if (selectedType === 'library') return kind === 'library'
+      return true
+    })
+    return (typeFiltered.length ? typeFiltered : nearestVenues).slice(0, 3)
+  }, [aiPrefs.type, nearestVenues])
 
   // ── section wrapper style (shared) ──
   const secInner = { maxWidth: MAX_W, margin: '0 auto', padding: `0 ${PX}` }
@@ -387,12 +668,11 @@ export default function HomePage() {
         @keyframes cs-pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
         @keyframes popIn { from{transform:scale(.9);opacity:0} to{transform:scale(1);opacity:1} }
         @keyframes toastIn { from{opacity:0;transform:translateX(-50%) translateY(8px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
-        .cs-banner { overflow: hidden; transition: opacity 0.28s ease, max-height 0.28s ease; }
-        .cs-banner.hidden-banner { opacity: 0; max-height: 0; pointer-events: none; }
-        .cs-banner.shown-banner { opacity: 1; max-height: 300px; }
+        @keyframes cs-banner-in { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+        .cs-banner { animation: cs-banner-in 0.3s ease both; }
       `}</style>
 
-      <Navbar locationName={locationName} />
+      <Navbar locationName={locationName} onLocationClick={() => setShowLocModal(true)} />
 
       {/* ══════════════════════════════════════════════════════════════════════
           1. HERO
@@ -420,8 +700,8 @@ export default function HomePage() {
               lineHeight: 0.98,
               marginBottom: 24,
             }}>
-              {copy.slogan.before}{' '}
-              <em style={{ fontStyle: 'italic', color: '#8A3F28' }}>{copy.slogan.accent}</em>
+              {heroSlogan.before}{' '}
+              <em style={{ fontStyle: 'italic', color: '#8A3F28' }}>{heroSlogan.accent}</em>
             </h1>
 
             <p style={{
@@ -432,7 +712,7 @@ export default function HomePage() {
               maxWidth: 520,
               marginBottom: 28,
             }}>
-              {current ? copy.desc : 'Loading today\'s conditions for your area…'}
+              {current ? heroDesc : 'Loading today\'s conditions for your area…'}
             </p>
 
             {/* Medication CTA — terracotta filled when baseline, surface when personalised */}
@@ -459,7 +739,7 @@ export default function HomePage() {
               onMouseLeave={(e) => { e.currentTarget.style.transform = 'none' }}
             >
               {selectedMedications.length > 0
-                ? `${selectedMedications.length} medication${selectedMedications.length > 1 ? 's' : ''} added`
+                ? 'Review medications'
                 : 'Add your medications for accuracy'}
               <i className="ti ti-arrow-right" style={{ fontSize: 16 }} />
             </button>
@@ -483,23 +763,21 @@ export default function HomePage() {
               value={uvInfo ? String(uvInfo.index) : '—'}
               label="UV index"
               badge={uvInfo?.label ?? '—'}
-              badgeColor="#B87200"
+              badgeColor={uvInfo?.color ?? FAINT}
               style={{ position: 'absolute', top: '24%', right: '-12%' }}
             />
             <WeatherCallout
               value={daily?.todayMax != null ? `${Math.round(daily.todayMax)}°C` : '—'}
               label="Peak today"
-              badge={daily?.todayMax != null
-                ? (daily.todayMax >= 35 ? 'Very hot' : daily.todayMax >= 28 ? 'Hot' : 'Mild')
-                : '—'}
-              badgeColor="#C94B1A"
+              badge={peakBadge.label}
+              badgeColor={peakBadge.color}
               style={{ position: 'absolute', top: '56%', left: '-4%' }}
             />
             <WeatherCallout
               value={aqi != null ? String(aqi) : '—'}
               label="AQI"
               badge={aqiInfo?.label ?? '—'}
-              badgeColor="#5B7A8C"
+              badgeColor={aqiBadgeColor(aqiInfo)}
               style={{ position: 'absolute', top: '68%', right: '-13%' }}
             />
           </div>
@@ -537,8 +815,9 @@ export default function HomePage() {
                   >?</button>
 
                   {showScoreInfo && breakdown && (
-                    <div style={{ position: 'absolute', bottom: '120%', left: '50%', transform: 'translateX(-50%)', background: '#111827', borderRadius: 14, padding: '16px 20px', minWidth: 248, boxShadow: '0 12px 40px rgba(0,0,0,0.5)', zIndex: 100 }}>
-                      <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.625rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'rgba(255,255,255,0.35)', textAlign: 'center', marginBottom: 12 }}>
+                    <div style={{ position: 'absolute', top: 'calc(100% + 14px)', left: '50%', transform: 'translateX(-50%)', background: '#FFFCF6', color: INK, border: `1px solid ${RULE}`, borderRadius: 16, padding: '15px 18px', minWidth: 280, boxShadow: '0 18px 44px rgba(34,30,26,0.16)', zIndex: 100 }}>
+                      <div style={{ position: 'absolute', top: -7, left: '50%', width: 14, height: 14, transform: 'translateX(-50%) rotate(45deg)', background: '#FFFCF6', borderLeft: `1px solid ${RULE}`, borderTop: `1px solid ${RULE}` }} />
+                      <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.777rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: FAINT, textAlign: 'center', marginBottom: 10, position: 'relative' }}>
                         How your score is calculated
                       </div>
                       {[
@@ -546,16 +825,16 @@ export default function HomePage() {
                         { label: 'Time of day',       pts: breakdown.timePts   },
                         { label: 'Medication risk',   pts: breakdown.medPts    },
                       ].map(({ label, pts }) => (
-                        <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '0.5px solid rgba(255,255,255,0.07)', fontFamily: "'DM Sans', sans-serif", fontSize: '0.875rem', color: 'rgba(255,255,255,0.8)' }}>
+                        <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderTop: `1px solid ${RULE}`, fontFamily: "'DM Sans', sans-serif", fontSize: '1rem', color: MUTED, position: 'relative' }}>
                           <span>{label}</span>
-                          <span style={{ fontWeight: 700, color: '#fff' }}>{pts >= 0 ? '+' : ''}{pts}</span>
+                          <span style={{ fontWeight: 700, color: INK }}>{pts >= 0 ? '+' : ''}{pts}</span>
                         </div>
                       ))}
-                      <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 10, fontFamily: "'DM Sans', sans-serif", fontSize: '1rem', color: '#fff', fontWeight: 700 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 10, borderTop: `1px solid ${RULE}`, fontFamily: "'DM Sans', sans-serif", fontSize: '1rem', color: INK, fontWeight: 700 }}>
                         <span>Total</span>
                         <span style={{ color: scoreColor }}>{score}</span>
                       </div>
-                      <div style={{ marginTop: 12, fontFamily: "'DM Sans', sans-serif", fontSize: '0.75rem', color: 'rgba(255,255,255,0.3)', lineHeight: 1.5 }}>
+                      <div style={{ marginTop: 10, fontFamily: "'DM Sans', sans-serif", fontSize: '0.875rem', color: FAINT, lineHeight: 1.35 }}>
                         Weather uses today's forecast. Time of day reflects the current hour.
                       </div>
                     </div>
@@ -568,7 +847,7 @@ export default function HomePage() {
                 alignItems: 'center',
                 minHeight: 30,
                 width: 'fit-content',
-                marginTop: 6,
+                marginTop: 14,
                 padding: '0.3rem 0.75rem',
                 borderRadius: 999,
                 background: selectedMedications.length > 0 ? '#D9DEC0' : '#F3ECDC',
@@ -590,7 +869,7 @@ export default function HomePage() {
             <div style={{ flexShrink: 0 }}>
               <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.6875rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', color: FAINT, marginBottom: 4 }}>Verdict</div>
               <div style={{ fontFamily: "'DM Serif Display', Georgia, serif", fontStyle: 'italic', fontSize: 'clamp(1.625rem,3vw,2rem)', color: scoreColor, lineHeight: 1 }}>
-                {copy.baseVerdict}
+                {verdict}
               </div>
             </div>
 
@@ -619,6 +898,32 @@ export default function HomePage() {
               </div>
             </div>
           </div>
+          {(score >= 50 || band === 'extreme') && (
+            <div style={{
+              marginTop: 20,
+              borderRadius: 18,
+              border: score >= 75 || band === 'extreme' ? '1px solid #B85A3C' : `1px solid ${RULE}`,
+              background: score >= 75 || band === 'extreme' ? '#F1D6CE' : '#F3ECDC',
+              padding: '14px 18px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 16,
+              fontFamily: 'var(--sans)',
+              color: score >= 75 || band === 'extreme' ? '#8A3F28' : MUTED,
+            }}>
+              <span>
+                {score >= 75 || band === 'extreme'
+                  ? <><strong>Medical emergency signs?</strong> Confusion, fainting, vomiting, or hot dry skin can be critical. Do not wait.</>
+                  : 'Feeling unwell? Check the symptoms below.'}
+              </span>
+              {(score >= 75 || band === 'extreme') && (
+                <a href="tel:000" style={{ borderRadius: 999, background: '#B85A3C', color: '#fff', padding: '9px 16px', textDecoration: 'none', fontWeight: 700, whiteSpace: 'nowrap' }}>
+                  Call 000 Now
+                </a>
+              )}
+            </div>
+          )}
         </div>
       </section>
 
@@ -636,17 +941,27 @@ export default function HomePage() {
             Tap a card to see more. Your details stay private.
           </p>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
             <ThingCard
               iconBg="#F2DDB3"
               icon="pill"
-              title={selectedMedications.length > 0
-                ? `${selectedMedications.length} medication${selectedMedications.length > 1 ? 's' : ''} added`
-                : copy.cardTitle}
-              desc="Some pills reduce sweating or increase fluid loss. Add them to see if you need extra care."
+              title={medicationCardTitle}
+              desc={medicationCardDesc}
               extra={selectedMedications.length > 0
-                ? <MedChips medications={selectedMedications} />
+                ? (
+                  <MedAdviceChips
+                    medications={selectedMedications}
+                    activeMed={activeMed}
+                    onSelect={setActiveMedAdvice}
+                    onClear={() => {
+                      setSelectedMedications([])
+                      setActiveMedAdvice(null)
+                      showToast('Medications cleared')
+                    }}
+                  />
+                )
                 : null}
+              extraBeforeDesc
               cta="Review medications"
               ctaIcon="arrow_forward"
               onClick={() => setShowMedModal(true)}
@@ -656,10 +971,12 @@ export default function HomePage() {
               icon="schedule"
               title={copy.cardTitle}
               windowTime={band === 'mild'
-                ? 'Easy plans all day.'
+                ? null
                 : bestWindow ? `${bestWindow.startH} – ${bestWindow.startH + 2}` : null}
               windowLabel={band === 'mild' ? '' : copy.windowLabel}
-              desc={copy.cardDesc(middayApparentTemp)}
+              desc={band === 'mild'
+                ? <>Easy plans all day.<br /><br />{copy.cardDesc(middayApparentTemp)}</>
+                : copy.cardDesc(middayApparentTemp)}
               cta="View hourly forecast"
               ctaIcon="arrow_downward"
               onClick={() => document.getElementById('sec-chart')?.scrollIntoView({ behavior: 'smooth' })}
@@ -695,10 +1012,10 @@ export default function HomePage() {
           <div style={{
             display: 'grid',
             gridTemplateColumns: '1.4fr 1fr',
-            height: 600,
+            minHeight: 650,
             background: '#fff',
             border: `1px solid ${RULE}`,
-            borderRadius: 24,
+            borderRadius: 32,
             overflow: 'hidden',
             boxShadow: '0 4px 24px rgba(0,0,0,0.02)',
           }}>
@@ -709,19 +1026,19 @@ export default function HomePage() {
                 Hourly Temperature · {locationName ?? 'Melbourne'}
               </div>
 
-              <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>
+              <div style={{ flex: 1, minHeight: 360, position: 'relative', display: 'flex', alignItems: 'stretch' }}>
                 <TempChart hourly={hourly} />
               </div>
 
               {/* Tomorrow outlook row */}
-              <div style={{ marginTop: 'auto', paddingTop: 16, borderTop: `1px solid ${RULE}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
+              <div style={{ marginTop: 'auto', paddingTop: 20, borderTop: `1px solid ${RULE}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 18, flexShrink: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#B85A3C', animation: 'cs-pulse 2s ease-in-out infinite' }} />
                   <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.875rem', fontWeight: 500, color: INK }}>
-                    Tomorrow's Outlook
+                    Tomorrow's Outlook: {tomorrowOutlook(daily?.tomorrowMax)}
                   </span>
                 </div>
-                <span style={{ fontFamily: "'DM Serif Display', Georgia, serif", fontSize: '1.375rem', color: '#B85A3C' }}>
+                <span style={{ fontFamily: "'DM Serif Display', Georgia, serif", fontSize: '1.65rem', color: daily?.tomorrowMax != null ? scoreColour(Math.min(100, daily.tomorrowMax * 2)) : '#B85A3C', whiteSpace: 'nowrap' }}>
                   {daily?.tomorrowMax != null ? `Max ${Math.round(daily.tomorrowMax)}°C` : '—'}
                 </span>
               </div>
@@ -736,17 +1053,29 @@ export default function HomePage() {
                   <button
                     key={p}
                     onClick={() => setActivePeriod(p)}
+                    onMouseEnter={(e) => {
+                      if (activePeriod !== p) {
+                        e.currentTarget.style.borderColor = '#8A3F28'
+                        e.currentTarget.style.background = '#FFFCF6'
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (activePeriod !== p) {
+                        e.currentTarget.style.borderColor = RULE
+                        e.currentTarget.style.background = 'transparent'
+                      }
+                    }}
                     style={{
-                      padding: '6px 14px',
+                      padding: '8px 18px',
                       borderRadius: 99,
-                      border: `1.5px solid ${activePeriod === p ? INK : RULE}`,
-                      background: activePeriod === p ? INK : 'transparent',
-                      color: activePeriod === p ? '#fff' : '#3A3A3A',
+                      border: `1px solid ${activePeriod === p ? (p === 'morning' ? '#6B7A3A' : p === 'midday' ? '#B85A3C' : '#5B7A8C') : RULE}`,
+                      background: activePeriod === p ? (p === 'morning' ? '#6B7A3A' : p === 'midday' ? '#B85A3C' : '#5B7A8C') : 'transparent',
+                      color: activePeriod === p ? '#fff' : MUTED,
                       fontFamily: "'DM Sans', sans-serif",
-                      fontSize: '0.875rem',
-                      fontWeight: activePeriod === p ? 600 : 500,
+                      fontSize: 'var(--text-caption)',
+                      fontWeight: 500,
                       cursor: 'pointer',
-                      transition: 'all 0.18s',
+                      transition: 'all 0.2s ease',
                     }}
                   >
                     {p.charAt(0).toUpperCase() + p.slice(1)}
@@ -756,24 +1085,20 @@ export default function HomePage() {
 
               {/* Period gradient banner */}
               <div style={{
-                height: 160,
+                height: 210,
                 flexShrink: 0,
-                background: activePeriod === 'morning'
-                  ? 'linear-gradient(160deg,#FDF5E6,#FAF8F5)'
-                  : activePeriod === 'midday'
-                  ? 'linear-gradient(160deg,#FDF0EB,#FAF3EE)'
-                  : 'linear-gradient(160deg,#EEF3FF,#F0F4FA)',
+                background: ROUTINE_META[activePeriod].bg,
                 borderBottom: `1px solid ${RULE}`,
-                display: 'flex',
-                alignItems: 'flex-end',
-                justifyContent: 'space-between',
-                padding: '0 20px 16px',
+                position: 'relative',
+                overflow: 'hidden',
+                transition: 'background 0.4s',
               }}>
-                <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.6875rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: FAINT }}>
-                  {getPeriodContent(activePeriod, band)?.eyebrow}
+                {ROUTINE_META[activePeriod].svg}
+                <span style={{ position: 'absolute', top: 16, left: 16, background: '#fff', borderRadius: 99, padding: '6px 14px', fontFamily: "'DM Sans', sans-serif", fontSize: '0.6875rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: FAINT, boxShadow: '0 2px 8px rgba(34,30,26,0.08)' }}>
+                  {getPeriodContent(activePeriod, band)?.eyebrow.replace('Morning · ', '').replace('Midday · ', '').replace('Evening · ', '')}
                 </span>
-                <span style={{ background: 'rgba(34,30,26,0.85)', color: '#FAF8F5', borderRadius: 99, padding: '4px 12px', fontFamily: "'DM Serif Display', Georgia, serif", fontSize: '1rem' }}>
-                  {periodTemps[activePeriod] != null ? `~${Math.round(periodTemps[activePeriod])}°` : '—°'}
+                <span style={{ position: 'absolute', right: 16, bottom: 16, background: 'rgba(34,30,26,0.85)', color: '#FAF8F5', borderRadius: 99, padding: '5px 14px', fontFamily: "'DM Serif Display', Georgia, serif", fontSize: '1rem', boxShadow: '0 2px 10px rgba(34,30,26,0.14)' }}>
+                  {periodRanges[activePeriod]}
                 </span>
               </div>
 
@@ -783,6 +1108,9 @@ export default function HomePage() {
                   const c = getPeriodContent(activePeriod, band)
                   return (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      <h3 style={{ fontFamily: 'var(--serif)', fontSize: '1.55rem', lineHeight: 1.1, fontWeight: 'normal', color: INK, marginBottom: 4 }}>
+                        {copy.routine[activePeriod] || ROUTINE_META[activePeriod].title}
+                      </h3>
                       {/* Do this box */}
                       <div style={{ background: 'rgba(74,103,65,0.06)', borderRadius: 12, padding: '12px 14px', border: '1px solid rgba(74,103,65,0.15)' }}>
                         <span style={{ display: 'inline-block', fontFamily: 'var(--sans)', fontSize: '0.625rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#4A6741', background: 'rgba(74,103,65,0.12)', padding: '2px 8px', borderRadius: 4, marginBottom: 8 }}>Do this</span>
@@ -823,9 +1151,12 @@ export default function HomePage() {
             Find a cool space near{' '}
             <em style={{ fontStyle: 'italic', color: '#8A3F28' }}>you.</em>
           </h2>
-          <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '1rem', color: MUTED, lineHeight: 1.55, marginBottom: 36, maxWidth: 520 }}>
-            Cool public places and shaded parks near you.
-          </p>
+          <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '1rem', color: MUTED, lineHeight: 1.55, marginBottom: 36, maxWidth: 560 }}>
+            <span>Cool public places and shaded parks near you.</span>
+            <span style={{ display: 'block', marginTop: 6 }}>
+              Or tap <span style={{ color: '#B85A3C', fontWeight: 700 }}>✦</span> to match by what you need.
+            </span>
+          </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32, alignItems: 'start' }}>
 
@@ -833,17 +1164,33 @@ export default function HomePage() {
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               {nearestVenues.length > 0
                 ? nearestVenues.map((v, idx) => {
-                    const kind = venueTypeKind(v.type ?? '')
-                    const typeTag = venueTypeLabel(v.type ?? '')
+                    const kind = venueTypeKind(v)
+                    const typeTag = venueTypeLabel(v)
                     const kindColor = VENUE_KIND_COLOR[kind]
                     const address = [v.address, v.suburb].filter(Boolean).join(', ')
                     return (
                       <div
                         key={v.id ?? v.name}
                         onClick={() => navigate('/map')}
-                        style={{ position: 'relative', padding: '16px 36px 16px 40px', borderTop: idx === 0 ? 'none' : `1px solid ${RULE}`, cursor: 'pointer', transition: 'background 0.16s' }}
-                        onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(243,236,220,0.46)' }}
-                        onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+                        style={{ position: 'relative', padding: '16px 36px 16px 40px', borderTop: idx === 0 ? 'none' : `1px solid ${RULE}`, cursor: 'pointer', transition: 'background 0.16s ease, padding-left 0.22s ease' }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = 'rgba(243,236,220,0.46)'
+                          e.currentTarget.style.paddingLeft = '50px'
+                          const arrow = e.currentTarget.querySelector('[data-row-arrow]')
+                          if (arrow) {
+                            arrow.style.opacity = '1'
+                            arrow.style.transform = 'translate(0, -50%)'
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = 'transparent'
+                          e.currentTarget.style.paddingLeft = '40px'
+                          const arrow = e.currentTarget.querySelector('[data-row-arrow]')
+                          if (arrow) {
+                            arrow.style.opacity = '0'
+                            arrow.style.transform = 'translate(-8px, -50%)'
+                          }
+                        }}
                       >
                         {/* Numbered circle */}
                         <div style={{ position: 'absolute', left: 0, top: idx === 0 ? 16 : 18, width: 24, height: 24, borderRadius: '50%', background: kindColor, color: '#fff', display: 'grid', placeItems: 'center', fontSize: '0.6875rem', fontWeight: 600, fontFamily: "'DM Sans', sans-serif", boxShadow: '0 2px 8px rgba(34,30,26,0.14)' }}>
@@ -858,13 +1205,20 @@ export default function HomePage() {
                           </div>
                         </div>
                         {/* Type pill */}
-                        <div style={{ display: 'inline-flex', alignItems: 'center', padding: '2px 10px', borderRadius: 99, background: `${kindColor}18`, fontFamily: "'DM Sans', sans-serif", fontSize: '0.6875rem', fontWeight: 600, color: kindColor, marginBottom: address ? 4 : 0 }}>
+                        <div style={{ display: 'inline-flex', alignItems: 'center', minHeight: 24, padding: '4px 11px', borderRadius: 99, background: VENUE_KIND_PILL[kind].background, fontFamily: "'DM Sans', sans-serif", fontSize: '0.777rem', fontWeight: 500, color: VENUE_KIND_PILL[kind].color, marginTop: 3, marginBottom: address ? 4 : 0, lineHeight: 1 }}>
                           {typeTag}
                         </div>
                         {/* Address */}
                         {address && (
                           <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.8125rem', color: FAINT, marginTop: 2 }}>{address}</div>
                         )}
+                        <span
+                          data-row-arrow
+                          aria-hidden="true"
+                          style={{ position: 'absolute', right: 8, top: 30, transform: 'translate(-8px, -50%)', opacity: 0, color: FAINT, fontSize: 24, lineHeight: 1, transition: 'opacity 0.18s ease, transform 0.18s ease' }}
+                        >
+                          →
+                        </span>
                       </div>
                     )
                   })
@@ -877,23 +1231,61 @@ export default function HomePage() {
             </div>
 
             {/* Map card — navigates to full map page */}
-            <div
-              onClick={() => navigate('/map')}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') navigate('/map') }}
-              style={{ height: 320, background: '#E8F0F5', borderRadius: 20, overflow: 'hidden', position: 'relative', cursor: 'pointer', display: 'flex', alignItems: 'flex-end', padding: 20 }}
-              onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.92' }}
-              onMouseLeave={(e) => { e.currentTarget.style.opacity = '1' }}
-            >
-              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(91,122,140,0.04) 0%, rgba(91,122,140,0.22) 100%)' }} />
-              <div style={{ position: 'relative', zIndex: 2, display: 'flex', alignItems: 'center', gap: 8, background: '#fff', borderRadius: 99, padding: '9px 18px', boxShadow: '0 2px 8px rgba(0,0,0,0.10)', fontFamily: "'DM Sans', sans-serif", fontSize: '0.9375rem', fontWeight: 600, color: INK }}>
-                Open full map →
-              </div>
-            </div>
+            <MiniMapCard venues={nearestVenues} onOpen={() => navigate('/map')} />
           </div>
         </div>
       </section>
+
+      <button
+        onClick={() => setShowAiPanel(true)}
+        aria-label="Find a cool space with AI"
+        style={{
+          position: 'fixed',
+          right: 28,
+          bottom: 28,
+          zIndex: 520,
+          width: 58,
+          height: 58,
+          borderRadius: '50%',
+          border: '1px solid rgba(184,90,60,0.34)',
+          background: '#B85A3C',
+          color: '#fff',
+          display: 'grid',
+          placeItems: 'center',
+          boxShadow: '0 16px 36px rgba(138,63,40,0.28)',
+          cursor: 'pointer',
+          fontSize: 25,
+          fontWeight: 700,
+        }}
+      >
+        ✦
+      </button>
+
+      {showAiPanel && (
+        <AiCoolSpacePanel
+          step={aiStep}
+          prefs={aiPrefs}
+          hasResult={aiHasResult}
+          matches={aiMatches}
+          onPick={(key, value) => {
+            setAiPrefs((prev) => ({ ...prev, [key]: value }))
+            setAiHasResult(false)
+          }}
+          onBack={() => setAiStep((s) => Math.max(0, s - 1))}
+          onNext={() => setAiStep((s) => Math.min(AI_QUESTIONS.length - 1, s + 1))}
+          onFind={() => {
+            setAiHasResult(true)
+            setAiStep(AI_QUESTIONS.length)
+          }}
+          onReset={() => {
+            setAiPrefs({})
+            setAiStep(0)
+            setAiHasResult(false)
+          }}
+          onClose={() => setShowAiPanel(false)}
+          onOpenMap={() => navigate('/map')}
+        />
+      )}
 
       {/* ══════════════════════════════════════════════════════════════════════
           6. SYMPTOMS CHECKER
@@ -952,50 +1344,53 @@ export default function HomePage() {
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
               <button
                 onClick={() => setSelectedSymptoms(new Set())}
-                style={{ background: 'none', border: `1px solid ${RULE}`, borderRadius: 99, padding: '6px 18px', fontFamily: "'DM Sans', sans-serif", fontSize: '0.875rem', color: '#B85A3C', cursor: 'pointer' }}
+                style={{ background: 'transparent', border: 'none', padding: 0, fontFamily: "'DM Sans', sans-serif", fontSize: '0.875rem', fontWeight: 500, color: '#8A3F28', cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: 3, transition: 'color 0.18s ease' }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = INK }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = '#8A3F28' }}
               >
                 Clear all
               </button>
             </div>
           )}
 
-          {/* Action banner — all 3 always rendered, CSS transitions on visibility */}
-          <div className={`cs-banner ${maxSeverity === null ? 'shown-banner' : 'hidden-banner'}`} style={{ background: '#F3ECDC', border: `1px solid ${RULE}`, borderRadius: 20, padding: '20px 24px', textAlign: 'center', fontFamily: "'DM Sans', sans-serif", fontSize: '1rem', color: MUTED }}>
-            Select any symptoms above to see recommended actions.
-          </div>
-
-          <div className={`cs-banner ${maxSeverity === 'nurse' ? 'shown-banner' : 'hidden-banner'}`} style={{ background: '#CFDDE5', border: '1px solid #5B7A8C', borderRadius: 20, padding: '24px 28px', display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 16, flex: 1, minWidth: 0 }}>
-              <div style={{ width: 48, height: 48, borderRadius: '50%', background: '#5B7A8C', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <span className="material-symbols-outlined" style={{ fontSize: 24, color: '#fff' }}>medical_services</span>
-              </div>
-              <div>
-                <div style={{ fontFamily: "'DM Serif Display', Georgia, serif", fontSize: '1.25rem', color: INK, marginBottom: 4 }}>Seek medical advice</div>
-                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.9375rem', color: '#1E465A', lineHeight: 1.5 }}>
-                  These may be signs of heat exhaustion. Rest in a cool place, sip water, and call Nurse-On-Call for guidance.
+          <div
+            key={symptomBanner.key}
+            className="cs-banner"
+            style={{
+              background: symptomBanner.bg,
+              border: `1px solid ${symptomBanner.border}`,
+              borderRadius: 20,
+              padding: symptomBanner.title ? '24px 28px' : '20px 24px',
+              minHeight: symptomBanner.title ? 104 : 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: symptomBanner.title ? 'space-between' : 'center',
+              gap: 24,
+              flexWrap: 'wrap',
+              fontFamily: "'DM Sans', sans-serif",
+              color: symptomBanner.textColor,
+            }}
+          >
+            {symptomBanner.title ? (
+              <>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 16, flex: 1, minWidth: 0 }}>
+                  <div style={{ width: 48, height: 48, borderRadius: '50%', background: symptomBanner.iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, animation: symptomBanner.key === '000' ? 'cs-pulse 2s ease-in-out infinite' : 'none' }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: 24, color: '#fff' }}>{symptomBanner.icon}</span>
+                  </div>
+                  <div>
+                    <div style={{ fontFamily: "'DM Serif Display', Georgia, serif", fontSize: '1.25rem', color: INK, marginBottom: 4 }}>{symptomBanner.title}</div>
+                    <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.9375rem', color: symptomBanner.textColor, lineHeight: 1.5 }}>
+                      {symptomBanner.text}
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-            <a href="tel:1300606024" style={{ display: 'inline-block', background: '#5B7A8C', color: '#fff', borderRadius: 99, padding: '12px 24px', fontFamily: "'DM Sans', sans-serif", fontSize: '0.9375rem', fontWeight: 600, textDecoration: 'none', flexShrink: 0 }}>
-              Call 1300 60 60 24
-            </a>
-          </div>
-
-          <div className={`cs-banner ${maxSeverity === '000' ? 'shown-banner' : 'hidden-banner'}`} style={{ background: '#F1D6CE', border: '1px solid #B85A3C', borderRadius: 20, padding: '24px 28px', display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 16, flex: 1, minWidth: 0 }}>
-              <div style={{ width: 48, height: 48, borderRadius: '50%', background: '#B85A3C', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, animation: 'cs-pulse 2s ease-in-out infinite' }}>
-                <span className="material-symbols-outlined" style={{ fontSize: 24, color: '#fff' }}>emergency</span>
-              </div>
-              <div>
-                <div style={{ fontFamily: "'DM Serif Display', Georgia, serif", fontSize: '1.25rem', color: INK, marginBottom: 4 }}>Medical Emergency</div>
-                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.9375rem', color: '#8A3F28', lineHeight: 1.5 }}>
-                  These may be critical signs of heat stroke. Do not wait. Call emergency services immediately.
-                </div>
-              </div>
-            </div>
-            <a href="tel:000" style={{ display: 'inline-block', background: '#B85A3C', color: '#fff', borderRadius: 99, padding: '12px 24px', fontFamily: "'DM Sans', sans-serif", fontSize: '0.9375rem', fontWeight: 600, textDecoration: 'none', flexShrink: 0 }}>
-              Call 000 Now
-            </a>
+                <a href={symptomBanner.href} style={{ display: 'inline-block', background: symptomBanner.iconBg, color: '#fff', borderRadius: 99, padding: '12px 24px', fontFamily: "'DM Sans', sans-serif", fontSize: '0.9375rem', fontWeight: 600, textDecoration: 'none', flexShrink: 0 }}>
+                  {symptomBanner.cta}
+                </a>
+              </>
+            ) : (
+              <span>{symptomBanner.text}</span>
+            )}
           </div>
         </div>
       </section>
@@ -1003,60 +1398,13 @@ export default function HomePage() {
       {/* ══════════════════════════════════════════════════════════════════════
           LOCATION MODAL
       ══════════════════════════════════════════════════════════════════════ */}
-      {showLocModal && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 900, background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-          <div style={{ background: '#fff', borderRadius: 20, padding: '36px 32px 32px', maxWidth: 420, width: '100%', boxShadow: '0 24px 64px rgba(0,0,0,0.3)', animation: 'popIn .3s cubic-bezier(.34,1.56,.64,1)' }}>
-
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
-              <div style={{ width: 52, height: 52, borderRadius: '50%', background: '#EEF3FF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1852B4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 21c-4-4-7-7.5-7-11a7 7 0 0 1 14 0c0 3.5-3 7-7 11z" />
-                  <circle cx="12" cy="10" r="2.5" />
-                </svg>
-              </div>
-            </div>
-
-            <h2 style={{ fontFamily: "'DM Serif Display',Georgia,serif", fontSize: '1.625rem', color: INK, textAlign: 'center', marginBottom: 10, letterSpacing: '-0.5px', lineHeight: 1.2 }}>
-              Where are you?
-            </h2>
-            <p style={{ fontFamily: "'DM Sans',sans-serif", fontSize: '0.9375rem', color: '#6B6B6B', textAlign: 'center', lineHeight: 1.55, marginBottom: 24 }}>
-              We need your location to show nearby cool spaces and personalise your heat risk.
-            </p>
-
-            <button
-              onClick={() => { setShowLocModal(false); requestGps() }}
-              style={{ width: '100%', background: '#1852B4', color: '#fff', border: 'none', borderRadius: 12, padding: 15, fontFamily: "'DM Sans',sans-serif", fontSize: '1rem', fontWeight: 600, cursor: 'pointer', marginBottom: 16 }}
-            >
-              Use my current location
-            </button>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-              <div style={{ flex: 1, height: 1, background: '#E5E3DF' }} />
-              <span style={{ fontFamily: "'DM Sans',sans-serif", fontSize: '0.875rem', color: '#9C9A96' }}>or</span>
-              <div style={{ flex: 1, height: 1, background: '#E5E3DF' }} />
-            </div>
-
-            <form
-              style={{ display: 'flex', gap: 8 }}
-              onSubmit={(e) => { e.preventDefault(); if (!locPostcode.trim()) return; setShowLocModal(false); fetchByPostcode(locPostcode.trim()) }}
-            >
-              <input
-                type="text"
-                value={locPostcode}
-                onChange={(e) => setLocPostcode(e.target.value)}
-                placeholder="Enter postcode (e.g. 3000)"
-                style={{ flex: 1, border: '1.5px solid #E5E3DF', borderRadius: 10, padding: '12px 16px', fontFamily: "'DM Sans',sans-serif", fontSize: '0.9375rem', color: INK, outline: 'none', background: '#FAFAF9' }}
-              />
-              <button
-                type="submit"
-                style={{ background: INK, color: '#fff', border: 'none', borderRadius: 10, padding: '12px 20px', fontFamily: "'DM Sans',sans-serif", fontSize: '0.9375rem', fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}
-              >
-                Go
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
+      <LocationModal
+        open={showLocModal}
+        onClose={() => setShowLocModal(false)}
+        requestGps={requestGps}
+        fetchByPostcode={fetchByPostcode}
+        canDismiss={canDismissLocationModal}
+      />
 
       {/* ══════════════════════════════════════════════════════════════════════
           MEDICATION MODAL
@@ -1099,7 +1447,7 @@ export default function HomePage() {
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
               <span style={{ fontFamily: "'DM Serif Display',Georgia,serif", fontSize: '1.625rem', color: INK, letterSpacing: '-0.5px', lineHeight: 1.2 }}>
-                Find your heat profile
+                Your medications
               </span>
               <button
                 onClick={() => {
@@ -1112,7 +1460,7 @@ export default function HomePage() {
             </div>
 
             <p style={{ fontFamily: "'DM Sans',sans-serif", fontSize: '0.9375rem', color: '#6B6B6B', marginBottom: 20, lineHeight: 1.5 }}>
-              Tell us what medications you take for personalised heat advice.
+              Select any medications you take regularly. We don't save this data — it's strictly used to calculate your heat risk today.
             </p>
 
             <MedicationsSection
@@ -1122,9 +1470,11 @@ export default function HomePage() {
 
             <button
               onClick={() => setSelectedMedications([])}
-              style={{ background: 'none', border: 'none', fontFamily: "'DM Sans',sans-serif", fontSize: '0.875rem', color: '#1852B4', cursor: 'pointer', padding: '14px 0 6px', textDecoration: 'underline', display: 'block' }}
+              style={{ background: 'transparent', border: 'none', fontFamily: "'DM Sans',sans-serif", fontSize: '0.875rem', fontWeight: 500, color: '#8A3F28', cursor: 'pointer', padding: '14px 0 6px', display: 'inline-flex', textDecoration: 'underline', textUnderlineOffset: 3, transition: 'color 0.18s ease' }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = INK }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = '#8A3F28' }}
             >
-              Clear all choices
+              Clear all
             </button>
 
             <button
@@ -1133,9 +1483,11 @@ export default function HomePage() {
                 const cnt = selectedMedications.length
                 showToast(cnt > 0 ? `Score updated — ${cnt} medication${cnt > 1 ? 's' : ''} saved` : 'Medications cleared — showing weather-only score')
               }}
-              style={{ width: '100%', background: INK, color: '#fff', border: 'none', borderRadius: 12, padding: 16, fontFamily: "'DM Sans',sans-serif", fontSize: '1rem', fontWeight: 700, cursor: 'pointer', marginTop: 8, letterSpacing: '-0.2px' }}
+              style={{ width: '100%', background: INK, color: '#fff', border: 'none', borderRadius: 12, padding: 16, fontFamily: "'DM Sans',sans-serif", fontSize: '1rem', fontWeight: 700, cursor: 'pointer', marginTop: 8, letterSpacing: '-0.2px', boxShadow: '0 4px 16px rgba(15,15,15,0.20)', transition: 'transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease' }}
+              onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(15,15,15,0.26)' }}
+              onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(15,15,15,0.20)' }}
             >
-              See my heat profile
+              Save & Calculate Risk
             </button>
           </div>
         </div>
@@ -1165,9 +1517,9 @@ function WeatherCallout({ value, label, badge, badgeColor, style: extraStyle }) 
     }}>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
         <span style={{ fontFamily: "'DM Serif Display', Georgia, serif", fontSize: '1.375rem', color: INK, letterSpacing: '-0.5px', lineHeight: 1 }}>{value}</span>
-        <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.6875rem', color: '#9A9A9A', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{label}</span>
+        <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.8125rem', color: '#9A9A9A', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{label}</span>
       </div>
-      <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 99, background: `${badgeColor}18`, fontFamily: "'DM Sans', sans-serif", fontSize: '0.625rem', fontWeight: 600, color: badgeColor, alignSelf: 'flex-start' }}>
+      <span style={{ display: 'inline-block', padding: '3px 10px', borderRadius: 99, background: `${badgeColor}18`, fontFamily: "'DM Sans', sans-serif", fontSize: '0.75rem', fontWeight: 600, color: badgeColor, alignSelf: 'flex-start' }}>
         {badge}
       </span>
     </div>
@@ -1175,11 +1527,11 @@ function WeatherCallout({ value, label, badge, badgeColor, style: extraStyle }) 
 }
 
 /** One of the three summary cards in the "Three things" section */
-function ThingCard({ icon, iconBg, title, desc, extra, cta, ctaIcon = 'arrow_forward', onClick, windowTime, windowLabel }) {
+function ThingCard({ icon, iconBg, title, desc, extra, extraBeforeDesc = false, cta, ctaIcon = 'arrow_forward', onClick, windowTime, windowLabel }) {
   return (
     <div
       onClick={onClick}
-      style={{ background: '#fff', border: `1px solid ${RULE}`, borderRadius: 24, padding: 32, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 24, cursor: 'pointer', transition: 'border-color 0.18s' }}
+      style={{ background: '#fff', border: `1px solid ${RULE}`, borderRadius: 24, padding: 32, minHeight: 430, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 24, cursor: 'pointer', transition: 'border-color 0.18s' }}
       onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#8A3F28' }}
       onMouseLeave={(e) => { e.currentTarget.style.borderColor = RULE }}
     >
@@ -1187,9 +1539,10 @@ function ThingCard({ icon, iconBg, title, desc, extra, cta, ctaIcon = 'arrow_for
         <div style={{ width: 48, height: 48, borderRadius: '50%', background: iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 24 }}>
           <span className="material-symbols-outlined" style={{ fontSize: 22, color: INK }}>{icon}</span>
         </div>
-        <h3 style={{ fontFamily: "'DM Serif Display', Georgia, serif", fontSize: '1.25rem', color: INK, lineHeight: 1.15, marginBottom: windowTime ? 0 : 16, fontWeight: 'normal' }}>
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 'var(--text-title-sm)', color: INK, lineHeight: 1.15, marginBottom: windowTime || extraBeforeDesc ? 0 : 16, fontWeight: 'normal', letterSpacing: '-0.01em' }}>
           {title}
         </h3>
+        {extraBeforeDesc && extra && <div style={{ marginTop: 16, marginBottom: 16 }}>{extra}</div>}
         {windowTime && (
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, margin: '12px 0' }}>
             <span style={{ fontFamily: 'var(--serif)', fontSize: 'clamp(1.75rem,2.5vw,2.25rem)', color: INK, lineHeight: 1 }}>{windowTime}</span>
@@ -1199,7 +1552,7 @@ function ThingCard({ icon, iconBg, title, desc, extra, cta, ctaIcon = 'arrow_for
         <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.9375rem', color: MUTED, lineHeight: 1.5 }}>
           {desc}
         </p>
-        {extra && <div style={{ marginTop: 12 }}>{extra}</div>}
+        {!extraBeforeDesc && extra && <div style={{ marginTop: 12 }}>{extra}</div>}
       </div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontFamily: "'DM Sans', sans-serif", fontSize: '0.9375rem', fontWeight: 500, color: INK }}>
         {cta}
@@ -1209,30 +1562,217 @@ function ThingCard({ icon, iconBg, title, desc, extra, cta, ctaIcon = 'arrow_for
   )
 }
 
-/** Inline chips showing each selected medication name */
-function MedChips({ medications }) {
+/** Interactive medication advice chips shown in the Three Things card */
+function MedAdviceChips({ medications, activeMed, onSelect, onClear }) {
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
       {medications.map((med) => (
-        <span
+        <button
           key={med}
+          onClick={(e) => {
+            e.stopPropagation()
+            onSelect(med)
+          }}
           style={{
             display: 'inline-flex',
             alignItems: 'center',
             padding: '3px 10px',
             borderRadius: 99,
-            background: 'rgba(138,63,40,0.08)',
-            border: '1px solid rgba(138,63,40,0.18)',
+            background: activeMed === med ? '#B85A3C' : '#FFFCF6',
+            border: activeMed === med ? '1px solid #B85A3C' : `1px solid ${RULE}`,
             fontFamily: "'DM Sans', sans-serif",
             fontSize: '0.75rem',
             fontWeight: 500,
-            color: '#8A3F28',
+            color: activeMed === med ? '#fff' : MUTED,
             lineHeight: 1.4,
+            cursor: 'pointer',
+            transition: 'border-color 0.18s ease, color 0.18s ease, transform 0.18s ease',
+          }}
+          onMouseEnter={(e) => {
+            if (activeMed !== med) {
+              e.currentTarget.style.borderColor = '#8A3F28'
+              e.currentTarget.style.color = INK
+            }
+            e.currentTarget.style.transform = 'translateY(-1px)'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.borderColor = activeMed === med ? '#B85A3C' : RULE
+            e.currentTarget.style.color = activeMed === med ? '#fff' : MUTED
+            e.currentTarget.style.transform = 'none'
           }}
         >
-          {med}
-        </span>
+          {MED_LABELS[med] ?? med}
+        </button>
       ))}
+      <button
+        onClick={(e) => {
+          e.stopPropagation()
+          onClear()
+        }}
+        style={{
+          border: 'none',
+          background: 'transparent',
+          color: '#8A3F28',
+          fontFamily: 'var(--sans)',
+          fontSize: '0.75rem',
+          fontWeight: 500,
+          cursor: 'pointer',
+          padding: '3px 4px',
+          textDecoration: 'underline',
+          textUnderlineOffset: 3,
+          transition: 'color 0.18s ease',
+        }}
+        onMouseEnter={(e) => { e.currentTarget.style.color = INK }}
+        onMouseLeave={(e) => { e.currentTarget.style.color = '#8A3F28' }}
+      >
+        Clear all
+      </button>
+    </div>
+  )
+}
+
+function MiniMapCard({ venues, onOpen }) {
+  const dots = venues.length ? venues : [{ name: 'Nearby cool space', type: 'Library' }]
+  const validDots = dots.filter((v) => Number.isFinite(v.lat) && Number.isFinite(v.lng))
+  const center = validDots.length
+    ? [validDots[0].lat, validDots[0].lng]
+    : [-37.8136, 144.9631]
+  return (
+    <div
+      onClick={onOpen}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onOpen() }}
+      style={{ height: 360, background: '#E8F0F5', borderRadius: 24, overflow: 'hidden', position: 'relative', cursor: 'pointer', border: `1px solid ${RULE}`, boxShadow: '0 4px 24px rgba(34,30,26,0.04)', transition: 'transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease' }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = 'translateY(-4px)'
+        e.currentTarget.style.boxShadow = '0 20px 46px rgba(34,30,26,0.12)'
+        e.currentTarget.style.borderColor = 'rgba(138,63,40,0.28)'
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = 'none'
+        e.currentTarget.style.boxShadow = '0 4px 24px rgba(34,30,26,0.04)'
+        e.currentTarget.style.borderColor = RULE
+      }}
+    >
+      <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
+        <MapContainer
+          key={`${center[0]}-${center[1]}-${validDots.length}`}
+          center={center}
+          zoom={14}
+          dragging={false}
+          scrollWheelZoom={false}
+          doubleClickZoom={false}
+          boxZoom={false}
+          keyboard={false}
+          zoomControl={false}
+          attributionControl={false}
+          style={{ width: '100%', height: '100%', filter: 'saturate(0.76) contrast(0.94) brightness(1.04)' }}
+        >
+          <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" />
+          {validDots.slice(0, 3).map((v, i) => {
+            const kind = venueTypeKind(v)
+            const color = VENUE_KIND_COLOR[kind]
+            return (
+              <Marker
+                key={v.id ?? v.name ?? i}
+                position={[v.lat, v.lng]}
+                icon={L.divIcon({
+                  className: '',
+                  iconSize: [28, 28],
+                  iconAnchor: [14, 14],
+                  html: `<div style="width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:${color};color:white;border:3px solid white;box-shadow:0 4px 12px rgba(34,30,26,.22);font-family:Atkinson Hyperlegible,system-ui,sans-serif;font-size:14px;font-weight:700">${i + 1}</div>`,
+                })}
+              />
+            )
+          })}
+        </MapContainer>
+      </div>
+      {validDots.length === 0 && dots.slice(0, 3).map((v, i) => {
+        const kind = venueTypeKind(v)
+        const color = VENUE_KIND_COLOR[kind]
+        const positions = [[28, 34], [62, 52], [44, 70]]
+        return (
+          <div key={v.id ?? v.name ?? i} title={v.name} style={{ position: 'absolute', left: `${positions[i][0]}%`, top: `${positions[i][1]}%`, transform: 'translate(-50%,-50%)', width: 26, height: 26, borderRadius: '50%', background: color, border: '3px solid #fff', boxShadow: '0 6px 16px rgba(34,30,26,0.22)', display: 'grid', placeItems: 'center', color: '#fff', fontFamily: 'var(--sans)', fontSize: '0.75rem', fontWeight: 800 }}>
+            {i + 1}
+          </div>
+        )
+      })}
+      <div style={{ position: 'absolute', right: 16, bottom: 16, zIndex: 2, display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.82)', backdropFilter: 'blur(12px)', borderRadius: 99, padding: '9px 18px', boxShadow: '0 8px 24px rgba(34,30,26,0.12)', fontFamily: "'DM Sans', sans-serif", fontSize: '0.9375rem', fontWeight: 600, color: INK }}>
+        Open full map →
+      </div>
+    </div>
+  )
+}
+
+function AiCoolSpacePanel({ step, prefs, hasResult, matches, onPick, onBack, onNext, onFind, onReset, onClose, onOpenMap }) {
+  const question = AI_QUESTIONS[step]
+  const showingResult = step >= AI_QUESTIONS.length
+  return (
+    <div style={{ position: 'fixed', right: 24, bottom: 96, zIndex: 530, width: 'min(420px, calc(100vw - 32px))', background: '#FFFCF6', border: `1px solid ${RULE}`, borderRadius: 22, boxShadow: '0 24px 64px rgba(34,30,26,0.22)', overflow: 'hidden' }}>
+      <div style={{ padding: '18px 20px', borderBottom: `1px solid ${RULE}`, display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'flex-start' }}>
+        <div>
+          <div style={{ fontFamily: 'var(--serif)', fontSize: '1.35rem', color: INK, lineHeight: 1.1 }}>Find a cool space with AI</div>
+          <div style={{ fontFamily: 'var(--sans)', fontSize: '0.8125rem', color: FAINT, marginTop: 4 }}>4 questions · about 1 minute</div>
+        </div>
+        <button onClick={onClose} aria-label="Close" style={{ border: 'none', background: 'rgba(34,30,26,0.07)', width: 32, height: 32, borderRadius: '50%', cursor: 'pointer', fontSize: 16 }}>×</button>
+      </div>
+
+      <div style={{ padding: 20 }}>
+        {!showingResult && question && (
+          <>
+            <div style={{ fontFamily: 'var(--serif)', fontSize: '1.2rem', lineHeight: 1.18, color: INK, marginBottom: 14 }}>{question.title}</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              {question.options.map(([value, label]) => {
+                const selected = prefs[question.key] === value
+                return (
+                  <button
+                    key={value}
+                    onClick={() => onPick(question.key, value)}
+                    style={{ border: selected ? '1.5px solid #B85A3C' : `1px solid ${RULE}`, background: selected ? '#F1D6CE' : '#fff', color: selected ? '#8A3F28' : INK, borderRadius: 14, padding: '12px 13px', textAlign: 'left', fontFamily: 'var(--sans)', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer' }}
+                  >
+                    {label}
+                  </button>
+                )
+              })}
+            </div>
+          </>
+        )}
+
+        {showingResult && (
+          <div>
+            <div style={{ fontFamily: 'var(--serif)', fontSize: '1.2rem', color: INK, marginBottom: 12 }}>
+              {hasResult ? 'Best matches nearby' : 'Finding the best spaces for you...'}
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {matches.length ? matches.map((v) => (
+                <button key={v.id ?? v.name} onClick={onOpenMap} style={{ textAlign: 'left', border: `1px solid ${RULE}`, background: '#fff', borderRadius: 14, padding: 14, cursor: 'pointer' }}>
+                  <div style={{ fontFamily: 'var(--sans)', fontWeight: 700, color: INK, marginBottom: 4 }}>{v.name}</div>
+                  <div style={{ fontFamily: 'var(--sans)', color: FAINT, fontSize: '0.84rem' }}>{venueTypeLabel(v)} · {v.distKm != null ? `${v.distKm.toFixed(1)} km` : 'nearby'}</div>
+                </button>
+              )) : (
+                <div style={{ fontFamily: 'var(--sans)', color: FAINT, border: `1px solid ${RULE}`, background: '#fff', borderRadius: 14, padding: 14 }}>
+                  Set your location to match nearby cool spaces.
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div style={{ borderTop: `1px solid ${RULE}`, padding: '14px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+        <button onClick={showingResult ? onReset : onBack} style={{ visibility: step === 0 && !showingResult ? 'hidden' : 'visible', border: 'none', background: 'transparent', color: FAINT, fontFamily: 'var(--sans)', fontWeight: 700, cursor: 'pointer' }}>
+          {showingResult ? 'Start over' : '← Back'}
+        </button>
+        <span style={{ fontFamily: 'var(--sans)', color: FAINT, fontSize: '0.78rem' }}>
+          {showingResult ? 'Results' : `Step ${step + 1} of ${AI_QUESTIONS.length}`}
+        </span>
+        {!showingResult && (
+          <button onClick={step === AI_QUESTIONS.length - 1 ? onFind : onNext} style={{ border: 'none', background: '#0F0F0F', color: '#fff', borderRadius: 99, padding: '10px 16px', fontFamily: 'var(--sans)', fontWeight: 700, cursor: 'pointer' }}>
+            {step === AI_QUESTIONS.length - 1 ? 'Find spaces ✦' : 'Next →'}
+          </button>
+        )}
+      </div>
     </div>
   )
 }

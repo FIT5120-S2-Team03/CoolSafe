@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import PasswordGate from './PasswordGate'
 import useFountains from './underdevelopment/hooks/useFountains'
 import useHVI from './underdevelopment/hooks/useHVI'
+import GlobalLocationModal from './underdevelopment/components/location/GlobalLocationModal'
 
 // Kicks off background fetches so map data is cached before the user navigates there.
 function Prefetch() {
@@ -22,7 +23,12 @@ import HomePageV2 from './version2/pages/HomePage'
 import MapPageV2 from './version2/pages/MapPage'
 
 function DevLayout({ children }) {
-  return children
+  return (
+    <>
+      <GlobalLocationModal />
+      {children}
+    </>
+  )
 }
 
 export default function App() {

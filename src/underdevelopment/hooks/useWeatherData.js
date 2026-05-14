@@ -3,6 +3,7 @@ import mockWeather from '../data/mockWeather.json'
 
 const CACHE_KEY = 'coolsafe_weather'
 const CACHE_TTL_MS = 30 * 60 * 1000 // 30 minutes
+const LOCATION_UPDATED_EVENT = 'coolsafe:location-updated'
 
 function readWeatherCache() {
   try {
@@ -68,7 +69,11 @@ export function useWeatherData() {
       setLocationName(name)
       setCoords({ lat, lng })
       localStorage.setItem('coolsafe_coords', JSON.stringify({ lat, lng }))
+      if (name) localStorage.setItem('cs_location', name)
       writeWeatherCache({ current: currentData, hourly: data.hourly, daily: dailyData, locationName: name, lat, lng })
+      window.dispatchEvent(new CustomEvent(LOCATION_UPDATED_EVENT, {
+        detail: { current: currentData, hourly: data.hourly, daily: dailyData, locationName: name, lat, lng },
+      }))
     } catch {
       setError(true)
     } finally {
@@ -144,6 +149,22 @@ export function useWeatherData() {
     }, CACHE_TTL_MS)
 
     return () => clearInterval(timer)
+  }, [])
+
+  useEffect(() => {
+    function onLocationUpdated(event) {
+      const data = event.detail
+      if (!data) return
+      setCurrent(data.current)
+      setHourly(data.hourly)
+      setDaily(data.daily)
+      setLocationName(data.locationName)
+      setCoords({ lat: data.lat, lng: data.lng })
+      setLoading(false)
+      setError(false)
+    }
+    window.addEventListener(LOCATION_UPDATED_EVENT, onLocationUpdated)
+    return () => window.removeEventListener(LOCATION_UPDATED_EVENT, onLocationUpdated)
   }, [])
 
   function requestGps() {

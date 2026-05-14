@@ -51,14 +51,38 @@
   --color-olive-deep:     #4F5A2B;
   --color-olive-soft:     #D9DEC0;
   --color-mustard:        #D49A3A;
+  --color-mustard-deep:   #8A5A12;
   --color-mustard-soft:   #F2DDB3;
   --color-dustblue:       #5B7A8C;
   --color-dustblue-deep:  #1E465A;
   --color-dustblue-soft:  #CFDDE5;
   --color-dustblue-pale:  #E8F0F5;
+  --color-blue-navy:      #0A2860;
+  --color-blue-royal:     #0A3090;
   --color-blue-soft:      #EEF3FF;
+  --color-blue-mist:      #F4F7FF;
+  --color-blue-callout:   #E1EAFF;
+  --color-blue-chip:      #C5D6FF;
+  --color-red-deep:       #6A0808;
+  --color-red-mist:       #FFF5F5;
+  --color-orange-mist:    #FFF0EE;
+  --color-orange-callout: #FFE4E0;
+  --color-orange-chip:    #FFBDB6;
+  --color-orange-deep:    #8A1000;
+  --color-location-soft:  #F0F4FF;
+  --color-spotlight-warm: #FDF0E8;
+  --color-spotlight-green:#EDF5EE;
+  --color-spotlight-neutral:#F5F0EA;
   --color-brick:          #A8503E;
   --color-brick-soft:     #F1D6CE;
+
+  /* Shared shape */
+  --radius-sm:   8px;
+  --radius-md:   12px;
+  --radius-lg:   16px;
+  --radius-xl:   20px;
+  --radius-2xl:  24px;
+  --radius-pill: 999px;
 
   /* Backwards-compatible aliases */
   --paper:           var(--color-paper);
@@ -85,10 +109,23 @@
   /* Layout */
   --content-width:  1120px;
   --content-gutter: clamp(16px, 5vw, 40px);
+  --nav-width: var(--content-width);
+  --landing-hero-width: var(--content-width);
+  --landing-hero-height: clamp(540px, 64vh, 620px);
+  --landing-video-scale: 1.15;
+  --landing-video-shift-x: 1%;
+  --landing-video-shift-y: -2%;
+  --landing-video-focus-x: 5%;
+  --landing-video-focus-y: 20%;
+  --landing-video-opacity: 1;
+  --landing-video-saturation: 1.08;
+  --landing-video-brightness: 0.99;
+  --landing-video-contrast: 1.06;
 
   /* Shadows */
   --shadow-soft: 0 1px 0 rgba(34,30,26,0.04), 0 4px 14px -8px rgba(34,30,26,0.08);
   --shadow-lift: 0 2px 0 rgba(34,30,26,0.06), 0 12px 30px -12px rgba(34,30,26,0.18);
+  --shadow-card: 0 24px 54px rgba(0,0,0,0.06);
 }
 
 html {
@@ -105,6 +142,27 @@ body {
   overflow-x: clip;
   font-size: var(--text-body);
   line-height: 1.5;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+.font-headline,
+.font-serif {
+  font-family: var(--serif) !important;
+}
+
+.font-sans,
+.font-body {
+  font-family: var(--sans) !important;
+}
+
+.font-mono {
+  font-family: var(--mono) !important;
 }
 
 @media (prefers-reduced-motion: reduce) {

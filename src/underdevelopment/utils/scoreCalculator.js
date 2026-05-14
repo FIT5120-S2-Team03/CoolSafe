@@ -9,7 +9,7 @@ const HIGH_RISK_MEDS = [
   'Heart medication',
   'Diabetes medication',
   'Antipsychotics',
-  'Opioid pain medication',
+  'Pain relievers (NSAIDs)',
 ]
 
 const LOW_RISK_MEDS = ['Antihistamines', 'Antidepressants']
@@ -29,8 +29,8 @@ export const MED_ADVICE = {
     'Some antihistamines reduce sweating. Wear light clothing and stay hydrated.',
   Antidepressants:
     'Some antidepressants affect how your body handles heat. Take extra care to stay cool and drink water.',
-  'Opioid pain medication':
-    'Opioids can impair your ability to sense heat and increase your risk of overheating. Stay in a cool environment and check in with someone regularly.',
+  'Pain relievers (NSAIDs)':
+    'Regular NSAIDs, such as ibuprofen or naproxen, can be harder on the kidneys when fluids are low. Keep hydrated and ask a doctor or pharmacist if you use them often.',
 }
 
 function formatHour(hour) {

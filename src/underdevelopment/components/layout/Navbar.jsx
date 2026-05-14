@@ -8,8 +8,9 @@
  */
 import { useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import { openGlobalLocationModal } from '../location/GlobalLocationModal'
 
-export default function Navbar({ locationName }) {
+export default function Navbar({ locationName, onLocationClick }) {
   const { pathname } = useLocation()
 
   useEffect(() => {
@@ -24,6 +25,7 @@ export default function Navbar({ locationName }) {
 
   const isToday   = pathname === '/today'  || pathname === '/underdevelopment/today'
   const isMap     = pathname === '/map'    || pathname === '/underdevelopment/map'
+  const handleLocationClick = onLocationClick ?? openGlobalLocationModal
 
   return (
     <nav style={{
@@ -74,9 +76,18 @@ export default function Navbar({ locationName }) {
         <NavTab to="/map"   active={isMap}>Map</NavTab>
       </div>
 
-      {/* Right — location pill + date */}
-      <div style={{ justifySelf: 'end', display: 'flex', alignItems: 'center', gap: 8 }}>
-        {displayLocation && (
+      {/* Right — date + clickable location */}
+      <div style={{ justifySelf: 'end', display: 'flex', alignItems: 'center' }}>
+        <div style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 0,
+          background: 'rgba(34,30,26,0.035)',
+          border: '0.5px solid rgba(0,0,0,0.04)',
+          borderRadius: 18,
+          padding: 3,
+          whiteSpace: 'nowrap',
+        }}>
           <div style={{
             display: 'flex',
             alignItems: 'center',
@@ -84,26 +95,53 @@ export default function Navbar({ locationName }) {
             fontFamily: 'var(--mono)',
             fontSize: 'var(--text-caption)',
             color: 'var(--color-ink-muted)',
-            background: 'var(--color-warm)',
-            padding: '6px 12px',
-            borderRadius: 16,
-            letterSpacing: '0.02em',
-            border: '0.5px solid rgba(0,0,0,0.05)',
+            letterSpacing: '0.06em',
             whiteSpace: 'nowrap',
-            transition: 'all 0.3s ease',
+            padding: '5px 10px',
+            borderRadius: 15,
           }}>
-            <i className="ti ti-map-pin" style={{ fontSize: 14, color: 'var(--color-blue)' }} />
-            <span id="nav-loc-text">{displayLocation}, VIC</span>
+            <i className="ti ti-calendar" style={{ fontSize: 14, color: 'var(--color-ink-muted)' }} />
+            {date}
           </div>
-        )}
-        <div style={{
-          fontFamily: 'var(--mono)',
-          fontSize: 'var(--text-caption)',
-          color: 'var(--color-ink-muted)',
-          letterSpacing: '0.06em',
-          whiteSpace: 'nowrap',
-        }}>
-          {date}
+          {displayLocation && (
+            <div style={{ width: 1, height: 20, background: 'rgba(34,30,26,0.10)', margin: '0 3px' }} />
+          )}
+          {displayLocation && (
+            <button
+              type="button"
+              onClick={handleLocationClick}
+              aria-label="Change location"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                fontFamily: 'var(--mono)',
+                fontSize: 'var(--text-caption)',
+                color: 'var(--color-blue)',
+                background: 'transparent',
+                padding: '5px 10px',
+                borderRadius: 15,
+                letterSpacing: '0.02em',
+                border: '0.5px solid transparent',
+                whiteSpace: 'nowrap',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = 'rgba(24,82,180,0.20)'
+                e.currentTarget.style.background = 'var(--color-blue-soft)'
+                e.currentTarget.style.transform = 'translateY(-1px)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = 'transparent'
+                e.currentTarget.style.background = 'transparent'
+                e.currentTarget.style.transform = 'none'
+              }}
+            >
+              <i className="ti ti-map-pin" style={{ fontSize: 14, color: 'var(--color-blue)' }} />
+              <span id="nav-loc-text">{displayLocation}, VIC</span>
+            </button>
+          )}
         </div>
       </div>
     </nav>
@@ -130,6 +168,16 @@ function NavTab({ to, active, children }) {
         minHeight: 36,
         display: 'flex',
         alignItems: 'center',
+      }}
+      onMouseEnter={(e) => {
+        if (active) return
+        e.currentTarget.style.background = 'rgba(34,30,26,0.07)'
+        e.currentTarget.style.color = 'var(--color-ink)'
+      }}
+      onMouseLeave={(e) => {
+        if (active) return
+        e.currentTarget.style.background = 'transparent'
+        e.currentTarget.style.color = 'var(--color-ink-soft)'
       }}
     >
       {children}

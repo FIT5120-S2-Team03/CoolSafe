@@ -79,18 +79,28 @@ export function TempChart({ hourly }) {
     <div style={{ width: '100%', height: '100%', background: '#E5E1DA', borderRadius: 8 }} />
   )
 
-  const today = todayStr()
-  const slots = hourly.time
-    .map((t, i) => ({ t, temp: hourly.apparent_temperature[i] }))
-    .filter((s) => s.t.startsWith(today))
+  const now = new Date()
+  const currentDay = todayStr()
+  const currentHour = now.getHours()
+  const allSlots = hourly.time.map((t, i) => ({
+    t,
+    temp: hourly.apparent_temperature[i],
+    day: t.slice(0, 10),
+    hour: parseInt(t.slice(11, 13)),
+    date: new Date(t),
+  }))
+  let startIdx = allSlots.findIndex((s) => s.day === currentDay && s.hour >= currentHour)
+  if (startIdx < 0) startIdx = allSlots.findIndex((s) => s.date >= now)
+  const slots = startIdx >= 0 ? allSlots.slice(startIdx, startIdx + 24) : allSlots.slice(0, 24)
   if (slots.length < 2) return null
 
-  const W = 560, H = 260
-  const PAD = { top: 20, right: 12, bottom: 32, left: 44 }
+  const W = 560, H = 380
+  const PAD = { top: 12, right: 12, bottom: 42, left: 44 }
 
   const temps = slots.map((s) => s.temp)
   const rawMin = Math.min(...temps)
   const rawMax = Math.max(...temps)
+  const peakIdx = temps.indexOf(rawMax)
   const minT   = Math.floor((rawMin - 2) / 4) * 4
   const maxT   = Math.ceil((rawMax + 2) / 4) * 4
 
@@ -106,10 +116,7 @@ export function TempChart({ hourly }) {
   const yLabels = []
   for (let t = minT; t <= maxT; t += 4) yLabels.push(t)
 
-  const nowH   = new Date().getHours()
-  const nowIdx = slots.findIndex((s) => parseInt(s.t.slice(11, 13)) === nowH)
-
-  const xLabelSlots = slots.filter((_, i) => i % 3 === 0)
+  const xLabelSlots = slots.filter((_, i) => i % 3 === 0 || i === slots.length - 1)
 
   return (
     <svg
@@ -150,9 +157,9 @@ export function TempChart({ hourly }) {
         const barTop = getY(s.temp)
         const barH = baseY - barTop
         const color = barColor(s.temp)
-        const isNow = i === nowIdx
+        const isPeak = i === peakIdx
         const isHovered = i === hoveredIdx
-        const opacity = isNow ? 1 : isHovered ? 1 : 0.72
+        const opacity = isPeak ? 1 : isHovered ? 1 : 0.72
         return (
           <rect
             key={i}
@@ -195,20 +202,20 @@ export function TempChart({ hourly }) {
         const h    = parseInt(s.t.slice(11, 13))
         const temp = Math.round(s.temp)
         const label = tempLabel(s.temp)
-        const TW = 96, TH = 58, TR = 7
+        const TW = 122, TH = 74, TR = 9
         let tx = barX + barW / 2 - TW / 2
         const ty = barTop < PAD.top + TH + 14 ? barTop + 8 : barTop - TH - 8
         tx = Math.max(PAD.left, Math.min(W - PAD.right - TW, tx))
         return (
           <g pointerEvents="none">
             <rect x={tx} y={ty} width={TW} height={TH} rx={TR} ry={TR} fill="rgba(17,24,39,0.96)" />
-            <text x={tx + TW / 2} y={ty + 16} textAnchor="middle" fill="white" fontSize="11" fontFamily="'DM Sans',sans-serif" fontWeight="700">
+            <text x={tx + TW / 2} y={ty + 22} textAnchor="middle" fill="white" fontSize="14" fontFamily="'DM Sans',sans-serif" fontWeight="700">
               {fmtH(h)}
             </text>
-            <text x={tx + TW / 2} y={ty + 32} textAnchor="middle" fill="rgba(255,255,255,0.9)" fontSize="11" fontFamily="'DM Sans',sans-serif" fontWeight="500">
+            <text x={tx + TW / 2} y={ty + 42} textAnchor="middle" fill="rgba(255,255,255,0.9)" fontSize="14" fontFamily="'DM Sans',sans-serif" fontWeight="500">
               {temp}°C
             </text>
-            <text x={tx + TW / 2} y={ty + 48} textAnchor="middle" fill="rgba(255,255,255,0.55)" fontSize="9.5" fontFamily="'DM Sans',sans-serif">
+            <text x={tx + TW / 2} y={ty + 61} textAnchor="middle" fill="rgba(255,255,255,0.62)" fontSize="12.5" fontFamily="'DM Sans',sans-serif">
               {label}
             </text>
           </g>

@@ -4,7 +4,6 @@
  *   1. Hero card  — full-bleed video background, text + weather strip on the left
  *   2. Spotlight  — 4-card carousel with hand-drawn illustrations
  *   3. How it works — 2-step section with UI snippet cards
- *   4. Footer
  */
 import { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
@@ -56,10 +55,29 @@ const SPOTLIGHT_CARDS = [
   },
 ]
 
+function heatBand(maxTemp) {
+  if (maxTemp == null) return 'mild'
+  if (maxTemp >= 35) return 'extreme'
+  if (maxTemp >= 30) return 'hot'
+  if (maxTemp >= 24) return 'warm'
+  return 'mild'
+}
+
+function landingSubtitleForBand(band) {
+  const map = {
+    mild: "Today's conditions are mild. CoolSafer still helps you check what matters for you: medications, the hourly forecast, and how your body is feeling.",
+    warm: "A warmer day ahead. CoolSafer helps older Melburnians plan around heat, shaped by today's conditions, medications, and how the body is feeling.",
+    hot: "Heat is building today. CoolSafer gives older Melburnians a personal plan based on the forecast, medications, and how the body is responding.",
+    extreme: "High heat today. CoolSafer helps older Melburnians take extra care with a personal risk score, hourly guidance, and nearby cool spaces.",
+  }
+  return map[band] ?? map.mild
+}
+
 export default function LandingPage() {
   const { current, daily, locationName, lat, lng } = useWeatherData()
   const { aqi } = useAirQuality({ lat, lng })
   const [activeCard, setActiveCard] = useState(0)
+  const [spotlightHover, setSpotlightHover] = useState(false)
   const videoRef = useRef(null)
   const spotlightRef = useRef(null)
   const timerRef = useRef(null)
@@ -82,31 +100,19 @@ export default function LandingPage() {
     }
   }, [])
 
-  // Spotlight auto-advance: every 5 s when section is ≥ 40 % visible, pause on hover
+  // Spotlight auto-advance: every 5 s, pause only while the user is hovering the carousel.
   useEffect(() => {
-    const el = spotlightRef.current
-    if (!el) return
-    const startTimer = () => {
-      if (timerRef.current) return
-      timerRef.current = setInterval(() => {
-        if (!isPausedRef.current) setActiveCard((i) => (i + 1) % SPOTLIGHT_CARDS.length)
-      }, 5000)
-    }
-    const stopTimer = () => { clearInterval(timerRef.current); timerRef.current = null }
-    const observer = new IntersectionObserver(
-      ([entry]) => { entry.isIntersecting ? startTimer() : stopTimer() },
-      { threshold: 0.4 }
-    )
-    observer.observe(el)
-    const onEnter = () => { isPausedRef.current = true }
-    const onLeave = () => { isPausedRef.current = false }
-    el.addEventListener('mouseenter', onEnter)
-    el.addEventListener('mouseleave', onLeave)
-    return () => { observer.disconnect(); stopTimer(); el.removeEventListener('mouseenter', onEnter); el.removeEventListener('mouseleave', onLeave) }
+    timerRef.current = setInterval(() => {
+      if (!isPausedRef.current && !document.hidden) {
+        setActiveCard((i) => (i + 1) % SPOTLIGHT_CARDS.length)
+      }
+    }, 5000)
+    return () => { clearInterval(timerRef.current); timerRef.current = null }
   }, [])
 
   const risk   = current ? getRiskLevel(current.temp) : null
   const uvInfo = risk ? UV_BY_RISK[risk.level] : null
+  const landingSubtitle = landingSubtitleForBand(heatBand(daily?.todayMax))
 
   return (
     <div style={{ background: 'var(--color-paper)', minHeight: '100vh' }}>
@@ -196,7 +202,9 @@ export default function LandingPage() {
               marginBottom: 26,
               maxWidth: 380,
             }}>
-              Heat guidance for older Melburnians, shaped by today's conditions, your medications, and how your body is feeling.
+              {daily?.todayMax != null
+                ? landingSubtitle
+                : "Heat guidance for older Melburnians, shaped by today's conditions, your medications, and how your body is feeling."}
             </p>
 
             {/* Weather climate strip */}
@@ -302,56 +310,68 @@ export default function LandingPage() {
             Heat risk is often personal, indoor, and easy to miss. These are the signals CoolSafer helps older Melburnians notice early.
           </p>
 
-          <div style={{ position: 'relative' }}>
+          <div
+            style={{ position: 'relative' }}
+            onMouseEnter={() => { setSpotlightHover(true); isPausedRef.current = true }}
+            onMouseLeave={() => { setSpotlightHover(false); isPausedRef.current = false }}
+          >
             {/* Prev arrow */}
-            {activeCard > 0 && (
+            {SPOTLIGHT_CARDS.length > 1 && (
               <button
-                onClick={() => setActiveCard((i) => i - 1)}
+                onClick={() => setActiveCard((i) => (i - 1 + SPOTLIGHT_CARDS.length) % SPOTLIGHT_CARDS.length)}
                 aria-label="Previous"
-                style={{ position: 'absolute', left: -60, top: '50%', transform: 'translateY(-50%)', zIndex: 10, width: 44, height: 44, borderRadius: '50%', border: '1.5px solid rgba(0,0,0,0.1)', background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(8px)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, color: 'var(--color-ink-soft)', boxShadow: '0 2px 12px rgba(0,0,0,0.12)' }}
+                style={{ position: 'absolute', left: -80, top: '50%', transform: 'translateY(-50%)', zIndex: 10, width: 44, height: 44, borderRadius: '50%', border: '1.5px solid rgba(0,0,0,0.1)', background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(8px)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, color: 'var(--color-ink-soft)', boxShadow: '0 2px 12px rgba(0,0,0,0.12)', transition: 'background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease' }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-surface)'; e.currentTarget.style.color = 'var(--color-ink)'; e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.18)'; e.currentTarget.style.transform = 'translateY(-50%) scale(1.03)' }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.92)'; e.currentTarget.style.color = 'var(--color-ink-soft)'; e.currentTarget.style.boxShadow = '0 2px 12px rgba(0,0,0,0.12)'; e.currentTarget.style.transform = 'translateY(-50%)' }}
               >←</button>
             )}
             {/* Next arrow */}
-            {activeCard < SPOTLIGHT_CARDS.length - 1 && (
+            {SPOTLIGHT_CARDS.length > 1 && (
               <button
-                onClick={() => setActiveCard((i) => i + 1)}
+                onClick={() => setActiveCard((i) => (i + 1) % SPOTLIGHT_CARDS.length)}
                 aria-label="Next"
-                style={{ position: 'absolute', right: -60, top: '50%', transform: 'translateY(-50%)', zIndex: 10, width: 44, height: 44, borderRadius: '50%', border: '1.5px solid rgba(0,0,0,0.1)', background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(8px)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, color: 'var(--color-ink-soft)', boxShadow: '0 2px 12px rgba(0,0,0,0.12)' }}
+                style={{ position: 'absolute', right: -80, top: '50%', transform: 'translateY(-50%)', zIndex: 10, width: 44, height: 44, borderRadius: '50%', border: '1.5px solid rgba(0,0,0,0.1)', background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(8px)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, color: 'var(--color-ink-soft)', boxShadow: '0 2px 12px rgba(0,0,0,0.12)', transition: 'background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease' }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-surface)'; e.currentTarget.style.color = 'var(--color-ink)'; e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.18)'; e.currentTarget.style.transform = 'translateY(-50%) scale(1.03)' }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.92)'; e.currentTarget.style.color = 'var(--color-ink-soft)'; e.currentTarget.style.boxShadow = '0 2px 12px rgba(0,0,0,0.12)'; e.currentTarget.style.transform = 'translateY(-50%)' }}
               >→</button>
             )}
 
             {/* Card */}
-            <div style={{ overflow: 'hidden', borderRadius: 22, border: '0.5px solid rgba(0,0,0,0.08)', boxShadow: '0 22px 54px rgba(34,30,26,0.07)' }}>
+            <div style={{ overflow: 'hidden', borderRadius: 22, border: '0.5px solid rgba(0,0,0,0.08)', boxShadow: spotlightHover ? '0 30px 70px rgba(34,30,26,0.12)' : '0 22px 54px rgba(34,30,26,0.07)', transform: spotlightHover ? 'translateY(-5px)' : 'translateY(0)', transition: 'transform 0.24s ease, box-shadow 0.24s ease' }}>
               <div style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
-                height: 440,
-                background: SPOTLIGHT_CARDS[activeCard].bg,
-                transition: 'background 0.4s',
+                display: 'flex',
+                width: `${SPOTLIGHT_CARDS.length * 100}%`,
+                transform: `translateX(-${activeCard * (100 / SPOTLIGHT_CARDS.length)}%)`,
+                transition: 'transform 0.65s cubic-bezier(.22,.61,.36,1)',
+                willChange: 'transform',
               }}>
-                {/* Left — text */}
-                <div style={{ padding: 'clamp(28px,3.5vw,52px) clamp(24px,3vw,44px)', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 18 }}>
-                  <p style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontFamily: 'var(--mono)', fontSize: 'var(--text-caption)', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 500, background: 'var(--color-surface)', border: '0.5px solid rgba(0,0,0,0.05)', boxShadow: '0 2px 8px rgba(0,0,0,0.03)', borderRadius: 20, padding: '5px 13px', width: 'fit-content' }}>
-                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: SPOTLIGHT_CARDS[activeCard].tagColor, display: 'inline-block', flexShrink: 0 }} />
-                    <span style={{ color: 'var(--color-ink)' }}>{SPOTLIGHT_CARDS[activeCard].tag}</span>
-                  </p>
-                  <h3 style={{ fontFamily: 'var(--serif)', fontSize: 'clamp(1.25rem, 1.6vw, 1.75rem)', lineHeight: 1.12, letterSpacing: '-0.3px', color: 'var(--color-ink)', fontWeight: 'normal' }}>
-                    {SPOTLIGHT_CARDS[activeCard].title}
-                  </h3>
-                  <p style={{ fontFamily: 'var(--sans)', fontSize: 'clamp(1rem, 0.95vw, 1.125rem)', lineHeight: 1.7, color: 'var(--color-ink-soft)' }}>
-                    {SPOTLIGHT_CARDS[activeCard].body}
-                  </p>
-                </div>
+                {SPOTLIGHT_CARDS.map((card) => (
+                  <div key={card.tag} style={{ flex: `0 0 ${100 / SPOTLIGHT_CARDS.length}%`, display: 'grid', gridTemplateColumns: '1fr 1fr', height: 440, background: card.bg }}>
+                    {/* Left — text */}
+                    <div style={{ padding: 'clamp(28px,3.5vw,52px) clamp(24px,3vw,44px)', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 18 }}>
+                      <p style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontFamily: 'var(--mono)', fontSize: 'var(--text-caption)', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 500, background: 'var(--color-surface)', border: '0.5px solid rgba(0,0,0,0.05)', boxShadow: '0 2px 8px rgba(0,0,0,0.03)', borderRadius: 20, padding: '5px 13px', width: 'fit-content' }}>
+                        <span style={{ width: 6, height: 6, borderRadius: '50%', background: card.tagColor, display: 'inline-block', flexShrink: 0 }} />
+                        <span style={{ color: 'var(--color-ink)' }}>{card.tag}</span>
+                      </p>
+                      <h3 style={{ fontFamily: 'var(--serif)', fontSize: 'clamp(1.25rem, 1.6vw, 1.75rem)', lineHeight: 1.12, letterSpacing: '-0.3px', color: 'var(--color-ink)', fontWeight: 'normal' }}>
+                        {card.title}
+                      </h3>
+                      <p style={{ fontFamily: 'var(--sans)', fontSize: 'clamp(1rem, 0.95vw, 1.125rem)', lineHeight: 1.7, color: 'var(--color-ink-soft)' }}>
+                        {card.body}
+                      </p>
+                    </div>
 
-                {/* Right — illustration */}
-                <div style={{ position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 'clamp(22px,3vw,42px)' }}>
-                  <div style={{ position: 'absolute', inset: 'clamp(22px,3vw,42px)', borderRadius: 22, background: 'rgba(255,252,246,0.5)', border: '1px solid rgba(229,220,200,0.72)', boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.52)' }} />
-                  <img
-                    src={SPOTLIGHT_CARDS[activeCard].img}
-                    alt={SPOTLIGHT_CARDS[activeCard].title}
-                    style={{ position: 'relative', zIndex: 1, width: 'min(100%, 540px)', aspectRatio: '4/3', objectFit: 'cover', borderRadius: 18, boxShadow: '0 14px 32px rgba(34,30,26,0.08)', filter: 'saturate(0.99) contrast(0.99)' }}
-                  />
-                </div>
+                    {/* Right — illustration */}
+                    <div style={{ position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 'clamp(22px,3vw,42px)' }}>
+                      <div style={{ position: 'absolute', inset: 'clamp(22px,3vw,42px)', borderRadius: 22, background: 'rgba(255,252,246,0.5)', border: '1px solid rgba(229,220,200,0.72)', boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.52)' }} />
+                      <img
+                        src={card.img}
+                        alt={card.title}
+                        style={{ position: 'relative', zIndex: 1, width: 'min(100%, 540px)', aspectRatio: '4/3', objectFit: 'cover', borderRadius: 18, boxShadow: '0 14px 32px rgba(34,30,26,0.08)', filter: 'saturate(0.99) contrast(0.99)' }}
+                      />
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
 
@@ -401,9 +421,9 @@ export default function LandingPage() {
               actions={
                 <Link
                   to="/today"
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '14px 28px', borderRadius: 50, background: 'var(--color-ink)', color: '#fff', fontFamily: 'var(--sans)', fontSize: 'var(--text-body-sm)', fontWeight: 500, textDecoration: 'none', transition: 'transform 0.2s, opacity 0.2s' }}
-                  onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.9'; e.currentTarget.style.transform = 'translateY(-2px)' }}
-                  onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'none' }}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '14px 28px', borderRadius: 50, background: 'var(--color-terracotta-deep)', color: '#fff', fontFamily: 'var(--sans)', fontSize: 'var(--text-body-sm)', fontWeight: 500, textDecoration: 'none', boxShadow: '0 10px 24px rgba(138,63,40,0.16)', transition: 'transform 0.2s, background 0.2s, box-shadow 0.2s' }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-brick)'; e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 14px 30px rgba(138,63,40,0.22)' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--color-terracotta-deep)'; e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 10px 24px rgba(138,63,40,0.16)' }}
                 >
                   Check today's heat risk <span>→</span>
                 </Link>
@@ -469,46 +489,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════════════════════════════
-          4. FOOTER
-      ══════════════════════════════════════════════════════════════════ */}
-      <footer style={{ background: 'var(--color-ink)', color: 'var(--color-surface)', padding: 'clamp(40px,6vh,64px) var(--content-gutter) 40px' }}>
-        <div style={{ maxWidth: 'var(--content-width)', margin: '0 auto', width: '100%' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 48, marginBottom: 36 }}>
-
-            <div>
-              <span style={{ fontFamily: 'var(--serif)', fontSize: 'var(--text-body-lg)', color: 'var(--color-surface)', display: 'block', marginBottom: 12 }}>CoolSafer</span>
-              <p style={{ fontFamily: 'var(--sans)', fontSize: 'var(--text-label)', lineHeight: 1.65, color: 'rgba(255,255,255,0.7)', marginBottom: 18 }}>
-                Helping older Melburnians stay safe on hot days — with real-time heat risk scores, personalised advice, and a map of nearby cool spaces.
-              </p>
-              <p style={{ fontFamily: 'var(--sans)', fontSize: 'var(--text-label)', lineHeight: 1.65, color: 'rgba(255,255,255,0.45)' }}>
-                Not a medical tool. CoolSafer provides general heat safety guidance only. Always follow advice from your doctor or healthcare provider. Phone numbers shown are for Victoria.
-              </p>
-            </div>
-
-            <div>
-              <div style={{ fontFamily: 'var(--sans)', fontSize: 'var(--text-caption)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.35)', marginBottom: 14 }}>Navigate</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <Link to="/today" style={FOOTER_LINK}>Today</Link>
-                <Link to="/map" style={FOOTER_LINK}>Map</Link>
-              </div>
-            </div>
-
-            <div>
-              <div style={{ fontFamily: 'var(--sans)', fontSize: 'var(--text-caption)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.35)', marginBottom: 14 }}>Partners</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <a href="https://www.monash.edu" target="_blank" rel="noreferrer" style={FOOTER_LINK}>Monash University</a>
-                <a href="#" style={FOOTER_LINK}>Data sources</a>
-              </div>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 20, flexWrap: 'wrap', paddingTop: 20, borderTop: '0.5px solid rgba(255,255,255,0.1)', fontFamily: 'var(--sans)', fontSize: 'var(--text-caption)', color: 'rgba(255,255,255,0.4)' }}>
-            <span>© 2026 CoolSafer · FIT5120 TP03 Civix · Monash University</span>
-            <span>Data: Bureau of Meteorology · City of Melbourne · Open-Meteo</span>
-          </div>
-        </div>
-      </footer>
     </div>
   )
 }
@@ -571,11 +551,4 @@ function StepRow({ num, numColor, numRight, reverse, title, desc, actions, rotat
       </div>
     </div>
   )
-}
-
-const FOOTER_LINK = {
-  fontFamily: 'var(--sans)',
-  fontSize: 'var(--text-label)',
-  color: 'rgba(255,255,255,0.7)',
-  textDecoration: 'none',
 }

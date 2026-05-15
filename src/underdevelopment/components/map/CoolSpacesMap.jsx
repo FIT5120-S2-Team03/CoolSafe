@@ -23,7 +23,7 @@ import { CATEGORY_COLORS } from '../../utils/categoryMapping'
 import { getWalkingMinutes } from '../../utils/haversine'
 import mockLocation from '../../data/mockLocation.json'
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'https://coolsafe-api.onrender.com'
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'https://coolsafe.onrender.com'
 
 const locationPinIcon = L.divIcon({
   className: '',

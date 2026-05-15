@@ -1,5 +1,5 @@
 from flask import Flask, jsonify, g, request
-from flask_cors import CORS
+from flask_cors import CORS, cross_origin
 from dotenv import load_dotenv
 import json
 import os
@@ -13,7 +13,7 @@ from pyproj import Transformer
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/api/*": {"origins": "*", "methods": ["GET", "POST", "OPTIONS"], "allow_headers": ["Content-Type"]}})
 
 DATABASE_URL = os.getenv('DATABASE_URL')
 
@@ -270,8 +270,11 @@ def calculate_shade_coverage(route_coords):
     }
 
 
-@app.route('/api/coolest-route', methods=['GET', 'POST'])
+@app.route('/api/coolest-route', methods=['GET', 'POST', 'OPTIONS'])
+@cross_origin()
 def get_coolest_route():
+    if request.method == 'OPTIONS':
+        return '', 200
     """
     Dynamic Coolest Route API.
 

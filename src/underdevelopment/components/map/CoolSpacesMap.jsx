@@ -22,6 +22,8 @@ import useHVI from '../../hooks/useHVI'
 import { CATEGORY_COLORS } from '../../utils/categoryMapping'
 import { getWalkingMinutes } from '../../utils/haversine'
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'https://coolsafe-api.onrender.com'
+
 const locationPinIcon = L.divIcon({
   className: '',
   iconSize: [28, 36],
@@ -113,24 +115,8 @@ function VenuePopup({
         }}
       >
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <line
-            x1="2"
-            y1="2"
-            x2="14"
-            y2="14"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-          />
-          <line
-            x1="14"
-            y1="2"
-            x2="2"
-            y2="14"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-          />
+          <line x1="2" y1="2" x2="14" y2="14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          <line x1="14" y1="2" x2="2" y2="14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
         </svg>
       </button>
 
@@ -167,16 +153,7 @@ function VenuePopup({
         </p>
       )}
 
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 6,
-          flexWrap: 'wrap',
-          fontSize: 13,
-          marginBottom: 16,
-        }}
-      >
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', fontSize: 13, marginBottom: 16 }}>
         {openStatus.status === 'unavailable' ? (
           <span style={{ color: '#94a3b8' }}>Hours unavailable</span>
         ) : (
@@ -228,8 +205,7 @@ function VenuePopup({
             alignItems: 'center',
             justifyContent: 'center',
             gap: 6,
-            backgroundColor:
-              selectedRoute === 'fastest' ? '#16a34a' : routeLoading ? '#f1f5f9' : '#fff',
+            backgroundColor: selectedRoute === 'fastest' ? '#16a34a' : routeLoading ? '#f1f5f9' : '#fff',
             border: selectedRoute === 'fastest' ? 'none' : '1px solid #e2e8f0',
             borderRadius: 10,
             padding: '10px 0',
@@ -256,8 +232,7 @@ function VenuePopup({
             alignItems: 'center',
             justifyContent: 'center',
             gap: 6,
-            backgroundColor:
-              selectedRoute === 'coolest' ? '#16a34a' : routeLoading ? '#f1f5f9' : '#fff',
+            backgroundColor: selectedRoute === 'coolest' ? '#16a34a' : routeLoading ? '#f1f5f9' : '#fff',
             border: selectedRoute === 'coolest' ? 'none' : '1px solid #e2e8f0',
             borderRadius: 10,
             padding: '10px 0',
@@ -536,7 +511,7 @@ export default function CoolSpacesMap({ selectedCategory, flyTo, showHVI, openVe
 
       setRouteCoords(coords)
 
-      const scoreRes = await fetch('https://coolsafe.onrender.com/api/coolest-route', {
+      const scoreRes = await fetch(`${API_BASE}/api/coolest-route`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -787,16 +762,7 @@ export default function CoolSpacesMap({ selectedCategory, flyTo, showHVI, openVe
           color: '#1e293b',
         }}
       >
-        <svg
-          width="18"
-          height="18"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="#003fa4"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#003fa4" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="12" r="4" />
           <line x1="12" y1="2" x2="12" y2="6" />
           <line x1="12" y1="18" x2="12" y2="22" />

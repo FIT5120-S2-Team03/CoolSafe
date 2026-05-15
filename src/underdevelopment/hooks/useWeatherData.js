@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import mockWeather from '../data/mockWeather.json'
+import mockLocation from '../data/mockLocation.json'
 
 const CACHE_KEY = 'coolsafe_weather'
 const CACHE_TTL_MS = 30 * 60 * 1000 // 30 minutes
@@ -37,7 +38,7 @@ export function useWeatherData() {
   const [error, setError] = useState(false)
   const [gpsBlocked, setGpsBlocked] = useState(false)
 
-  async function fetchWeather(lat, lng) {
+  async function fetchWeather(lat, lng, suburbOverride) {
     setLoading(true)
     setError(false)
     try {
@@ -47,13 +48,15 @@ export function useWeatherData() {
         `&daily=temperature_2m_max,apparent_temperature_max&timezone=Australia%2FMelbourne&forecast_days=2`
       const [data, geo] = await Promise.all([
         fetch(weatherUrl).then((r) => r.json()),
-        fetch(
-          `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,
-          { headers: { 'Accept-Language': 'en' } }
-        ).then((r) => r.json()).catch(() => null),
+        suburbOverride
+          ? Promise.resolve(null) // skip reverse-geocode when suburb is already known
+          : fetch(
+              `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,
+              { headers: { 'Accept-Language': 'en' } }
+            ).then((r) => r.json()).catch(() => null),
       ])
       const addr = geo?.address
-      const name = addr?.suburb ?? addr?.town ?? addr?.city_district ?? addr?.city ?? null
+      const name = suburbOverride ?? addr?.suburb ?? addr?.town ?? addr?.city_district ?? addr?.city ?? null
       const currentData = {
         temp: data.current.temperature_2m,
         apparentTemp: data.current.apparent_temperature,
@@ -67,7 +70,9 @@ export function useWeatherData() {
       setDaily(dailyData)
       setLocationName(name)
       setCoords({ lat, lng })
-      localStorage.setItem('coolsafe_coords', JSON.stringify({ lat, lng }))
+      if (!mockLocation.enabled) {
+        localStorage.setItem('coolsafe_coords', JSON.stringify({ lat, lng }))
+      }
       writeWeatherCache({ current: currentData, hourly: data.hourly, daily: dailyData, locationName: name, lat, lng })
     } catch {
       setError(true)
@@ -103,9 +108,18 @@ export function useWeatherData() {
         todayMax: mockWeather.daily.apparent_temperature_max[0],
         tomorrowMax: mockWeather.daily.apparent_temperature_max[1],
       })
-      setLocationName('Melbourne')
-      setCoords({ lat: -37.8136, lng: 144.9631 })
+      setLocationName(mockLocation.enabled ? mockLocation.suburb : 'Melbourne')
+      setCoords({
+        lat: mockLocation.enabled ? mockLocation.lat : -37.8136,
+        lng: mockLocation.enabled ? mockLocation.lng : 144.9631,
+      })
       setLoading(false)
+      return
+    }
+
+    // Mock location: bypass localStorage and fetch weather at the mock coords
+    if (mockLocation.enabled) {
+      fetchWeather(mockLocation.lat, mockLocation.lng, mockLocation.suburb)
       return
     }
 
@@ -147,6 +161,7 @@ export function useWeatherData() {
   }, [])
 
   function requestGps() {
+    if (mockLocation.enabled) return
     setLoading(true)
     setError(false)
     setGpsBlocked(false)
@@ -160,6 +175,7 @@ export function useWeatherData() {
   }
 
   async function fetchByPostcode(postcode) {
+    if (mockLocation.enabled) return
     setLoading(true)
     setError(false)
     try {

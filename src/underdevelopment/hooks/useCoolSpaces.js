@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'https://coolsafe-api.onrender.com'
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'https://coolsafe.onrender.com'
 const CACHE_KEY = 'coolsafe_coolspaces'
 const CACHE_TTL_MS = 2 * 60 * 60 * 1000 // 2 hours
 

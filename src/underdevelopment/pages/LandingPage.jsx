@@ -11,6 +11,7 @@ import { useWeatherData } from '../hooks/useWeatherData'
 import { useAirQuality } from '../hooks/useAirQuality'
 import { getRiskLevel } from '../utils/riskLevel'
 import Navbar from '../components/layout/Navbar'
+import { toggleAIFinder } from '../components/ai/AIFinderButton'
 import bgVideo from '../../assets/8939276-uhd_3840_2160_25fps.mp4'
 
 const UV_BY_RISK = {
@@ -55,24 +56,6 @@ const SPOTLIGHT_CARDS = [
   },
 ]
 
-function heatBand(maxTemp) {
-  if (maxTemp == null) return 'mild'
-  if (maxTemp >= 35) return 'extreme'
-  if (maxTemp >= 30) return 'hot'
-  if (maxTemp >= 24) return 'warm'
-  return 'mild'
-}
-
-function landingSubtitleForBand(band) {
-  const map = {
-    mild: "Today's conditions are mild. CoolSafer still helps you check what matters for you: medications, the hourly forecast, and how your body is feeling.",
-    warm: "A warmer day ahead. CoolSafer helps older Melburnians plan around heat, shaped by today's conditions, medications, and how the body is feeling.",
-    hot: "Heat is building today. CoolSafer gives older Melburnians a personal plan based on the forecast, medications, and how the body is responding.",
-    extreme: "High heat today. CoolSafer helps older Melburnians take extra care with a personal risk score, hourly guidance, and nearby cool spaces.",
-  }
-  return map[band] ?? map.mild
-}
-
 export default function LandingPage() {
   const { current, daily, locationName, lat, lng } = useWeatherData()
   const { aqi } = useAirQuality({ lat, lng })
@@ -112,8 +95,6 @@ export default function LandingPage() {
 
   const risk   = current ? getRiskLevel(current.temp) : null
   const uvInfo = risk ? UV_BY_RISK[risk.level] : null
-  const landingSubtitle = landingSubtitleForBand(heatBand(daily?.todayMax))
-
   return (
     <div style={{ background: 'var(--color-paper)', minHeight: '100vh' }}>
       <Navbar locationName={locationName} />
@@ -191,7 +172,7 @@ export default function LandingPage() {
               letterSpacing: 0,
               fontWeight: 'normal',
             }}>
-              A safer plan for hot days.
+              Heat safety for older Melburnians.
             </h1>
 
             <p style={{
@@ -200,19 +181,18 @@ export default function LandingPage() {
               lineHeight: 1.62,
               color: 'var(--color-ink-muted)',
               marginBottom: 26,
-              maxWidth: 380,
+              maxWidth: 500,
             }}>
-              {daily?.todayMax != null
-                ? landingSubtitle
-                : "Heat guidance for older Melburnians, shaped by today's conditions, your medications, and how your body is feeling."}
+              Understand today’s conditions, manage medication risks, and plan safer routines in extreme heat.
             </p>
 
             {/* Weather climate strip */}
             <div style={{
               display: 'grid',
-              gridTemplateColumns: '1.22fr 1.12fr 0.7fr 0.88fr',
+              gridTemplateColumns: 'minmax(92px,1fr) minmax(100px,1fr) minmax(54px,0.62fr) minmax(82px,0.88fr)',
               alignItems: 'stretch',
-              maxWidth: 420,
+              width: 'min(100%, 500px)',
+              maxWidth: 500,
               marginBottom: 30,
               padding: 9,
               border: '1px solid rgba(229,220,200,0.9)',
@@ -242,10 +222,10 @@ export default function LandingPage() {
                   borderLeft: i === 0 ? 'none' : '1px solid rgba(229,220,200,0.9)',
                   padding: '8px 10px',
                 }}>
-                  <span style={{ display: 'block', fontFamily: 'var(--serif)', color: 'var(--color-terracotta-deep)', fontSize: 'clamp(1.1rem, 1.5vw, 1.35rem)', lineHeight: 1, whiteSpace: 'nowrap' }}>
+                  <span style={{ display: 'block', fontFamily: 'var(--serif)', color: 'var(--color-ink-strong)', fontSize: 'clamp(1.1rem, 1.5vw, 1.35rem)', lineHeight: 1, whiteSpace: 'nowrap' }}>
                     {value}
                   </span>
-                  <span style={{ display: 'block', marginTop: 5, fontFamily: 'var(--mono)', fontSize: 'var(--text-caption)', lineHeight: 1.15, letterSpacing: '0.03em', textTransform: 'uppercase', color: 'var(--color-ink-muted)' }}>
+                  <span style={{ display: 'block', marginTop: 5, fontFamily: 'var(--font-body)', fontSize: 'var(--text-caption)', lineHeight: 1.15, letterSpacing: '0.01em', textTransform: 'uppercase', color: 'var(--color-ink-muted)', whiteSpace: 'nowrap' }}>
                     {label}
                   </span>
                 </div>
@@ -274,7 +254,7 @@ export default function LandingPage() {
                 onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-brick)'; e.currentTarget.style.transform = 'translateY(-2px)' }}
                 onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--color-terracotta-deep)'; e.currentTarget.style.transform = 'none' }}
               >
-                Check today's heat risk
+                See today’s outlook
                 <i className="ti ti-arrow-right" style={{ fontSize: 16 }} />
               </button>
             </div>
@@ -296,7 +276,7 @@ export default function LandingPage() {
             textAlign: 'center',
             marginBottom: 16,
           }}>
-            What heat does, quietly.
+            Heat doesn’t always feel dangerous.
           </h2>
           <p style={{
             fontFamily: 'var(--sans)',
@@ -307,7 +287,7 @@ export default function LandingPage() {
             maxWidth: 640,
             margin: '0 auto 52px',
           }}>
-            Heat risk is often personal, indoor, and easy to miss. These are the signals CoolSafer helps older Melburnians notice early.
+            Small changes in hydration, medication, and body temperature can become harder to notice with age.
           </p>
 
           <div
@@ -405,7 +385,7 @@ export default function LandingPage() {
       <section style={{ padding: 'clamp(64px,9vh,100px) var(--content-gutter)', background: 'var(--color-paper)' }}>
         <div style={{ maxWidth: 'var(--content-width)', margin: '0 auto' }}>
           <h2 style={{ fontFamily: 'var(--serif)', fontSize: 'var(--text-section)', lineHeight: 1.05, letterSpacing: '-0.02em', color: 'var(--color-ink)', textAlign: 'center', marginBottom: 20 }}>
-            How CoolSafer works
+            How CoolSafer helps day to day.
           </h2>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 100, padding: '40px 0 80px' }}>
@@ -416,8 +396,8 @@ export default function LandingPage() {
               numColor="rgba(201,75,26,0.15)"
               numRight={false}
               reverse={false}
-              title="See your personal safety score"
-              desc={<>Get a heat risk score based on today's temperature, time of day, and <strong>your medications</strong>. Then get a clear Do / Avoid list so you know exactly what to do right now.</>}
+              title="See your personalised heat outlook"
+              desc="Check today’s heat conditions, medication-related risks, and simple guidance for staying safe."
               actions={
                 <Link
                   to="/today"
@@ -429,6 +409,7 @@ export default function LandingPage() {
                 </Link>
               }
               rotateCard={3}
+              snippetShiftX={-128}
               snippet={
                 <div style={{ padding: 24 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
@@ -454,8 +435,8 @@ export default function LandingPage() {
               numColor="rgba(42,125,79,0.12)"
               numRight={true}
               reverse={true}
-              title="Your AI guide to the city"
-              desc="Find air-conditioned libraries, community centres, and parks across Melbourne. Browse the map yourself, or let our AI guide find the most accessible option for you."
+              title="Find cooler places that fit your day"
+              desc="Browse nearby cool spaces yourself, or get personalised suggestions based on comfort, accessibility, and local activities."
               actions={
                 <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
                   <Link to="/map" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '14px 28px', borderRadius: 50, background: 'transparent', color: 'var(--color-ink)', border: '1px solid var(--color-ink-disabled)', fontFamily: 'var(--sans)', fontSize: 'var(--text-body-sm)', fontWeight: 500, textDecoration: 'none', transition: 'all 0.2s' }}
@@ -463,13 +444,14 @@ export default function LandingPage() {
                     onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--color-ink-disabled)'; e.currentTarget.style.background = 'transparent'; e.currentTarget.style.transform = 'none' }}
                   >Browse the map <span>→</span></Link>
                   <span style={{ fontFamily: 'var(--sans)', fontSize: 'var(--text-label)', color: 'var(--color-ink-disabled)', fontStyle: 'italic', padding: '0 4px' }}>or</span>
-                  <Link to="/map" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '14px 28px', borderRadius: 50, background: 'var(--color-blue)', color: '#fff', fontFamily: 'var(--sans)', fontSize: 'var(--text-body-sm)', fontWeight: 500, textDecoration: 'none', transition: 'all 0.2s' }}
+                  <button type="button" onClick={toggleAIFinder} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '14px 28px', borderRadius: 50, background: 'var(--color-blue)', color: '#fff', border: 'none', fontFamily: 'var(--sans)', fontSize: 'var(--text-body-sm)', fontWeight: 500, textDecoration: 'none', transition: 'all 0.2s', cursor: 'pointer' }}
                     onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-blue-deep, #0E3D8F)'; e.currentTarget.style.transform = 'translateY(-2px)' }}
                     onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--color-blue)'; e.currentTarget.style.transform = 'none' }}
-                  ><i className="ti ti-sparkles" /> Find with AI</Link>
+                  ><i className="ti ti-sparkles" /> Find with AI</button>
                 </div>
               }
               rotateCard={-3}
+              textShiftX={32}
               snippet={
                 <div style={{ padding: 24, display: 'flex', flexDirection: 'column' }}>
                   <div style={{ width: 32, height: 32, background: 'rgba(24,82,180,0.1)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: 'var(--color-blue)', marginBottom: 12 }}>
@@ -495,7 +477,7 @@ export default function LandingPage() {
 
 // ── Step row: decorative number + body + tilted UI card ──────────────────────
 
-function StepRow({ num, numColor, numRight, reverse, title, desc, actions, rotateCard, snippet }) {
+function StepRow({ num, numColor, numRight, reverse, title, desc, actions, rotateCard, snippet, textShiftX = 0, snippetShiftX = 0 }) {
   const [hovered, setHovered] = useState(false)
 
   return (
@@ -521,7 +503,7 @@ function StepRow({ num, numColor, numRight, reverse, title, desc, actions, rotat
       </div>
 
       {/* Text body */}
-      <div style={{ flex: 1, position: 'relative', zIndex: 1, paddingLeft: reverse ? 0 : 100, display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div style={{ flex: 1, position: 'relative', zIndex: 1, paddingLeft: reverse ? 0 : 128, transform: textShiftX ? `translateX(${textShiftX}px)` : 'none', display: 'flex', flexDirection: 'column', gap: 16 }}>
         <h3 style={{ fontFamily: 'var(--serif)', fontSize: '2rem', letterSpacing: '-0.5px', color: 'var(--color-ink)', lineHeight: 1.1, fontWeight: 'normal' }}>
           {title}
         </h3>
@@ -534,7 +516,7 @@ function StepRow({ num, numColor, numRight, reverse, title, desc, actions, rotat
       </div>
 
       {/* Tilted UI snippet card */}
-      <div style={{ flex: 0.8, display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative', zIndex: 1 }}>
+      <div style={{ flex: 0.8, display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative', zIndex: 1, transform: snippetShiftX ? `translateX(${snippetShiftX}px)` : 'none' }}>
         <div style={{
           background: 'var(--color-surface)',
           borderRadius: 20,

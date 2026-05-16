@@ -1,6 +1,6 @@
 /**
  * Medication selection UI — radio-card style grid.
- * All state lives in the parent (HomePage/modal).
+ * All state lives in the parent (TodayPage/modal).
  * @module MedicationsSection
  */
 
@@ -74,7 +74,7 @@ export default function MedicationsSection({ selectedMedications, onMedicationsC
             </span>
             <span
               style={{
-                fontFamily: "'DM Sans', sans-serif",
+                fontFamily: "var(--font-body)",
                 fontSize: '0.9375rem',
                 fontWeight: 500,
                 color: selected ? '#1852B4' : '#0F0F0F',

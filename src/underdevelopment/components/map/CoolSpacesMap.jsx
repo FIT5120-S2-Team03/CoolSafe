@@ -23,8 +23,13 @@ import { useNavigate } from 'react-router-dom'
 import useCoolSpaces from '../../hooks/useCoolSpaces'
 import useFountains from '../../hooks/useFountains'
 import useHVI from '../../hooks/useHVI'
-import { CATEGORY_COLORS } from '../../utils/categoryMapping'
+import {
+  CATEGORY_MARKER_COLORS,
+  CATEGORY_UI_BACKGROUNDS,
+  CATEGORY_UI_COLORS,
+} from '../../utils/categoryMapping'
 import { getWalkingMinutes } from '../../utils/haversine'
+import mockLocation from '../../data/mockLocation.json'
 
 const locationPinIcon = L.divIcon({
   className: '',
@@ -86,7 +91,7 @@ function VenuePopup({ venue, userLocation, onFastestRoute, routeLoading, onClose
         boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
         padding: 20,
         width: 300,
-        fontFamily: "'Lexend', sans-serif",
+        fontFamily: "var(--font-body)",
         position: 'relative',
       }}
     >
@@ -116,21 +121,30 @@ function VenuePopup({ venue, userLocation, onFastestRoute, routeLoading, onClose
         </svg>
       </button>
 
-      <p style={{ fontFamily: "'Public Sans', sans-serif", fontWeight: 700, fontSize: 16, color: '#1e293b', margin: '0 32px 8px 0' }}>
+      <p style={{ fontFamily: "var(--font-body)", fontWeight: 700, fontSize: 16, color: '#1e293b', margin: '0 32px 8px 0' }}>
         {venue.name}
       </p>
 
-      <span style={{ display: 'inline-block', backgroundColor: CATEGORY_COLORS[venue.category] ?? '#64748b', color: '#fff', borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 700, marginBottom: 10 }}>
+      <span style={{
+        display: 'inline-block',
+        backgroundColor: CATEGORY_UI_BACKGROUNDS[venue.category] ?? '#F0EDE8',
+        color: CATEGORY_UI_COLORS[venue.category] ?? '#5A5048',
+        borderRadius: 999,
+        padding: '4px 10px',
+        fontSize: 15,
+        fontWeight: 700,
+        marginBottom: 10,
+      }}>
         {venue.category}
       </span>
 
       {venue.address && (
-        <p style={{ fontSize: 12, color: '#64748b', margin: '0 0 12px' }}>
+        <p style={{ fontSize: 16, color: '#64748b', margin: '0 0 12px' }}>
           {venue.address}
         </p>
       )}
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', fontSize: 13, marginBottom: 16 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', fontSize: 15, marginBottom: 16 }}>
         {openStatus.status === 'unavailable' ? (
           <span style={{ color: '#94a3b8' }}>Hours unavailable</span>
         ) : (
@@ -165,7 +179,7 @@ function VenuePopup({ venue, userLocation, onFastestRoute, routeLoading, onClose
             border: selectedRoute === 'fastest' ? 'none' : '1px solid #e2e8f0',
             borderRadius: 10, padding: '10px 0',
             color: selectedRoute === 'fastest' ? '#fff' : '#1e293b',
-            fontFamily: "'Lexend', sans-serif", fontWeight: 600, fontSize: 13,
+            fontFamily: "var(--font-body)", fontWeight: 600, fontSize: 15,
             cursor: routeLoading ? 'not-allowed' : 'pointer', minHeight: 44,
           }}
         >
@@ -180,7 +194,7 @@ function VenuePopup({ venue, userLocation, onFastestRoute, routeLoading, onClose
             border: selectedRoute === 'coolest' ? 'none' : '1px solid #e2e8f0',
             borderRadius: 10, padding: '10px 0',
             color: selectedRoute === 'coolest' ? '#fff' : '#1e293b',
-            fontFamily: "'Lexend', sans-serif", fontWeight: 600, fontSize: 13,
+            fontFamily: "var(--font-body)", fontWeight: 600, fontSize: 15,
             cursor: 'pointer', minHeight: 44,
           }}
         >
@@ -189,8 +203,8 @@ function VenuePopup({ venue, userLocation, onFastestRoute, routeLoading, onClose
       </div>
 
       <button
-        onClick={() => navigate(`/venue/${venue.id}`)}
-        style={{ width: '100%', backgroundColor: '#003fa4', color: '#fff', border: 'none', borderRadius: 12, padding: '14px 0', fontSize: 16, fontWeight: 700, fontFamily: "'Public Sans', sans-serif", cursor: 'pointer', minHeight: 44 }}
+        onClick={() => navigate(`/venue/${venue.id}`, { state: { venue } })}
+        style={{ width: '100%', backgroundColor: '#003fa4', color: '#fff', border: 'none', borderRadius: 12, padding: '14px 0', fontSize: 16, fontWeight: 700, fontFamily: "var(--font-body)", cursor: 'pointer', minHeight: 44 }}
       >
         View Full Details →
       </button>
@@ -246,7 +260,9 @@ export default function CoolSpacesMap({ selectedCategory, flyTo, showHVI, openVe
   const mapRef = useRef(null)
   const [selectedVenue, setSelectedVenue] = useState(null)
   const [pinPos, setPinPos] = useState(null)
-  const [userLocation, setUserLocation] = useState(null)
+  const [userLocation, setUserLocation] = useState(
+    mockLocation.enabled ? { lat: mockLocation.lat, lng: mockLocation.lng } : null
+  )
   const [routeCoords, setRouteCoords] = useState([])
   const [routeLoading, setRouteLoading] = useState(false)
   const [routeError, setRouteError] = useState('')
@@ -261,13 +277,13 @@ export default function CoolSpacesMap({ selectedCategory, flyTo, showHVI, openVe
   const { fountains, loading: fountainsLoading, error: fountainsError } = useFountains()
   const { hviData } = useHVI()
 
-  const isLoading = venuesLoading || fountainsLoading
-  const error = venuesError || fountainsError
+  const isLoading = venuesLoading || (selectedCategory === 'Fountain' && fountainsLoading)
+  const error = venuesError || (selectedCategory === 'Fountain' ? fountainsError : null)
 
   const allVenues = [...venues, ...fountains]
   const filtered =
     selectedCategory === 'All'
-      ? allVenues
+      ? venues
       : allVenues.filter((v) => v.category === selectedCategory)
 
   // Auto-open venue card when arriving from detail page
@@ -289,6 +305,13 @@ export default function CoolSpacesMap({ selectedCategory, flyTo, showHVI, openVe
   }
 
   function handleMyLocation() {
+    if (mockLocation.enabled) {
+      const { lat, lng } = mockLocation
+      setUserLocation({ lat, lng })
+      mapRef.current?.flyTo([lat, lng], 16)
+      return
+    }
+
     if (!navigator.geolocation) {
       window.alert('Geolocation is not supported by your browser.')
       return
@@ -308,6 +331,10 @@ export default function CoolSpacesMap({ selectedCategory, flyTo, showHVI, openVe
   }
 
   function getCurrentLocation() {
+    if (mockLocation.enabled) {
+      return Promise.resolve({ lat: mockLocation.lat, lng: mockLocation.lng })
+    }
+
     return new Promise((resolve, reject) => {
       if (!navigator.geolocation) {
         reject(new Error('Geolocation is not supported by your browser.'))
@@ -391,14 +418,14 @@ export default function CoolSpacesMap({ selectedCategory, flyTo, showHVI, openVe
 
       {/* Non-blocking error notice */}
       {error && (
-        <div style={{ position: 'absolute', top: 12, left: '50%', transform: 'translateX(-50%)', zIndex: 1000, backgroundColor: '#fff7ed', border: '1px solid #fed7aa', borderRadius: 8, padding: '6px 14px', fontFamily: "'Lexend', sans-serif", fontSize: 13, color: '#9a3412', pointerEvents: 'none' }}>
+        <div style={{ position: 'absolute', top: 12, left: '50%', transform: 'translateX(-50%)', zIndex: 1000, backgroundColor: '#fff7ed', border: '1px solid #fed7aa', borderRadius: 8, padding: '6px 14px', fontFamily: "var(--font-body)", fontSize: 15, color: '#9a3412', pointerEvents: 'none' }}>
           Some venue data could not be loaded
         </div>
       )}
 
       {/* Route error notice */}
       {routeError && (
-        <div style={{ position: 'absolute', top: 52, left: '50%', transform: 'translateX(-50%)', zIndex: 1000, backgroundColor: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '6px 14px', fontFamily: "'Lexend', sans-serif", fontSize: 13, color: '#991b1b', pointerEvents: 'none' }}>
+        <div style={{ position: 'absolute', top: 52, left: '50%', transform: 'translateX(-50%)', zIndex: 1000, backgroundColor: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '6px 14px', fontFamily: "var(--font-body)", fontSize: 15, color: '#991b1b', pointerEvents: 'none' }}>
           {routeError}
         </div>
       )}
@@ -438,7 +465,7 @@ export default function CoolSpacesMap({ selectedCategory, flyTo, showHVI, openVe
             center={[venue.lat, venue.lng]}
             radius={venue.category === 'Fountain' ? 5 : 8}
             pathOptions={{
-              fillColor: CATEGORY_COLORS[venue.category] ?? '#64748b',
+              fillColor: CATEGORY_MARKER_COLORS[venue.category] ?? '#64748b',
               color: 'white',
               weight: 2,
               fillOpacity: 0.9,
@@ -463,7 +490,7 @@ export default function CoolSpacesMap({ selectedCategory, flyTo, showHVI, openVe
       {/* My Location button */}
       <button
         onClick={handleMyLocation}
-        style={{ position: 'absolute', bottom: 32, right: 32, zIndex: 1000, display: 'flex', alignItems: 'center', gap: 8, backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: 12, padding: '12px 20px', boxShadow: '0 10px 40px rgba(0,0,0,0.18)', cursor: 'pointer', fontFamily: "'Lexend', sans-serif", fontWeight: 700, fontSize: 16, color: '#1e293b' }}
+        style={{ position: 'absolute', bottom: 32, right: 32, zIndex: 1000, display: 'flex', alignItems: 'center', gap: 8, backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: 12, padding: '12px 20px', boxShadow: '0 10px 40px rgba(0,0,0,0.18)', cursor: 'pointer', fontFamily: "var(--font-body)", fontWeight: 700, fontSize: 16, color: '#1e293b' }}
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#003fa4" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="12" r="4" />

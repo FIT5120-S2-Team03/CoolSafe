@@ -9,6 +9,8 @@
  *   onHVIToggle      {function} — called when the HVI toggle is clicked
  */
 
+import { CATEGORY_MARKER_COLORS } from '../../utils/categoryMapping'
+
 const CATEGORIES = [
   'All',
   'Arts & Culture',
@@ -20,12 +22,12 @@ const CATEGORIES = [
 ]
 
 const LEGEND_ITEMS = [
-  { color: '#8b5cf6', label: 'Arts & Culture' },
-  { color: '#10b981', label: 'Recreation' },
-  { color: '#1d4ed8', label: 'Learning' },
-  { color: '#ec4899', label: 'Support' },
-  { color: '#f59e0b', label: 'Visitor Info' },
-  { color: '#0ea5e9', label: 'Fountain' },
+  { color: CATEGORY_MARKER_COLORS['Arts & Culture'], label: 'Arts & Culture' },
+  { color: CATEGORY_MARKER_COLORS.Recreation, label: 'Recreation' },
+  { color: CATEGORY_MARKER_COLORS.Learning, label: 'Learning' },
+  { color: CATEGORY_MARKER_COLORS['Community Support'], label: 'Support' },
+  { color: CATEGORY_MARKER_COLORS['Visitor Info'], label: 'Visitor Info' },
+  { color: CATEGORY_MARKER_COLORS.Fountain, label: 'Fountain' },
 ]
 
 export default function MapSidebar({ selectedCategory, onCategoryChange, showHVI, onHVIToggle }) {
@@ -44,7 +46,7 @@ export default function MapSidebar({ selectedCategory, onCategoryChange, showHVI
       <div>
         <p
           className="uppercase tracking-[0.7px]"
-          style={{ fontFamily: "'Public Sans', sans-serif", fontWeight: 700, fontSize: 14, color: '#94a3b8' }}
+          style={{ fontFamily: "var(--font-body)", fontWeight: 700, fontSize: 16, color: '#94a3b8' }}
         >
           Category
         </p>
@@ -56,9 +58,9 @@ export default function MapSidebar({ selectedCategory, onCategoryChange, showHVI
                 key={cat}
                 onClick={() => onCategoryChange(cat)}
                 style={{
-                  fontFamily: "'Inter', sans-serif",
+                  fontFamily: "var(--font-body)",
                   fontWeight: 600,
-                  fontSize: 14,
+                  fontSize: 16,
                   borderRadius: 12,
                   padding: '7px 12px',
                   border: '1px solid',
@@ -90,12 +92,12 @@ export default function MapSidebar({ selectedCategory, onCategoryChange, showHVI
             <span style={{ fontSize: 18 }}>🔥</span>
             <div className="flex flex-col">
               <span
-                style={{ fontFamily: "'Lexend', sans-serif", fontWeight: 700, fontSize: 14, color: '#1e293b' }}
+                style={{ fontFamily: "var(--font-body)", fontWeight: 700, fontSize: 16, color: '#1e293b' }}
               >
                 Heat Vulnerability Layer
               </span>
               <span
-                style={{ fontFamily: "'Lexend', sans-serif", fontWeight: 400, fontSize: 12, color: '#64748b' }}
+                style={{ fontFamily: "var(--font-body)", fontWeight: 400, fontSize: 16, color: '#64748b' }}
               >
                 Shows high-risk suburbs
               </span>
@@ -138,7 +140,7 @@ export default function MapSidebar({ selectedCategory, onCategoryChange, showHVI
       <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: 24 }}>
         <p
           className="uppercase tracking-[1.1px] mb-3"
-          style={{ fontFamily: "'Public Sans', sans-serif", fontWeight: 700, fontSize: 11, color: '#94a3b8' }}
+          style={{ fontFamily: "var(--font-body)", fontWeight: 700, fontSize: 15, color: '#94a3b8' }}
         >
           Legend
         </p>
@@ -149,7 +151,7 @@ export default function MapSidebar({ selectedCategory, onCategoryChange, showHVI
                 style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: color, flexShrink: 0 }}
               />
               <span
-                style={{ fontFamily: "'Lexend', sans-serif", fontWeight: 500, fontSize: 12, color: '#475569' }}
+                style={{ fontFamily: "var(--font-body)", fontWeight: 500, fontSize: 16, color: '#475569' }}
               >
                 {label}
               </span>

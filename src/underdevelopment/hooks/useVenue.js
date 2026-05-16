@@ -1,10 +1,50 @@
 import { useState, useEffect } from 'react'
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'https://coolsafe-api.onrender.com'
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'https://coolsafe.onrender.com'
+const DETAIL_CACHE_PREFIX = 'coolsafe_venue_'
+const LIST_CACHE_KEYS = ['coolsafe_coolspaces', 'coolsafe_fountains']
+const CACHE_TTL_MS = 2 * 60 * 60 * 1000 // 2 hours
 
-export default function useVenue(id) {
-  const [venue, setVenue] = useState(null)
-  const [loading, setLoading] = useState(true)
+function readJson(key) {
+  try {
+    const raw = sessionStorage.getItem(key)
+    if (!raw) return null
+    return JSON.parse(raw)
+  } catch {
+    return null
+  }
+}
+
+function readDetailCache(id) {
+  const cached = readJson(`${DETAIL_CACHE_PREFIX}${id}`)
+  if (!cached || Date.now() - cached.cachedAt > CACHE_TTL_MS) return null
+  return cached.data
+}
+
+function writeDetailCache(id, data) {
+  try {
+    sessionStorage.setItem(`${DETAIL_CACHE_PREFIX}${id}`, JSON.stringify({ data, cachedAt: Date.now() }))
+  } catch {}
+}
+
+function findCachedVenue(id) {
+  for (const key of LIST_CACHE_KEYS) {
+    const cached = readJson(key)
+    if (!cached || Date.now() - cached.cachedAt > CACHE_TTL_MS || !Array.isArray(cached.data)) continue
+    const found = cached.data.find((venue) => String(venue.id) === String(id))
+    if (found) return found
+  }
+  return null
+}
+
+export default function useVenue(id, initialVenue = null) {
+  const getInitialVenue = () => {
+    if (initialVenue && String(initialVenue.id) === String(id)) return initialVenue
+    return readDetailCache(id) ?? findCachedVenue(id)
+  }
+
+  const [venue, setVenue] = useState(getInitialVenue)
+  const [loading, setLoading] = useState(() => !getInitialVenue())
   const [error, setError] = useState(null)
 
   useEffect(() => {
@@ -14,15 +54,24 @@ export default function useVenue(id) {
     }
 
     let cancelled = false
+    const cached = getInitialVenue()
+    if (cached) {
+      setVenue(cached)
+      setLoading(false)
+    } else {
+      setLoading(true)
+    }
+    setError(null)
 
     async function load() {
       try {
         const res = await fetch(`${API_BASE}/api/venue/${id}`)
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
         const data = await res.json()
+        writeDetailCache(id, data)
         if (!cancelled) setVenue(data)
       } catch (err) {
-        if (!cancelled) setError(err.message)
+        if (!cancelled && !cached) setError(err.message)
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -30,7 +79,7 @@ export default function useVenue(id) {
 
     load()
     return () => { cancelled = true }
-  }, [id])
+  }, [id, initialVenue])
 
   return { venue, loading, error }
 }

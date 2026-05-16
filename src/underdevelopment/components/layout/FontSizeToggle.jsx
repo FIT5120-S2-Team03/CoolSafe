@@ -32,7 +32,7 @@ export default function FontSizeToggle() {
           key={key}
           onClick={() => setActive(key)}
           style={{
-            fontFamily: "'DM Sans', sans-serif",
+            fontFamily: "var(--font-body)",
             fontWeight: 600,
             fontSize,
             width: '36px', height: '36px',

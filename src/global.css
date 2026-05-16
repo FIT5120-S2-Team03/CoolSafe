@@ -2,19 +2,27 @@
 
 :root {
   /* Typography */
-  --serif: 'Newsreader', Georgia, serif;
-  --sans:  'Atkinson Hyperlegible', system-ui, sans-serif;
-  --mono:  'Atkinson Hyperlegible', system-ui, sans-serif;
+  --font-apple: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+  --font-title: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+  --font-body: var(--font-apple);
+  --font-label: var(--font-apple);
+  --font-button: var(--font-apple);
+  --font-mono: "SF Mono", ui-monospace, Menlo, Monaco, Consolas, monospace;
+  --serif: var(--font-title);
+  --sans:  var(--font-body);
+  --mono:  var(--font-mono);
 
-  --text-caption:  14px;
-  --text-label:    16px;
+  --text-caption-sm: 13px;
+  --text-caption:  16px;
+  --text-label:    18px;
+  --text-button:   16px;
   --text-body-sm:  18px;
   --text-body:     18px;
   --text-body-lg:  20px;
-  --text-title-xs: 22px;
-  --text-title-sm: 26px;
-  --text-title-md: 30px;
-  --text-title-lg: 32px;
+  --text-title-xs: 24px;
+  --text-title-sm: 28px;
+  --text-title-md: 32px;
+  --text-title-lg: 36px;
   --text-section:  clamp(2.5rem, 4vw, 3rem);
   --text-display-sm: 40px;
   --text-score:    72px;
@@ -107,7 +115,7 @@
   --brick-soft:      var(--color-brick-soft);
 
   /* Layout */
-  --content-width:  1120px;
+  --content-width:  1280px;
   --content-gutter: clamp(16px, 5vw, 40px);
   --nav-width: var(--content-width);
   --landing-hero-width: var(--content-width);
@@ -153,16 +161,40 @@ select {
 
 .font-headline,
 .font-serif {
-  font-family: var(--serif) !important;
+  font-family: var(--font-title) !important;
 }
 
 .font-sans,
 .font-body {
-  font-family: var(--sans) !important;
+  font-family: var(--font-body) !important;
 }
 
 .font-mono {
-  font-family: var(--mono) !important;
+  font-family: var(--font-mono) !important;
+}
+
+.cs-title {
+  font-family: var(--font-title);
+  font-weight: 650;
+  letter-spacing: 0;
+}
+
+.cs-subtitle,
+.cs-body {
+  font-family: var(--font-body);
+  font-size: var(--text-body);
+}
+
+.cs-label {
+  font-family: var(--font-label);
+  font-size: var(--text-caption);
+  font-weight: 700;
+}
+
+.cs-button {
+  font-family: var(--font-button);
+  font-size: var(--text-button);
+  font-weight: 700;
 }
 
 @media (prefers-reduced-motion: reduce) {

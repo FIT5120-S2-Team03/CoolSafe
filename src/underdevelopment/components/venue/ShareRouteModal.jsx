@@ -1,8 +1,8 @@
 import { useRef, useState } from 'react'
 import { QRCodeCanvas } from 'qrcode.react'
 
-const FONT_HEADING = "'Public Sans', sans-serif"
-const FONT_BODY = "'Lexend', sans-serif"
+const FONT_HEADING = "var(--font-body)"
+const FONT_BODY = "var(--font-body)"
 
 function AppButton({ label, bg, children, href, onClick }) {
   const circleStyle = {
@@ -34,19 +34,21 @@ function AppButton({ label, bg, children, href, onClick }) {
           {children}
         </button>
       )}
-      <span style={{ fontFamily: FONT_BODY, fontSize: 11, color: '#64748b' }}>{label}</span>
+      <span style={{ fontFamily: FONT_BODY, fontSize: 15, color: '#64748b' }}>{label}</span>
     </div>
   )
 }
 
-export default function ShareRouteModal({ isOpen, onClose, venueId, venueName, routeType }) {
+export default function ShareRouteModal({ isOpen, onClose, venueId, venueName, routeType, userLocation }) {
   const qrRef = useRef(null)
   const [copied, setCopied] = useState(false)
 
   if (!isOpen) return null
 
   const base = import.meta.env.VITE_SITE_URL || window.location.origin
-  const shareUrl = `${base}/venue/${venueId}?route=${routeType}`
+  const shareUrl = userLocation
+    ? `${base}/venue/${venueId}?share=true&from_lat=${userLocation.lat}&from_lng=${userLocation.lng}`
+    : `${base}/venue/${venueId}?share=true`
   const routeLabel = routeType === 'fastest' ? 'Fastest Route' : 'Coolest Route'
 
   function handleSaveImage() {
@@ -102,7 +104,7 @@ export default function ShareRouteModal({ isOpen, onClose, venueId, venueName, r
             <h2 style={{ fontFamily: FONT_HEADING, fontWeight: 800, fontSize: 22, color: '#0f172a', margin: 0 }}>
               Share This Route
             </h2>
-            <p style={{ fontFamily: FONT_BODY, fontSize: 13, color: '#64748b', margin: '4px 0 0' }}>
+            <p style={{ fontFamily: FONT_BODY, fontSize: 15, color: '#64748b', margin: '4px 0 0' }}>
               {venueName} · {routeLabel}
             </p>
           </div>
@@ -140,7 +142,7 @@ export default function ShareRouteModal({ isOpen, onClose, venueId, venueName, r
               <p style={{ fontFamily: FONT_HEADING, fontWeight: 700, fontSize: 15, color: '#0f172a', margin: 0 }}>
                 Scan to open
               </p>
-              <p style={{ fontFamily: FONT_BODY, fontSize: 13, color: '#64748b', margin: 0, lineHeight: 1.55 }}>
+              <p style={{ fontFamily: FONT_BODY, fontSize: 15, color: '#64748b', margin: 0, lineHeight: 1.55 }}>
                 Show this code to a family member nearby — it opens this exact page on their phone.
               </p>
               <button
@@ -152,7 +154,7 @@ export default function ShareRouteModal({ isOpen, onClose, venueId, venueName, r
                   borderRadius: 8,
                   padding: '8px 14px',
                   fontFamily: FONT_BODY,
-                  fontSize: 13,
+                  fontSize: 15,
                   fontWeight: 600,
                   color: '#475569',
                   cursor: 'pointer',
@@ -167,7 +169,7 @@ export default function ShareRouteModal({ isOpen, onClose, venueId, venueName, r
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{ flex: 1, height: 1, background: '#e2e8f0' }} />
             <span style={{
-              fontFamily: FONT_BODY, fontSize: 11, fontWeight: 600,
+              fontFamily: FONT_BODY, fontSize: 15, fontWeight: 600,
               color: '#94a3b8', letterSpacing: '0.08em', whiteSpace: 'nowrap',
             }}>
               OR SEND A LINK
@@ -190,7 +192,7 @@ export default function ShareRouteModal({ isOpen, onClose, venueId, venueName, r
               L
             </AppButton>
             <AppButton label="More" bg="#64748b" onClick={handleMore}>
-              <span style={{ fontSize: 14, letterSpacing: 2 }}>•••</span>
+              <span style={{ fontSize: 16, letterSpacing: 2 }}>•••</span>
             </AppButton>
           </div>
 
@@ -206,7 +208,7 @@ export default function ShareRouteModal({ isOpen, onClose, venueId, venueName, r
               style={{
                 flex: 1, minWidth: 0,
                 border: 'none', background: 'transparent', outline: 'none',
-                fontFamily: FONT_BODY, fontSize: 13, color: '#475569',
+                fontFamily: FONT_BODY, fontSize: 15, color: '#475569',
                 overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
               }}
             />
@@ -217,7 +219,7 @@ export default function ShareRouteModal({ isOpen, onClose, venueId, venueName, r
                 background: copied ? '#16a34a' : '#003fa4',
                 color: '#fff', border: 'none', borderRadius: 8,
                 padding: '7px 16px',
-                fontFamily: FONT_BODY, fontSize: 13, fontWeight: 700,
+                fontFamily: FONT_BODY, fontSize: 15, fontWeight: 700,
                 cursor: 'pointer',
                 transition: 'background 0.15s',
                 minWidth: 72,

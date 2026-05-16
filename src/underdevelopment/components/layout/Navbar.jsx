@@ -3,7 +3,7 @@
  *
  * Layout (3-column grid):
  *   Left   — CoolSafer logo (serif, links to "/")
- *   Center — Today (/today) and Map (/map) tabs
+ *   Center — Today (/today), Map (/map), and Safety (/safety) tabs
  *   Right  — warm-pill location badge + date
  */
 import { useEffect } from 'react'
@@ -25,6 +25,7 @@ export default function Navbar({ locationName, onLocationClick }) {
 
   const isToday   = pathname === '/today'  || pathname === '/underdevelopment/today'
   const isMap     = pathname === '/map'    || pathname === '/underdevelopment/map'
+  const isSafety  = pathname === '/safety' || pathname === '/underdevelopment/safety'
   const handleLocationClick = onLocationClick ?? openGlobalLocationModal
 
   return (
@@ -39,7 +40,7 @@ export default function Navbar({ locationName, onLocationClick }) {
       display: 'grid',
       gridTemplateColumns: '1fr auto 1fr',
       alignItems: 'center',
-      padding: '0 22px',
+      padding: '0 7px 0 22px',
       height: 52,
       background: 'rgba(255,255,255,0.96)',
       backdropFilter: 'blur(20px)',
@@ -74,6 +75,7 @@ export default function Navbar({ locationName, onLocationClick }) {
       <div style={{ display: 'flex', justifyContent: 'center', gap: 2 }}>
         <NavTab to="/today" active={isToday}>Today</NavTab>
         <NavTab to="/map"   active={isMap}>Map</NavTab>
+        <NavTab to="/safety" active={isSafety}>Safety</NavTab>
       </div>
 
       {/* Right — date + clickable location */}
@@ -84,7 +86,7 @@ export default function Navbar({ locationName, onLocationClick }) {
           gap: 0,
           background: 'rgba(34,30,26,0.035)',
           border: '0.5px solid rgba(0,0,0,0.04)',
-          borderRadius: 18,
+          borderRadius: 22,
           padding: 3,
           whiteSpace: 'nowrap',
         }}>
@@ -100,7 +102,7 @@ export default function Navbar({ locationName, onLocationClick }) {
             padding: '5px 10px',
             borderRadius: 15,
           }}>
-            <i className="ti ti-calendar" style={{ fontSize: 14, color: 'var(--color-ink-muted)' }} />
+            <i className="ti ti-calendar" style={{ fontSize: 16, color: 'var(--color-ink-muted)' }} />
             {date}
           </div>
           {displayLocation && (
@@ -138,7 +140,7 @@ export default function Navbar({ locationName, onLocationClick }) {
                 e.currentTarget.style.transform = 'none'
               }}
             >
-              <i className="ti ti-map-pin" style={{ fontSize: 14, color: 'var(--color-blue)' }} />
+              <i className="ti ti-map-pin" style={{ fontSize: 16, color: 'var(--color-blue)' }} />
               <span id="nav-loc-text">{displayLocation}, VIC</span>
             </button>
           )}
@@ -157,7 +159,7 @@ function NavTab({ to, active, children }) {
         fontSize: 'var(--text-label)',
         fontWeight: active ? 600 : 500,
         color: active ? '#fff' : 'var(--color-ink-soft)',
-        padding: '8px 18px',
+        padding: '8px 16px',
         cursor: 'pointer',
         borderRadius: 22,
         transition: 'all 0.18s',

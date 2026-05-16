@@ -12,9 +12,11 @@ function Prefetch() {
 }
 
 import LandingPage from './underdevelopment/pages/LandingPage'
-import HomePageDev from './underdevelopment/pages/HomePage'
+import TodayPage from './underdevelopment/pages/TodayPage'
 import MapPageDev from './underdevelopment/pages/MapPage'
+import SafetyPage from './underdevelopment/pages/SafetyPage'
 import VenueDetailPage from './underdevelopment/pages/VenueDetailPage'
+import AIFinderButton from './underdevelopment/components/ai/AIFinderButton'
 
 import HomePageV1 from './version1/pages/HomePage'
 import MapPageV1 from './version1/pages/MapPage'
@@ -26,6 +28,7 @@ function DevLayout({ children }) {
   return (
     <>
       <GlobalLocationModal />
+      <AIFinderButton />
       {children}
     </>
   )
@@ -47,7 +50,7 @@ export default function App() {
         {/* ── Today / heat risk page ── */}
         <Route path="/today" element={
           <PasswordGate storageKey="auth_dev">
-            <DevLayout><HomePageDev /></DevLayout>
+            <DevLayout><TodayPage /></DevLayout>
           </PasswordGate>
         } />
 
@@ -55,6 +58,13 @@ export default function App() {
         <Route path="/map" element={
           <PasswordGate storageKey="auth_dev">
             <DevLayout><MapPageDev /></DevLayout>
+          </PasswordGate>
+        } />
+
+        {/* ── Safety check page ── */}
+        <Route path="/safety" element={
+          <PasswordGate storageKey="auth_dev">
+            <DevLayout><SafetyPage /></DevLayout>
           </PasswordGate>
         } />
 
@@ -73,12 +83,17 @@ export default function App() {
         } />
         <Route path="/underdevelopment/today" element={
           <PasswordGate storageKey="auth_dev">
-            <DevLayout><HomePageDev /></DevLayout>
+            <DevLayout><TodayPage /></DevLayout>
           </PasswordGate>
         } />
         <Route path="/underdevelopment/map" element={
           <PasswordGate storageKey="auth_dev">
             <DevLayout><MapPageDev /></DevLayout>
+          </PasswordGate>
+        } />
+        <Route path="/underdevelopment/safety" element={
+          <PasswordGate storageKey="auth_dev">
+            <DevLayout><SafetyPage /></DevLayout>
           </PasswordGate>
         } />
         <Route path="/underdevelopment/venue/:id" element={

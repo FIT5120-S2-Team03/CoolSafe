@@ -13,23 +13,31 @@
  * All data fetching is lifted here; sub-components receive pure props.
  */
 import { useState, useMemo, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import L from 'leaflet'
 import { MapContainer, TileLayer, Marker } from 'react-leaflet'
 import Navbar from '../components/layout/Navbar'
-import MedicationsSection from '../components/home/MedicationsSection'
+import MedicationsSection from '../components/today/MedicationsSection'
 import LocationModal from '../components/location/LocationModal'
+import { WeatherCallout, ThingCard } from '../components/today/TodayCards'
 import {
   TempChart,
   getWindows,
   todayStr,
-} from '../components/home/HourlyForecastStrip'
+} from '../components/today/HourlyForecastStrip'
 import { useWeatherData } from '../hooks/useWeatherData'
 import { useAirQuality }  from '../hooks/useAirQuality'
 import useCoolSpaces      from '../hooks/useCoolSpaces'
 import { getRiskLevel, getAqiInfo } from '../utils/riskLevel'
 import { calculateHeatSafetyScore } from '../utils/scoreCalculator'
 import { getWalkingMinutes } from '../utils/haversine'
+import {
+  CATEGORY_MARKER_COLORS,
+  CATEGORY_UI_BACKGROUNDS,
+  CATEGORY_UI_COLORS,
+  getCategoryFromSubTheme,
+} from '../utils/categoryMapping'
+import mockLocation from '../data/mockLocation.json'
 
 // ── Design tokens ────────────────────────────────────────────────────────────
 
@@ -38,7 +46,7 @@ const PAPER = '#FAF8F5'
 const INK   = '#0F0F0F'
 const MUTED = '#5A5048'
 const FAINT = '#6E6358'
-const MAX_W = 1120
+const MAX_W = 'var(--content-width)'
 const PX    = 'clamp(16px,5vw,40px)'
 
 // Score colour by risk level
@@ -75,47 +83,6 @@ const MED_ADVICE = {
   'Pain relievers (NSAIDs)':
     'Regular NSAIDs, such as ibuprofen or naproxen, can be harder on the kidneys when fluids are low. Keep hydrated and ask a doctor or pharmacist if you use them often.',
 }
-
-const MED_LABELS = {
-  'Blood pressure medication': 'Blood pressure',
-  'Diuretics / water tablets': 'Water pills',
-  Antidepressants: 'Antidepressants',
-  'Diabetes medication': 'Diabetes',
-  Antihistamines: 'Antihistamines',
-  'Heart medication': 'Heart meds',
-  Antipsychotics: 'Antipsychotics',
-  'Pain relievers (NSAIDs)': 'Pain relievers',
-}
-
-const AI_QUESTIONS = [
-  {
-    key: 'type',
-    title: 'What kind of place are you looking for?',
-    options: [
-      ['library', 'Library'],
-      ['shopping', 'Shopping centre'],
-      ['community', 'Community centre'],
-      ['park', 'Shaded park / garden'],
-      ['cafe', 'Cafe or food court'],
-      ['any', 'No preference'],
-    ],
-  },
-  {
-    key: 'travel',
-    title: 'How do you prefer to get there?',
-    options: [['walking', 'Walking'], ['transit', 'Public transport'], ['driving', 'Driving'], ['any', 'No preference']],
-  },
-  {
-    key: 'vibe',
-    title: 'What kind of atmosphere suits you?',
-    options: [['quiet', 'Quiet and calm'], ['social', 'Social and lively'], ['activities', 'Activities or events'], ['any', 'No preference']],
-  },
-  {
-    key: 'access',
-    title: 'Any accessibility needs?',
-    options: [['wheelchair', 'Wheelchair accessible'], ['seating', 'Plenty of seating'], ['toilets', 'Accessible toilets'], ['parking', 'Nearby parking'], ['none', 'None needed']],
-  },
-]
 
 const ROUTINE_META = {
   morning: {
@@ -395,40 +362,42 @@ function isFountainVenue(venue) {
 
 function venueTypeKind(venueOrType = '') {
   const t = venueTypeSource(venueOrType).toLowerCase()
-  if (t.includes('gallery') || t.includes('museum') || t.includes('arts & culture')) return 'gallery'
-  if (t.includes('park') || t.includes('garden') || t.includes('reserve') || t.includes('informal outdoor') || t.includes('recreation')) return 'park'
-  if (t.includes('library') || t.includes('learning')) return 'library'
-  if (t.includes('shopping') || t.includes('community') || t.includes('centre') || t.includes('retail') || t.includes('visitor info') || t.includes('support')) return 'community'
+  if (typeof venueOrType === 'object' && venueOrType !== null) {
+    if (venueOrType.category && CATEGORY_MARKER_COLORS[venueOrType.category]) return venueOrType.category
+    const mapped = getCategoryFromSubTheme(venueOrType.sub_theme ?? venueOrType.subTheme ?? venueOrType.type)
+    if (mapped) return mapped
+  }
+  if (t.includes('gallery') || t.includes('museum') || t.includes('arts & culture') || t.includes('theatre') || t.includes('cinema')) return 'Arts & Culture'
+  if (t.includes('park') || t.includes('garden') || t.includes('reserve') || t.includes('informal outdoor') || t.includes('recreation') || t.includes('aquarium')) return 'Recreation'
+  if (t.includes('library') || t.includes('learning') || t.includes('education')) return 'Learning'
+  if (t.includes('visitor info') || t.includes('visitor centre') || t.includes('conference') || t.includes('exhibition')) return 'Visitor Info'
+  if (t.includes('community') || t.includes('support') || t.includes('public building') || t.includes('hospital')) return 'Community Support'
   return 'default'
 }
 
 function venueTypeLabel(venueOrType = '') {
   const source = venueTypeSource(venueOrType)
   const kind = venueTypeKind(venueOrType)
-  if (kind === 'gallery') return 'Art Gallery / Museum'
-  if (kind === 'park') return 'Park / Garden / Reserve'
-  if (kind === 'library') return 'Library'
-  if (kind === 'community') {
-    const t = source.toLowerCase()
-    return (t.includes('shopping') || t.includes('retail')) ? 'Shopping Centre' : 'Community Centre'
+  if (typeof venueOrType === 'object' && venueOrType !== null) {
+    const subTheme = venueOrType.sub_theme ?? venueOrType.subTheme ?? venueOrType.type
+    if (subTheme) return subTheme
   }
-  return source || 'Public space'
+  return kind === 'default' ? (source || 'Public space') : kind
 }
 
 const VENUE_KIND_COLOR = {
-  gallery:   '#8A3F28',
-  park:      '#4F5A2B',
-  library:   '#1E465A',
-  community: '#8A5A12',
-  default:   '#6E6358',
+  ...CATEGORY_UI_COLORS,
+  default: '#6E6358',
 }
 
 const VENUE_KIND_PILL = {
-  gallery:   { background: '#F3ECDC', color: '#8A3F28' },
-  park:      { background: '#D9DEC0', color: '#4F5A2B' },
-  library:   { background: '#CFDDE5', color: '#1E465A' },
-  community: { background: '#F2DDB3', color: '#8A5A12' },
-  default:   { background: '#F0EDE8', color: '#5A5048' },
+  'Arts & Culture':    { background: CATEGORY_UI_BACKGROUNDS['Arts & Culture'], color: CATEGORY_UI_COLORS['Arts & Culture'] },
+  Recreation:          { background: CATEGORY_UI_BACKGROUNDS.Recreation, color: CATEGORY_UI_COLORS.Recreation },
+  Learning:            { background: CATEGORY_UI_BACKGROUNDS.Learning, color: CATEGORY_UI_COLORS.Learning },
+  'Community Support': { background: CATEGORY_UI_BACKGROUNDS['Community Support'], color: CATEGORY_UI_COLORS['Community Support'] },
+  'Visitor Info':      { background: CATEGORY_UI_BACKGROUNDS['Visitor Info'], color: CATEGORY_UI_COLORS['Visitor Info'] },
+  Fountain:            { background: CATEGORY_UI_BACKGROUNDS.Fountain, color: CATEGORY_UI_COLORS.Fountain },
+  default:             { background: '#F0EDE8', color: '#5A5048' },
 }
 
 function getDistanceKm(lat1, lng1, lat2, lng2) {
@@ -453,7 +422,7 @@ const SYMPTOMS = [
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-export default function HomePage() {
+export default function TodayPage() {
   const {
     current, hourly, daily, locationName,
     loading, gpsBlocked, requestGps, fetchByPostcode,
@@ -465,9 +434,15 @@ export default function HomePage() {
   const navigate   = useNavigate()
 
   // ── local state ──
-  const [selectedMedications, setSelectedMedications] = useState([])
+  const [selectedMedications, setSelectedMedications] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('coolsafe_medications') || '[]')
+    } catch {
+      return []
+    }
+  })
   const [showMedModal, setShowMedModal] = useState(false)
-  const [showLocModal, setShowLocModal] = useState(() => !localStorage.getItem('coolsafe_coords'))
+  const [showLocModal, setShowLocModal] = useState(() => !mockLocation.enabled && !localStorage.getItem('coolsafe_coords'))
   const [showScoreInfo, setShowScoreInfo] = useState(false)
   const [activePeriod, setActivePeriod] = useState(() => {
     const h = new Date().getHours()
@@ -475,13 +450,8 @@ export default function HomePage() {
     if (h >= 16 || h < 6) return 'evening'
     return 'morning'
   })
-  const [selectedSymptoms, setSelectedSymptoms] = useState(new Set())
   const [toastMsg, setToastMsg] = useState('')
   const [activeMedAdvice, setActiveMedAdvice] = useState(null)
-  const [showAiPanel, setShowAiPanel] = useState(false)
-  const [aiStep, setAiStep] = useState(0)
-  const [aiPrefs, setAiPrefs] = useState({})
-  const [aiHasResult, setAiHasResult] = useState(false)
   const scoreInfoRef = useRef(null)
   const toastTimerRef = useRef(null)
 
@@ -494,6 +464,10 @@ export default function HomePage() {
       setActiveMedAdvice(selectedMedications[0])
     }
   }, [activeMedAdvice, selectedMedications])
+
+  useEffect(() => {
+    localStorage.setItem('coolsafe_medications', JSON.stringify(selectedMedications))
+  }, [selectedMedications])
 
   // Score tooltip is now hover-based — no click-outside handler needed
 
@@ -556,16 +530,25 @@ export default function HomePage() {
     ? activeMedAdvice
     : selectedMedications.find((m) => MED_ADVICE[m])
   const medicationCardTitle = hasMedications
-    ? (score >= 75 ? 'Your medications need extra care today.' : 'Your medications may add risk today.')
+    ? `${selectedMedications.length} medication${selectedMedications.length > 1 ? 's' : ''} in your plan.`
     : 'Tell us your medications for accuracy.'
-  const medicationCardDesc = hasMedications && activeMed
-    ? MED_ADVICE[activeMed]
-    : 'Some pills reduce sweating or increase fluid loss. Add them to see if you need extra care.'
+  const medicationCardDesc = hasMedications
+    ? 'See what your medicines may mean in heat, then check how your body is feeling.'
+    : 'Some pills reduce sweating or increase fluid loss. Add them to make your score more personal.'
   const heroSlogan = hasMedications
     ? (score >= 75
       ? { before: 'Stay', accent: 'indoors today.' }
       : { before: 'Take it', accent: 'easy today.' })
     : copy.slogan
+  const heroAccentColor = hasMedications
+    ? (score >= 75 ? '#8A3F28' : score >= 50 ? '#B87200' : '#6B7A3A')
+    : band === 'mild'
+      ? '#2A7D4F'
+      : band === 'warm'
+        ? '#6B7A3A'
+        : band === 'hot'
+          ? '#B87200'
+          : '#8A3F28'
   const heroDesc = hasMedications
     ? 'Your medications may add heat risk today. See your personalised plan below.'
     : copy.desc
@@ -582,60 +565,6 @@ export default function HomePage() {
     return slot?.temp ?? null
   }, [hourly])
 
-  // Highest symptom severity across selected symptoms
-  const maxSeverity = useMemo(() => {
-    let top = null
-    for (const id of selectedSymptoms) {
-      const s = SYMPTOMS.find((x) => x.id === id)
-      if (!s) continue
-      if (s.severity === '000') return '000'
-      top = 'nurse'
-    }
-    return top
-  }, [selectedSymptoms])
-
-  const symptomBanner = maxSeverity === '000'
-    ? {
-      key: '000',
-      bg: '#F1D6CE',
-      border: '#B85A3C',
-      iconBg: '#B85A3C',
-      icon: 'emergency',
-      title: 'Medical Emergency',
-      text: 'These may be critical signs of heat stroke. Do not wait. Call emergency services immediately.',
-      textColor: '#8A3F28',
-      href: 'tel:000',
-      cta: 'Call 000 Now',
-    }
-    : maxSeverity === 'nurse'
-      ? {
-        key: 'nurse',
-        bg: '#CFDDE5',
-        border: '#5B7A8C',
-        iconBg: '#5B7A8C',
-        icon: 'medical_services',
-        title: 'Seek medical advice',
-        text: 'These may be signs of heat exhaustion. Rest in a cool place, sip water, and call Nurse-On-Call for guidance.',
-        textColor: '#1E465A',
-        href: 'tel:1300606024',
-        cta: 'Call 1300 60 60 24',
-      }
-      : {
-        key: 'default',
-        bg: '#F3ECDC',
-        border: RULE,
-        title: null,
-        text: 'Select any symptoms above to see recommended actions.',
-        textColor: MUTED,
-      }
-
-  const toggleSymptom = (id) =>
-    setSelectedSymptoms((prev) => {
-      const next = new Set(prev)
-      next.has(id) ? next.delete(id) : next.add(id)
-      return next
-    })
-
   const periodRanges = useMemo(() => {
     return {
       morning: periodRange(hourly, 6, 11, '17-22°'),
@@ -644,22 +573,8 @@ export default function HomePage() {
     }
   }, [hourly])
 
-  const aiMatches = useMemo(() => {
-    const selectedType = aiPrefs.type
-    const typeFiltered = nearestVenues.filter((v) => {
-      if (!selectedType || selectedType === 'any') return true
-      const kind = venueTypeKind(v)
-      if (selectedType === 'shopping') return venueTypeLabel(v).toLowerCase().includes('shopping')
-      if (selectedType === 'community') return kind === 'community'
-      if (selectedType === 'park') return kind === 'park'
-      if (selectedType === 'library') return kind === 'library'
-      return true
-    })
-    return (typeFiltered.length ? typeFiltered : nearestVenues).slice(0, 3)
-  }, [aiPrefs.type, nearestVenues])
-
   // ── section wrapper style (shared) ──
-  const secInner = { maxWidth: MAX_W, margin: '0 auto', padding: `0 ${PX}` }
+  const secInner = { width: '100%', maxWidth: MAX_W, boxSizing: 'border-box', margin: '0 auto', padding: `0 ${PX}` }
 
   // ── render ──────────────────────────────────────────────────────────────────
   return (
@@ -670,6 +585,11 @@ export default function HomePage() {
         @keyframes toastIn { from{opacity:0;transform:translateX(-50%) translateY(8px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
         @keyframes cs-banner-in { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
         .cs-banner { animation: cs-banner-in 0.3s ease both; }
+        .weather-callout:hover {
+          transform: translateY(-3px);
+          border-color: rgba(138,63,40,0.34);
+          box-shadow: 0 12px 30px rgba(34,30,26,0.14);
+        }
       `}</style>
 
       <Navbar locationName={locationName} onLocationClick={() => setShowLocModal(true)} />
@@ -692,7 +612,7 @@ export default function HomePage() {
           {/* Left — slogan */}
           <div>
             <h1 style={{
-              fontFamily: "'DM Serif Display', Georgia, serif",
+              fontFamily: "var(--font-title)",
               fontSize: 'clamp(3rem,6vw,5rem)',
               fontWeight: 'normal',
               color: INK,
@@ -701,11 +621,11 @@ export default function HomePage() {
               marginBottom: 24,
             }}>
               {heroSlogan.before}{' '}
-              <em style={{ fontStyle: 'italic', color: '#8A3F28' }}>{heroSlogan.accent}</em>
+              <em style={{ fontStyle: 'italic', color: heroAccentColor }}>{heroSlogan.accent}</em>
             </h1>
 
             <p style={{
-              fontFamily: "'DM Sans', sans-serif",
+              fontFamily: "var(--font-body)",
               fontSize: '1.125rem',
               color: MUTED,
               lineHeight: 1.55,
@@ -739,7 +659,7 @@ export default function HomePage() {
               onMouseLeave={(e) => { e.currentTarget.style.transform = 'none' }}
             >
               {selectedMedications.length > 0
-                ? 'Review medications'
+                ? 'Review or edit medications'
                 : 'Add your medications for accuracy'}
               <i className="ti ti-arrow-right" style={{ fontSize: 16 }} />
             </button>
@@ -752,6 +672,32 @@ export default function HomePage() {
               alt="Older Melburnian staying cool indoors during hot weather"
               style={{ width: '100%', borderRadius: 20, display: 'block', objectFit: 'cover' }}
             />
+            <div
+              style={{
+                position: 'absolute',
+                top: 18,
+                right: 18,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 7,
+                padding: '7px 11px',
+                borderRadius: 999,
+                background: 'rgba(237,245,238,0.76)',
+                border: '1px solid rgba(42,125,79,0.16)',
+                backdropFilter: 'blur(8px)',
+                WebkitBackdropFilter: 'blur(8px)',
+                fontFamily: "var(--font-body)",
+                fontSize: '0.875rem',
+                fontWeight: 700,
+                color: '#2A7D4F',
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                pointerEvents: 'none',
+              }}
+            >
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#2A7D4F', boxShadow: '0 0 0 4px rgba(42,125,79,0.10)', animation: 'cs-pulse 1.4s ease-in-out infinite' }} />
+              Live local data
+            </div>
             <WeatherCallout
               value={current ? `${Math.round(current.apparentTemp)}°C` : '—'}
               label="Feels like"
@@ -764,7 +710,7 @@ export default function HomePage() {
               label="UV index"
               badge={uvInfo?.label ?? '—'}
               badgeColor={uvInfo?.color ?? FAINT}
-              style={{ position: 'absolute', top: '24%', right: '-12%' }}
+              style={{ position: 'absolute', top: '30%', right: '-12%' }}
             />
             <WeatherCallout
               value={daily?.todayMax != null ? `${Math.round(daily.todayMax)}°C` : '—'}
@@ -794,14 +740,14 @@ export default function HomePage() {
 
             {/* Score number */}
             <div style={{ flexShrink: 0 }}>
-              <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.6875rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', color: FAINT, marginBottom: 4 }}>
+              <div style={{ fontFamily: "var(--font-body)", fontSize: '0.9375rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', color: FAINT, marginBottom: 4 }}>
                 Your risk today
               </div>
               <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4 }}>
-                <span style={{ fontFamily: "'DM Serif Display', Georgia, serif", fontSize: 'clamp(3.5rem,6vw,4.5rem)', color: scoreColor, lineHeight: 0.8, fontWeight: 'normal' }}>
+                <span style={{ fontFamily: "var(--font-title)", fontSize: 'clamp(3.5rem,6vw,4.5rem)', color: scoreColor, lineHeight: 0.8, fontWeight: 'normal' }}>
                   {score}
                 </span>
-                <span style={{ fontFamily: "'DM Serif Display', Georgia, serif", fontSize: '1.625rem', color: FAINT, lineHeight: 1, marginBottom: 4 }}>/100</span>
+                <span style={{ fontFamily: "var(--font-title)", fontSize: '1.625rem', color: FAINT, lineHeight: 1, marginBottom: 4 }}>/100</span>
 
                 {/* Score breakdown tooltip */}
                 <div
@@ -811,13 +757,13 @@ export default function HomePage() {
                   onMouseLeave={() => setShowScoreInfo(false)}
                 >
                   <button
-                    style={{ width: 22, height: 22, borderRadius: '50%', border: `1.5px solid ${RULE}`, background: 'transparent', cursor: 'pointer', fontSize: '0.6875rem', fontFamily: "'DM Sans', sans-serif", fontWeight: 700, color: FAINT, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}
+                    style={{ width: 22, height: 22, borderRadius: '50%', border: `1.5px solid ${RULE}`, background: 'transparent', cursor: 'pointer', fontSize: '0.9375rem', fontFamily: "var(--font-body)", fontWeight: 700, color: FAINT, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}
                   >?</button>
 
                   {showScoreInfo && breakdown && (
                     <div style={{ position: 'absolute', top: 'calc(100% + 14px)', left: '50%', transform: 'translateX(-50%)', background: '#FFFCF6', color: INK, border: `1px solid ${RULE}`, borderRadius: 16, padding: '15px 18px', minWidth: 280, boxShadow: '0 18px 44px rgba(34,30,26,0.16)', zIndex: 100 }}>
                       <div style={{ position: 'absolute', top: -7, left: '50%', width: 14, height: 14, transform: 'translateX(-50%) rotate(45deg)', background: '#FFFCF6', borderLeft: `1px solid ${RULE}`, borderTop: `1px solid ${RULE}` }} />
-                      <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.777rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: FAINT, textAlign: 'center', marginBottom: 10, position: 'relative' }}>
+                      <div style={{ fontFamily: "var(--font-body)", fontSize: '0.9375rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: FAINT, textAlign: 'center', marginBottom: 10, position: 'relative' }}>
                         How your score is calculated
                       </div>
                       {[
@@ -825,16 +771,16 @@ export default function HomePage() {
                         { label: 'Time of day',       pts: breakdown.timePts   },
                         { label: 'Medication risk',   pts: breakdown.medPts    },
                       ].map(({ label, pts }) => (
-                        <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderTop: `1px solid ${RULE}`, fontFamily: "'DM Sans', sans-serif", fontSize: '1rem', color: MUTED, position: 'relative' }}>
+                        <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderTop: `1px solid ${RULE}`, fontFamily: "var(--font-body)", fontSize: '1rem', color: MUTED, position: 'relative' }}>
                           <span>{label}</span>
                           <span style={{ fontWeight: 700, color: INK }}>{pts >= 0 ? '+' : ''}{pts}</span>
                         </div>
                       ))}
-                      <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 10, borderTop: `1px solid ${RULE}`, fontFamily: "'DM Sans', sans-serif", fontSize: '1rem', color: INK, fontWeight: 700 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 10, borderTop: `1px solid ${RULE}`, fontFamily: "var(--font-body)", fontSize: '1rem', color: INK, fontWeight: 700 }}>
                         <span>Total</span>
                         <span style={{ color: scoreColor }}>{score}</span>
                       </div>
-                      <div style={{ marginTop: 10, fontFamily: "'DM Sans', sans-serif", fontSize: '0.875rem', color: FAINT, lineHeight: 1.35 }}>
+                      <div style={{ marginTop: 10, fontFamily: "var(--font-body)", fontSize: '1rem', color: FAINT, lineHeight: 1.35 }}>
                         Weather uses today's forecast. Time of day reflects the current hour.
                       </div>
                     </div>
@@ -848,7 +794,7 @@ export default function HomePage() {
                 minHeight: 30,
                 width: 'fit-content',
                 marginTop: 14,
-                padding: '0.3rem 0.75rem',
+                padding: '0.3rem 1rem',
                 borderRadius: 999,
                 background: selectedMedications.length > 0 ? '#D9DEC0' : '#F3ECDC',
                 color: selectedMedications.length > 0 ? '#4F5A2B' : '#6E6358',
@@ -867,14 +813,14 @@ export default function HomePage() {
 
             {/* Verdict */}
             <div style={{ flexShrink: 0 }}>
-              <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.6875rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', color: FAINT, marginBottom: 4 }}>Verdict</div>
-              <div style={{ fontFamily: "'DM Serif Display', Georgia, serif", fontStyle: 'italic', fontSize: 'clamp(1.625rem,3vw,2rem)', color: scoreColor, lineHeight: 1 }}>
+              <div style={{ fontFamily: "var(--font-body)", fontSize: '0.9375rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', color: FAINT, marginBottom: 4 }}>Verdict</div>
+              <div style={{ fontFamily: "var(--font-title)", fontStyle: 'italic', fontSize: 'clamp(1.625rem,3vw,2rem)', color: scoreColor, lineHeight: 1 }}>
                 {verdict}
               </div>
             </div>
 
             {/* Gradient slider */}
-            <div style={{ flex: 1, minWidth: 180 }}>
+            <div style={{ flex: '1 1 300px', minWidth: 180 }}>
               <div style={{ position: 'relative', height: 12, borderRadius: 99, background: 'linear-gradient(to right,#6B7A3A 0%,#D49A3A 50%,#B85A3C 100%)' }}>
                 <div style={{
                   position: 'absolute',
@@ -893,79 +839,50 @@ export default function HomePage() {
                   <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#B85A3C' }} />
                 </div>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, fontFamily: "'DM Sans', sans-serif", fontSize: '0.625rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#9A9A9A' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, fontFamily: "var(--font-body)", fontSize: '1rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#9A9A9A' }}>
                 {['Calm', 'Mild', 'Moderate', 'High', 'Extreme'].map((l) => <span key={l}>{l}</span>)}
               </div>
             </div>
+
+            <Link
+              to="/safety"
+              style={{
+                flexShrink: 0,
+                marginLeft: 'auto',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                minHeight: 42,
+                padding: '0 4px',
+                color: '#1857B8',
+                fontFamily: 'var(--font-body)',
+                fontSize: '1rem',
+                fontWeight: 700,
+                textDecoration: 'none',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              Not feeling well? Check now
+              <span aria-hidden="true">→</span>
+            </Link>
           </div>
-          {(score >= 50 || band === 'extreme') && (
-            <div style={{
-              marginTop: 20,
-              borderRadius: 18,
-              border: score >= 75 || band === 'extreme' ? '1px solid #B85A3C' : `1px solid ${RULE}`,
-              background: score >= 75 || band === 'extreme' ? '#F1D6CE' : '#F3ECDC',
-              padding: '14px 18px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: 16,
-              fontFamily: 'var(--sans)',
-              color: score >= 75 || band === 'extreme' ? '#8A3F28' : MUTED,
-            }}>
-              <span>
-                {score >= 75 || band === 'extreme'
-                  ? <><strong>Medical emergency signs?</strong> Confusion, fainting, vomiting, or hot dry skin can be critical. Do not wait.</>
-                  : 'Feeling unwell? Check the symptoms below.'}
-              </span>
-              {(score >= 75 || band === 'extreme') && (
-                <a href="tel:000" style={{ borderRadius: 999, background: '#B85A3C', color: '#fff', padding: '9px 16px', textDecoration: 'none', fontWeight: 700, whiteSpace: 'nowrap' }}>
-                  Call 000 Now
-                </a>
-              )}
-            </div>
-          )}
         </div>
       </section>
 
       {/* ══════════════════════════════════════════════════════════════════════
           3. THREE CARDS
-          Medications · Day window · Symptoms check
+          Day window · Cool spaces · Medications
       ══════════════════════════════════════════════════════════════════════ */}
       <section style={{ borderBottom: `1px solid ${RULE}` }}>
         <div style={{ ...secInner, padding: `clamp(48px,6vw,80px) ${PX}` }}>
           <h2 style={headingStyle}>
-            Three things shaping{' '}
-            <em style={{ fontStyle: 'italic', color: '#8A3F28' }}>your</em> day.
+            Your {score} today, in three steps.
           </h2>
-          <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '1rem', color: MUTED, lineHeight: 1.55, marginBottom: 36, maxWidth: 520 }}>
+          <p style={{ fontFamily: "var(--font-body)", fontSize: '1rem', color: MUTED, lineHeight: 1.55, marginBottom: 36, maxWidth: 520 }}>
             Tap a card to see more. Your details stay private.
           </p>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
-            <ThingCard
-              iconBg="#F2DDB3"
-              icon="pill"
-              title={medicationCardTitle}
-              desc={medicationCardDesc}
-              extra={selectedMedications.length > 0
-                ? (
-                  <MedAdviceChips
-                    medications={selectedMedications}
-                    activeMed={activeMed}
-                    onSelect={setActiveMedAdvice}
-                    onClear={() => {
-                      setSelectedMedications([])
-                      setActiveMedAdvice(null)
-                      showToast('Medications cleared')
-                    }}
-                  />
-                )
-                : null}
-              extraBeforeDesc
-              cta="Review medications"
-              ctaIcon="arrow_forward"
-              onClick={() => setShowMedModal(true)}
-            />
             <ThingCard
               iconBg="#D9DEC0"
               icon="schedule"
@@ -975,7 +892,7 @@ export default function HomePage() {
                 : bestWindow ? `${bestWindow.startH} – ${bestWindow.startH + 2}` : null}
               windowLabel={band === 'mild' ? '' : copy.windowLabel}
               desc={band === 'mild'
-                ? <>Easy plans all day.<br /><br />{copy.cardDesc(middayApparentTemp)}</>
+                ? `Easy plans all day. ${copy.cardDesc(middayApparentTemp)}`
                 : copy.cardDesc(middayApparentTemp)}
               cta="View hourly forecast"
               ctaIcon="arrow_downward"
@@ -983,12 +900,21 @@ export default function HomePage() {
             />
             <ThingCard
               iconBg="#CFDDE5"
-              icon="favorite"
-              title="Anything off? It's worth checking."
-              desc="Heat exhaustion can sneak up on you. Dizziness, an unusual headache, dry skin — these are the body's way of asking for help."
-              cta="Run a quick check"
+              icon="location_on"
+              title="Find cool spaces near you."
+              desc="Air-conditioned libraries, community centres, and shaded parks across Melbourne."
+              cta="See nearby spaces"
+              ctaIcon="arrow_downward"
+              onClick={() => document.getElementById('sec-cool-spaces')?.scrollIntoView({ behavior: 'smooth' })}
+            />
+            <ThingCard
+              iconBg="#F2DDB3"
+              icon="pill"
+              title={medicationCardTitle}
+              desc={medicationCardDesc}
+              cta="Check medications and symptoms"
               ctaIcon="arrow_forward"
-              onClick={() => document.getElementById('sec-symptoms')?.scrollIntoView({ behavior: 'smooth' })}
+              onClick={() => navigate('/safety')}
             />
           </div>
         </div>
@@ -1002,9 +928,9 @@ export default function HomePage() {
       <section id="sec-chart" style={{ borderBottom: `1px solid ${RULE}` }}>
         <div style={{ ...secInner, padding: `clamp(48px,6vw,80px) ${PX}` }}>
           <h2 style={headingStyle}>
-            <em style={{ fontStyle: 'italic', color: '#8A3F28' }}>Your</em> day, looked after.
+            Your day, looked after.
           </h2>
-          <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '1rem', color: MUTED, lineHeight: 1.55, marginBottom: 36 }}>
+          <p style={{ fontFamily: "var(--font-body)", fontSize: '1rem', color: MUTED, lineHeight: 1.55, marginBottom: 36 }}>
             Tap a time of day to see your plan.
           </p>
 
@@ -1012,7 +938,7 @@ export default function HomePage() {
           <div style={{
             display: 'grid',
             gridTemplateColumns: '1.4fr 1fr',
-            minHeight: 650,
+            minHeight: 570,
             background: '#fff',
             border: `1px solid ${RULE}`,
             borderRadius: 32,
@@ -1021,12 +947,12 @@ export default function HomePage() {
           }}>
 
             {/* Left — chart */}
-            <div style={{ display: 'flex', flexDirection: 'column', padding: '32px 32px 24px', boxSizing: 'border-box' }}>
-              <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.6875rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: FAINT, marginBottom: 20, flexShrink: 0 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', padding: '30px 32px 24px', boxSizing: 'border-box' }}>
+              <div style={{ fontFamily: "var(--font-body)", fontSize: '1rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: FAINT, marginBottom: 12, flexShrink: 0 }}>
                 Hourly Temperature · {locationName ?? 'Melbourne'}
               </div>
 
-              <div style={{ flex: 1, minHeight: 360, position: 'relative', display: 'flex', alignItems: 'stretch' }}>
+              <div style={{ flex: 1, minHeight: 300, position: 'relative', display: 'flex', alignItems: 'stretch' }}>
                 <TempChart hourly={hourly} />
               </div>
 
@@ -1034,11 +960,11 @@ export default function HomePage() {
               <div style={{ marginTop: 'auto', paddingTop: 20, borderTop: `1px solid ${RULE}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 18, flexShrink: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#B85A3C', animation: 'cs-pulse 2s ease-in-out infinite' }} />
-                  <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.875rem', fontWeight: 500, color: INK }}>
+                  <span style={{ fontFamily: "var(--font-body)", fontSize: '1rem', fontWeight: 500, color: INK }}>
                     Tomorrow's Outlook: {tomorrowOutlook(daily?.tomorrowMax)}
                   </span>
                 </div>
-                <span style={{ fontFamily: "'DM Serif Display', Georgia, serif", fontSize: '1.65rem', color: daily?.tomorrowMax != null ? scoreColour(Math.min(100, daily.tomorrowMax * 2)) : '#B85A3C', whiteSpace: 'nowrap' }}>
+                <span style={{ fontFamily: "var(--font-title)", fontSize: '1.65rem', color: daily?.tomorrowMax != null ? scoreColour(Math.min(100, daily.tomorrowMax * 2)) : '#B85A3C', whiteSpace: 'nowrap' }}>
                   {daily?.tomorrowMax != null ? `Max ${Math.round(daily.tomorrowMax)}°C` : '—'}
                 </span>
               </div>
@@ -1071,7 +997,7 @@ export default function HomePage() {
                       border: `1px solid ${activePeriod === p ? (p === 'morning' ? '#6B7A3A' : p === 'midday' ? '#B85A3C' : '#5B7A8C') : RULE}`,
                       background: activePeriod === p ? (p === 'morning' ? '#6B7A3A' : p === 'midday' ? '#B85A3C' : '#5B7A8C') : 'transparent',
                       color: activePeriod === p ? '#fff' : MUTED,
-                      fontFamily: "'DM Sans', sans-serif",
+                      fontFamily: "var(--font-body)",
                       fontSize: 'var(--text-caption)',
                       fontWeight: 500,
                       cursor: 'pointer',
@@ -1094,10 +1020,10 @@ export default function HomePage() {
                 transition: 'background 0.4s',
               }}>
                 {ROUTINE_META[activePeriod].svg}
-                <span style={{ position: 'absolute', top: 16, left: 16, background: '#fff', borderRadius: 99, padding: '6px 14px', fontFamily: "'DM Sans', sans-serif", fontSize: '0.6875rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: FAINT, boxShadow: '0 2px 8px rgba(34,30,26,0.08)' }}>
+                <span style={{ position: 'absolute', top: 16, left: 16, background: '#fff', borderRadius: 99, padding: '6px 14px', fontFamily: "var(--font-body)", fontSize: '0.9375rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: FAINT, boxShadow: '0 2px 8px rgba(34,30,26,0.08)' }}>
                   {getPeriodContent(activePeriod, band)?.eyebrow.replace('Morning · ', '').replace('Midday · ', '').replace('Evening · ', '')}
                 </span>
-                <span style={{ position: 'absolute', right: 16, bottom: 16, background: 'rgba(34,30,26,0.85)', color: '#FAF8F5', borderRadius: 99, padding: '5px 14px', fontFamily: "'DM Serif Display', Georgia, serif", fontSize: '1rem', boxShadow: '0 2px 10px rgba(34,30,26,0.14)' }}>
+                <span style={{ position: 'absolute', right: 16, bottom: 16, background: 'rgba(34,30,26,0.85)', color: '#FAF8F5', borderRadius: 99, padding: '5px 14px', fontFamily: "var(--font-title)", fontSize: '1rem', boxShadow: '0 2px 10px rgba(34,30,26,0.14)' }}>
                   {periodRanges[activePeriod]}
                 </span>
               </div>
@@ -1113,21 +1039,21 @@ export default function HomePage() {
                       </h3>
                       {/* Do this box */}
                       <div style={{ background: 'rgba(74,103,65,0.06)', borderRadius: 12, padding: '12px 14px', border: '1px solid rgba(74,103,65,0.15)' }}>
-                        <span style={{ display: 'inline-block', fontFamily: 'var(--sans)', fontSize: '0.625rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#4A6741', background: 'rgba(74,103,65,0.12)', padding: '2px 8px', borderRadius: 4, marginBottom: 8 }}>Do this</span>
+                        <span style={{ display: 'inline-block', fontFamily: 'var(--sans)', fontSize: '1rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#4A6741', background: 'rgba(74,103,65,0.12)', padding: '2px 8px', borderRadius: 4, marginBottom: 8 }}>Do this</span>
                         {c.do.map((item, i) => (
                           <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginTop: i > 0 ? 5 : 0 }}>
                             <span style={{ color: '#4A6741', lineHeight: 1.4, flexShrink: 0 }}>•</span>
-                            <span style={{ fontFamily: 'var(--sans)', fontSize: '0.875rem', color: MUTED, lineHeight: 1.4 }}>{item}</span>
+                            <span style={{ fontFamily: 'var(--sans)', fontSize: '1rem', color: MUTED, lineHeight: 1.4 }}>{item}</span>
                           </div>
                         ))}
                       </div>
                       {/* Avoid box */}
                       <div style={{ background: 'rgba(201,75,26,0.04)', borderRadius: 12, padding: '12px 14px', border: '1px solid rgba(201,75,26,0.12)' }}>
-                        <span style={{ display: 'inline-block', fontFamily: 'var(--sans)', fontSize: '0.625rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8A3F28', background: 'rgba(201,75,26,0.08)', padding: '2px 8px', borderRadius: 4, marginBottom: 8 }}>Avoid</span>
+                        <span style={{ display: 'inline-block', fontFamily: 'var(--sans)', fontSize: '1rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8A3F28', background: 'rgba(201,75,26,0.08)', padding: '2px 8px', borderRadius: 4, marginBottom: 8 }}>Avoid</span>
                         {c.avoid.map((item, i) => (
                           <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginTop: i > 0 ? 5 : 0 }}>
                             <span style={{ color: '#C94B1A', lineHeight: 1.4, flexShrink: 0 }}>•</span>
-                            <span style={{ fontFamily: 'var(--sans)', fontSize: '0.875rem', color: MUTED, lineHeight: 1.4 }}>{item}</span>
+                            <span style={{ fontFamily: 'var(--sans)', fontSize: '1rem', color: MUTED, lineHeight: 1.4 }}>{item}</span>
                           </div>
                         ))}
                       </div>
@@ -1145,16 +1071,15 @@ export default function HomePage() {
           5. COOL SPACES
           List of 3 nearest venues + map card
       ══════════════════════════════════════════════════════════════════════ */}
-      <section style={{ borderBottom: `1px solid ${RULE}` }}>
+      <section id="sec-cool-spaces" style={{ borderBottom: `1px solid ${RULE}` }}>
         <div style={{ ...secInner, padding: `clamp(48px,6vw,80px) ${PX}` }}>
           <h2 style={headingStyle}>
-            Find a cool space near{' '}
-            <em style={{ fontStyle: 'italic', color: '#8A3F28' }}>you.</em>
+            Find a cool space near you.
           </h2>
-          <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '1rem', color: MUTED, lineHeight: 1.55, marginBottom: 36, maxWidth: 560 }}>
+          <div style={{ fontFamily: "var(--font-body)", fontSize: '1rem', color: MUTED, lineHeight: 1.55, marginBottom: 36, maxWidth: 560 }}>
             <span>Cool public places and shaded parks near you.</span>
             <span style={{ display: 'block', marginTop: 6 }}>
-              Or tap <span style={{ color: '#B85A3C', fontWeight: 700 }}>✦</span> to match by what you need.
+              Or tap <span style={{ color: '#1852B4', fontWeight: 700 }}>✦</span> to match by what you need.
             </span>
           </div>
 
@@ -1193,24 +1118,24 @@ export default function HomePage() {
                         }}
                       >
                         {/* Numbered circle */}
-                        <div style={{ position: 'absolute', left: 0, top: idx === 0 ? 16 : 18, width: 24, height: 24, borderRadius: '50%', background: kindColor, color: '#fff', display: 'grid', placeItems: 'center', fontSize: '0.6875rem', fontWeight: 600, fontFamily: "'DM Sans', sans-serif", boxShadow: '0 2px 8px rgba(34,30,26,0.14)' }}>
+                        <div style={{ position: 'absolute', left: 0, top: idx === 0 ? 16 : 18, width: 24, height: 24, borderRadius: '50%', background: kindColor, color: '#fff', display: 'grid', placeItems: 'center', fontSize: '0.9375rem', fontWeight: 600, fontFamily: "var(--font-body)", boxShadow: '0 2px 8px rgba(34,30,26,0.14)' }}>
                           {idx + 1}
                         </div>
                         {/* Name + distance */}
                         <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12, marginBottom: 6 }}>
-                          <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '1rem', fontWeight: 500, color: INK, lineHeight: 1.24 }}>{v.name}</div>
-                          <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.875rem', color: FAINT, flexShrink: 0, display: 'flex', alignItems: 'baseline', gap: 2 }}>
+                          <div style={{ fontFamily: "var(--font-body)", fontSize: '1rem', fontWeight: 500, color: INK, lineHeight: 1.24 }}>{v.name}</div>
+                          <div style={{ fontFamily: "var(--font-body)", fontSize: '1rem', color: FAINT, flexShrink: 0, display: 'flex', alignItems: 'baseline', gap: 2 }}>
                             <strong style={{ fontWeight: 500 }}>{v.distKm != null ? v.distKm.toFixed(1) : '—'}</strong>
-                            <span style={{ fontSize: '0.6875rem' }}>km</span>
+                            <span style={{ fontSize: '0.9375rem' }}>km</span>
                           </div>
                         </div>
                         {/* Type pill */}
-                        <div style={{ display: 'inline-flex', alignItems: 'center', minHeight: 24, padding: '4px 11px', borderRadius: 99, background: VENUE_KIND_PILL[kind].background, fontFamily: "'DM Sans', sans-serif", fontSize: '0.777rem', fontWeight: 500, color: VENUE_KIND_PILL[kind].color, marginTop: 3, marginBottom: address ? 4 : 0, lineHeight: 1 }}>
+                        <div style={{ display: 'inline-flex', alignItems: 'center', minHeight: 24, padding: '4px 11px', borderRadius: 99, background: VENUE_KIND_PILL[kind].background, fontFamily: "var(--font-body)", fontSize: '0.9375rem', fontWeight: 500, color: VENUE_KIND_PILL[kind].color, marginTop: 3, marginBottom: address ? 4 : 0, lineHeight: 1 }}>
                           {typeTag}
                         </div>
                         {/* Address */}
                         {address && (
-                          <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.8125rem', color: FAINT, marginTop: 2 }}>{address}</div>
+                          <div style={{ fontFamily: "var(--font-body)", fontSize: '0.9375rem', color: FAINT, marginTop: 2 }}>{address}</div>
                         )}
                         <span
                           data-row-arrow
@@ -1223,7 +1148,7 @@ export default function HomePage() {
                     )
                   })
                 : (
-                    <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.9375rem', color: '#9A9A9A', padding: '20px 0' }}>
+                    <div style={{ fontFamily: "var(--font-body)", fontSize: '0.9375rem', color: '#9A9A9A', padding: '20px 0' }}>
                       {lat == null ? 'Set your location to see nearby cool spaces.' : 'Finding nearby cool spaces…'}
                     </div>
                   )
@@ -1232,165 +1157,6 @@ export default function HomePage() {
 
             {/* Map card — navigates to full map page */}
             <MiniMapCard venues={nearestVenues} onOpen={() => navigate('/map')} />
-          </div>
-        </div>
-      </section>
-
-      <button
-        onClick={() => setShowAiPanel(true)}
-        aria-label="Find a cool space with AI"
-        style={{
-          position: 'fixed',
-          right: 28,
-          bottom: 28,
-          zIndex: 520,
-          width: 58,
-          height: 58,
-          borderRadius: '50%',
-          border: '1px solid rgba(184,90,60,0.34)',
-          background: '#B85A3C',
-          color: '#fff',
-          display: 'grid',
-          placeItems: 'center',
-          boxShadow: '0 16px 36px rgba(138,63,40,0.28)',
-          cursor: 'pointer',
-          fontSize: 25,
-          fontWeight: 700,
-        }}
-      >
-        ✦
-      </button>
-
-      {showAiPanel && (
-        <AiCoolSpacePanel
-          step={aiStep}
-          prefs={aiPrefs}
-          hasResult={aiHasResult}
-          matches={aiMatches}
-          onPick={(key, value) => {
-            setAiPrefs((prev) => ({ ...prev, [key]: value }))
-            setAiHasResult(false)
-          }}
-          onBack={() => setAiStep((s) => Math.max(0, s - 1))}
-          onNext={() => setAiStep((s) => Math.min(AI_QUESTIONS.length - 1, s + 1))}
-          onFind={() => {
-            setAiHasResult(true)
-            setAiStep(AI_QUESTIONS.length)
-          }}
-          onReset={() => {
-            setAiPrefs({})
-            setAiStep(0)
-            setAiHasResult(false)
-          }}
-          onClose={() => setShowAiPanel(false)}
-          onOpenMap={() => navigate('/map')}
-        />
-      )}
-
-      {/* ══════════════════════════════════════════════════════════════════════
-          6. SYMPTOMS CHECKER
-          6 toggle buttons → action banner (default / nurse / 000)
-      ══════════════════════════════════════════════════════════════════════ */}
-      <section id="sec-symptoms" style={{ paddingBottom: 'clamp(64px,8vw,100px)' }}>
-        <div style={{ ...secInner, padding: `clamp(48px,6vw,80px) ${PX}` }}>
-          <h2 style={headingStyle}>
-            How is{' '}
-            <em style={{ fontStyle: 'italic', color: '#8A3F28' }}>your body</em> feeling?
-          </h2>
-          <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '1rem', color: MUTED, lineHeight: 1.55, marginBottom: 36, maxWidth: 520 }}>
-            Tap any symptom you feel right now.
-          </p>
-
-          {/* Symptom grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 24 }}>
-            {SYMPTOMS.map((sym) => {
-              const active = selectedSymptoms.has(sym.id)
-              const severe = sym.severity === '000'
-              const activeColor = severe ? '#C94B1A' : '#1852B4'
-              return (
-                <button
-                  key={sym.id}
-                  onClick={() => toggleSymptom(sym.id)}
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '24px 16px',
-                    gap: 10,
-                    background: active ? (severe ? '#FDF0EB' : '#EEF3FF') : '#fff',
-                    border: `1px solid ${active ? activeColor : RULE}`,
-                    borderRadius: 20,
-                    cursor: 'pointer',
-                    transition: 'all 0.18s',
-                  }}
-                  onMouseEnter={(e) => { if (!active) e.currentTarget.style.borderColor = '#8A3F28' }}
-                  onMouseLeave={(e) => { if (!active) e.currentTarget.style.borderColor = RULE }}
-                >
-                  <span
-                    className="material-symbols-outlined"
-                    style={{ fontSize: 28, color: active ? activeColor : FAINT, lineHeight: 1 }}
-                  >{sym.icon}</span>
-                  <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.9375rem', fontWeight: 500, color: active ? activeColor : INK, textAlign: 'center', lineHeight: 1.4 }}>
-                    {sym.label}
-                  </span>
-                </button>
-              )
-            })}
-          </div>
-
-          {/* Clear all button */}
-          {selectedSymptoms.size > 0 && (
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
-              <button
-                onClick={() => setSelectedSymptoms(new Set())}
-                style={{ background: 'transparent', border: 'none', padding: 0, fontFamily: "'DM Sans', sans-serif", fontSize: '0.875rem', fontWeight: 500, color: '#8A3F28', cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: 3, transition: 'color 0.18s ease' }}
-                onMouseEnter={(e) => { e.currentTarget.style.color = INK }}
-                onMouseLeave={(e) => { e.currentTarget.style.color = '#8A3F28' }}
-              >
-                Clear all
-              </button>
-            </div>
-          )}
-
-          <div
-            key={symptomBanner.key}
-            className="cs-banner"
-            style={{
-              background: symptomBanner.bg,
-              border: `1px solid ${symptomBanner.border}`,
-              borderRadius: 20,
-              padding: symptomBanner.title ? '24px 28px' : '20px 24px',
-              minHeight: symptomBanner.title ? 104 : 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: symptomBanner.title ? 'space-between' : 'center',
-              gap: 24,
-              flexWrap: 'wrap',
-              fontFamily: "'DM Sans', sans-serif",
-              color: symptomBanner.textColor,
-            }}
-          >
-            {symptomBanner.title ? (
-              <>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 16, flex: 1, minWidth: 0 }}>
-                  <div style={{ width: 48, height: 48, borderRadius: '50%', background: symptomBanner.iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, animation: symptomBanner.key === '000' ? 'cs-pulse 2s ease-in-out infinite' : 'none' }}>
-                    <span className="material-symbols-outlined" style={{ fontSize: 24, color: '#fff' }}>{symptomBanner.icon}</span>
-                  </div>
-                  <div>
-                    <div style={{ fontFamily: "'DM Serif Display', Georgia, serif", fontSize: '1.25rem', color: INK, marginBottom: 4 }}>{symptomBanner.title}</div>
-                    <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.9375rem', color: symptomBanner.textColor, lineHeight: 1.5 }}>
-                      {symptomBanner.text}
-                    </div>
-                  </div>
-                </div>
-                <a href={symptomBanner.href} style={{ display: 'inline-block', background: symptomBanner.iconBg, color: '#fff', borderRadius: 99, padding: '12px 24px', fontFamily: "'DM Sans', sans-serif", fontSize: '0.9375rem', fontWeight: 600, textDecoration: 'none', flexShrink: 0 }}>
-                  {symptomBanner.cta}
-                </a>
-              </>
-            ) : (
-              <span>{symptomBanner.text}</span>
-            )}
           </div>
         </div>
       </section>
@@ -1446,7 +1212,7 @@ export default function HomePage() {
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-              <span style={{ fontFamily: "'DM Serif Display',Georgia,serif", fontSize: '1.625rem', color: INK, letterSpacing: '-0.5px', lineHeight: 1.2 }}>
+              <span style={{ fontFamily: "var(--font-title)", fontSize: '1.625rem', color: INK, letterSpacing: '-0.5px', lineHeight: 1.2 }}>
                 Your medications
               </span>
               <button
@@ -1459,7 +1225,7 @@ export default function HomePage() {
               >×</button>
             </div>
 
-            <p style={{ fontFamily: "'DM Sans',sans-serif", fontSize: '0.9375rem', color: '#6B6B6B', marginBottom: 20, lineHeight: 1.5 }}>
+            <p style={{ fontFamily: "var(--font-body)", fontSize: '0.9375rem', color: '#6B6B6B', marginBottom: 20, lineHeight: 1.5 }}>
               Select any medications you take regularly. We don't save this data — it's strictly used to calculate your heat risk today.
             </p>
 
@@ -1468,27 +1234,29 @@ export default function HomePage() {
               onMedicationsChange={setSelectedMedications}
             />
 
-            <button
-              onClick={() => setSelectedMedications([])}
-              style={{ background: 'transparent', border: 'none', fontFamily: "'DM Sans',sans-serif", fontSize: '0.875rem', fontWeight: 500, color: '#8A3F28', cursor: 'pointer', padding: '14px 0 6px', display: 'inline-flex', textDecoration: 'underline', textUnderlineOffset: 3, transition: 'color 0.18s ease' }}
-              onMouseEnter={(e) => { e.currentTarget.style.color = INK }}
-              onMouseLeave={(e) => { e.currentTarget.style.color = '#8A3F28' }}
-            >
-              Clear all
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 18 }}>
+              <button
+                onClick={() => setSelectedMedications([])}
+                style={{ background: 'transparent', border: 'none', fontFamily: "var(--font-body)", fontSize: '1rem', fontWeight: 500, color: '#8A3F28', cursor: 'pointer', padding: '0 2px', display: 'inline-flex', textDecoration: 'underline', textUnderlineOffset: 3, transition: 'color 0.18s ease', whiteSpace: 'nowrap' }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = INK }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = '#8A3F28' }}
+              >
+                Clear all
+              </button>
 
-            <button
-              onClick={() => {
-                setShowMedModal(false)
-                const cnt = selectedMedications.length
-                showToast(cnt > 0 ? `Score updated — ${cnt} medication${cnt > 1 ? 's' : ''} saved` : 'Medications cleared — showing weather-only score')
-              }}
-              style={{ width: '100%', background: INK, color: '#fff', border: 'none', borderRadius: 12, padding: 16, fontFamily: "'DM Sans',sans-serif", fontSize: '1rem', fontWeight: 700, cursor: 'pointer', marginTop: 8, letterSpacing: '-0.2px', boxShadow: '0 4px 16px rgba(15,15,15,0.20)', transition: 'transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease' }}
-              onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(15,15,15,0.26)' }}
-              onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(15,15,15,0.20)' }}
-            >
-              Save & Calculate Risk
-            </button>
+              <button
+                onClick={() => {
+                  setShowMedModal(false)
+                  const cnt = selectedMedications.length
+                  showToast(cnt > 0 ? `Score updated — ${cnt} medication${cnt > 1 ? 's' : ''} saved` : 'Medications cleared — showing weather-only score')
+                }}
+                style={{ flex: 1, background: INK, color: '#fff', border: 'none', borderRadius: 12, padding: 16, fontFamily: "var(--font-body)", fontSize: '1rem', fontWeight: 700, cursor: 'pointer', letterSpacing: '-0.2px', boxShadow: '0 4px 16px rgba(15,15,15,0.20)', transition: 'transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease' }}
+                onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(15,15,15,0.26)' }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(15,15,15,0.20)' }}
+              >
+                Save & Calculate Risk
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -1497,139 +1265,6 @@ export default function HomePage() {
 }
 
 // ── Sub-components ────────────────────────────────────────────────────────────
-
-/** Floating weather callout badge used in the hero illustration */
-function WeatherCallout({ value, label, badge, badgeColor, style: extraStyle }) {
-  return (
-    <div style={{
-      background: 'rgba(255,255,255,0.96)',
-      backdropFilter: 'blur(12px)',
-      WebkitBackdropFilter: 'blur(12px)',
-      border: `1px solid ${RULE}`,
-      borderRadius: 14,
-      padding: '12px 16px',
-      display: 'flex',
-      flexDirection: 'column',
-      gap: 4,
-      boxShadow: '0 4px 20px rgba(34,30,26,0.10)',
-      minWidth: 110,
-      ...extraStyle,
-    }}>
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-        <span style={{ fontFamily: "'DM Serif Display', Georgia, serif", fontSize: '1.375rem', color: INK, letterSpacing: '-0.5px', lineHeight: 1 }}>{value}</span>
-        <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.8125rem', color: '#9A9A9A', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{label}</span>
-      </div>
-      <span style={{ display: 'inline-block', padding: '3px 10px', borderRadius: 99, background: `${badgeColor}18`, fontFamily: "'DM Sans', sans-serif", fontSize: '0.75rem', fontWeight: 600, color: badgeColor, alignSelf: 'flex-start' }}>
-        {badge}
-      </span>
-    </div>
-  )
-}
-
-/** One of the three summary cards in the "Three things" section */
-function ThingCard({ icon, iconBg, title, desc, extra, extraBeforeDesc = false, cta, ctaIcon = 'arrow_forward', onClick, windowTime, windowLabel }) {
-  return (
-    <div
-      onClick={onClick}
-      style={{ background: '#fff', border: `1px solid ${RULE}`, borderRadius: 24, padding: 32, minHeight: 430, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 24, cursor: 'pointer', transition: 'border-color 0.18s' }}
-      onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#8A3F28' }}
-      onMouseLeave={(e) => { e.currentTarget.style.borderColor = RULE }}
-    >
-      <div>
-        <div style={{ width: 48, height: 48, borderRadius: '50%', background: iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 24 }}>
-          <span className="material-symbols-outlined" style={{ fontSize: 22, color: INK }}>{icon}</span>
-        </div>
-        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 'var(--text-title-sm)', color: INK, lineHeight: 1.15, marginBottom: windowTime || extraBeforeDesc ? 0 : 16, fontWeight: 'normal', letterSpacing: '-0.01em' }}>
-          {title}
-        </h3>
-        {extraBeforeDesc && extra && <div style={{ marginTop: 16, marginBottom: 16 }}>{extra}</div>}
-        {windowTime && (
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, margin: '12px 0' }}>
-            <span style={{ fontFamily: 'var(--serif)', fontSize: 'clamp(1.75rem,2.5vw,2.25rem)', color: INK, lineHeight: 1 }}>{windowTime}</span>
-            {windowLabel && <span style={{ fontFamily: 'var(--sans)', fontSize: '0.875rem', color: FAINT }}>{windowLabel}</span>}
-          </div>
-        )}
-        <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.9375rem', color: MUTED, lineHeight: 1.5 }}>
-          {desc}
-        </p>
-        {!extraBeforeDesc && extra && <div style={{ marginTop: 12 }}>{extra}</div>}
-      </div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontFamily: "'DM Sans', sans-serif", fontSize: '0.9375rem', fontWeight: 500, color: INK }}>
-        {cta}
-        <span className="material-symbols-outlined" style={{ fontSize: 20 }}>{ctaIcon}</span>
-      </div>
-    </div>
-  )
-}
-
-/** Interactive medication advice chips shown in the Three Things card */
-function MedAdviceChips({ medications, activeMed, onSelect, onClear }) {
-  return (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-      {medications.map((med) => (
-        <button
-          key={med}
-          onClick={(e) => {
-            e.stopPropagation()
-            onSelect(med)
-          }}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            padding: '3px 10px',
-            borderRadius: 99,
-            background: activeMed === med ? '#B85A3C' : '#FFFCF6',
-            border: activeMed === med ? '1px solid #B85A3C' : `1px solid ${RULE}`,
-            fontFamily: "'DM Sans', sans-serif",
-            fontSize: '0.75rem',
-            fontWeight: 500,
-            color: activeMed === med ? '#fff' : MUTED,
-            lineHeight: 1.4,
-            cursor: 'pointer',
-            transition: 'border-color 0.18s ease, color 0.18s ease, transform 0.18s ease',
-          }}
-          onMouseEnter={(e) => {
-            if (activeMed !== med) {
-              e.currentTarget.style.borderColor = '#8A3F28'
-              e.currentTarget.style.color = INK
-            }
-            e.currentTarget.style.transform = 'translateY(-1px)'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = activeMed === med ? '#B85A3C' : RULE
-            e.currentTarget.style.color = activeMed === med ? '#fff' : MUTED
-            e.currentTarget.style.transform = 'none'
-          }}
-        >
-          {MED_LABELS[med] ?? med}
-        </button>
-      ))}
-      <button
-        onClick={(e) => {
-          e.stopPropagation()
-          onClear()
-        }}
-        style={{
-          border: 'none',
-          background: 'transparent',
-          color: '#8A3F28',
-          fontFamily: 'var(--sans)',
-          fontSize: '0.75rem',
-          fontWeight: 500,
-          cursor: 'pointer',
-          padding: '3px 4px',
-          textDecoration: 'underline',
-          textUnderlineOffset: 3,
-          transition: 'color 0.18s ease',
-        }}
-        onMouseEnter={(e) => { e.currentTarget.style.color = INK }}
-        onMouseLeave={(e) => { e.currentTarget.style.color = '#8A3F28' }}
-      >
-        Clear all
-      </button>
-    </div>
-  )
-}
 
 function MiniMapCard({ venues, onOpen }) {
   const dots = venues.length ? venues : [{ name: 'Nearby cool space', type: 'Library' }]
@@ -1681,7 +1316,7 @@ function MiniMapCard({ venues, onOpen }) {
                   className: '',
                   iconSize: [28, 28],
                   iconAnchor: [14, 14],
-                  html: `<div style="width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:${color};color:white;border:3px solid white;box-shadow:0 4px 12px rgba(34,30,26,.22);font-family:Atkinson Hyperlegible,system-ui,sans-serif;font-size:14px;font-weight:700">${i + 1}</div>`,
+                  html: `<div style="width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:${color};color:white;border:3px solid white;box-shadow:0 4px 12px rgba(34,30,26,.22);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',Arial,sans-serif;font-size:16px;font-weight:700">${i + 1}</div>`,
                 })}
               />
             )
@@ -1693,85 +1328,13 @@ function MiniMapCard({ venues, onOpen }) {
         const color = VENUE_KIND_COLOR[kind]
         const positions = [[28, 34], [62, 52], [44, 70]]
         return (
-          <div key={v.id ?? v.name ?? i} title={v.name} style={{ position: 'absolute', left: `${positions[i][0]}%`, top: `${positions[i][1]}%`, transform: 'translate(-50%,-50%)', width: 26, height: 26, borderRadius: '50%', background: color, border: '3px solid #fff', boxShadow: '0 6px 16px rgba(34,30,26,0.22)', display: 'grid', placeItems: 'center', color: '#fff', fontFamily: 'var(--sans)', fontSize: '0.75rem', fontWeight: 800 }}>
+          <div key={v.id ?? v.name ?? i} title={v.name} style={{ position: 'absolute', left: `${positions[i][0]}%`, top: `${positions[i][1]}%`, transform: 'translate(-50%,-50%)', width: 26, height: 26, borderRadius: '50%', background: color, border: '3px solid #fff', boxShadow: '0 6px 16px rgba(34,30,26,0.22)', display: 'grid', placeItems: 'center', color: '#fff', fontFamily: 'var(--sans)', fontSize: '1rem', fontWeight: 800 }}>
             {i + 1}
           </div>
         )
       })}
-      <div style={{ position: 'absolute', right: 16, bottom: 16, zIndex: 2, display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.82)', backdropFilter: 'blur(12px)', borderRadius: 99, padding: '9px 18px', boxShadow: '0 8px 24px rgba(34,30,26,0.12)', fontFamily: "'DM Sans', sans-serif", fontSize: '0.9375rem', fontWeight: 600, color: INK }}>
+      <div style={{ position: 'absolute', right: 16, bottom: 16, zIndex: 2, display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.82)', backdropFilter: 'blur(12px)', borderRadius: 99, padding: '9px 18px', boxShadow: '0 8px 24px rgba(34,30,26,0.12)', fontFamily: "var(--font-body)", fontSize: '0.9375rem', fontWeight: 600, color: INK }}>
         Open full map →
-      </div>
-    </div>
-  )
-}
-
-function AiCoolSpacePanel({ step, prefs, hasResult, matches, onPick, onBack, onNext, onFind, onReset, onClose, onOpenMap }) {
-  const question = AI_QUESTIONS[step]
-  const showingResult = step >= AI_QUESTIONS.length
-  return (
-    <div style={{ position: 'fixed', right: 24, bottom: 96, zIndex: 530, width: 'min(420px, calc(100vw - 32px))', background: '#FFFCF6', border: `1px solid ${RULE}`, borderRadius: 22, boxShadow: '0 24px 64px rgba(34,30,26,0.22)', overflow: 'hidden' }}>
-      <div style={{ padding: '18px 20px', borderBottom: `1px solid ${RULE}`, display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'flex-start' }}>
-        <div>
-          <div style={{ fontFamily: 'var(--serif)', fontSize: '1.35rem', color: INK, lineHeight: 1.1 }}>Find a cool space with AI</div>
-          <div style={{ fontFamily: 'var(--sans)', fontSize: '0.8125rem', color: FAINT, marginTop: 4 }}>4 questions · about 1 minute</div>
-        </div>
-        <button onClick={onClose} aria-label="Close" style={{ border: 'none', background: 'rgba(34,30,26,0.07)', width: 32, height: 32, borderRadius: '50%', cursor: 'pointer', fontSize: 16 }}>×</button>
-      </div>
-
-      <div style={{ padding: 20 }}>
-        {!showingResult && question && (
-          <>
-            <div style={{ fontFamily: 'var(--serif)', fontSize: '1.2rem', lineHeight: 1.18, color: INK, marginBottom: 14 }}>{question.title}</div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-              {question.options.map(([value, label]) => {
-                const selected = prefs[question.key] === value
-                return (
-                  <button
-                    key={value}
-                    onClick={() => onPick(question.key, value)}
-                    style={{ border: selected ? '1.5px solid #B85A3C' : `1px solid ${RULE}`, background: selected ? '#F1D6CE' : '#fff', color: selected ? '#8A3F28' : INK, borderRadius: 14, padding: '12px 13px', textAlign: 'left', fontFamily: 'var(--sans)', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer' }}
-                  >
-                    {label}
-                  </button>
-                )
-              })}
-            </div>
-          </>
-        )}
-
-        {showingResult && (
-          <div>
-            <div style={{ fontFamily: 'var(--serif)', fontSize: '1.2rem', color: INK, marginBottom: 12 }}>
-              {hasResult ? 'Best matches nearby' : 'Finding the best spaces for you...'}
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {matches.length ? matches.map((v) => (
-                <button key={v.id ?? v.name} onClick={onOpenMap} style={{ textAlign: 'left', border: `1px solid ${RULE}`, background: '#fff', borderRadius: 14, padding: 14, cursor: 'pointer' }}>
-                  <div style={{ fontFamily: 'var(--sans)', fontWeight: 700, color: INK, marginBottom: 4 }}>{v.name}</div>
-                  <div style={{ fontFamily: 'var(--sans)', color: FAINT, fontSize: '0.84rem' }}>{venueTypeLabel(v)} · {v.distKm != null ? `${v.distKm.toFixed(1)} km` : 'nearby'}</div>
-                </button>
-              )) : (
-                <div style={{ fontFamily: 'var(--sans)', color: FAINT, border: `1px solid ${RULE}`, background: '#fff', borderRadius: 14, padding: 14 }}>
-                  Set your location to match nearby cool spaces.
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-
-      <div style={{ borderTop: `1px solid ${RULE}`, padding: '14px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
-        <button onClick={showingResult ? onReset : onBack} style={{ visibility: step === 0 && !showingResult ? 'hidden' : 'visible', border: 'none', background: 'transparent', color: FAINT, fontFamily: 'var(--sans)', fontWeight: 700, cursor: 'pointer' }}>
-          {showingResult ? 'Start over' : '← Back'}
-        </button>
-        <span style={{ fontFamily: 'var(--sans)', color: FAINT, fontSize: '0.78rem' }}>
-          {showingResult ? 'Results' : `Step ${step + 1} of ${AI_QUESTIONS.length}`}
-        </span>
-        {!showingResult && (
-          <button onClick={step === AI_QUESTIONS.length - 1 ? onFind : onNext} style={{ border: 'none', background: '#0F0F0F', color: '#fff', borderRadius: 99, padding: '10px 16px', fontFamily: 'var(--sans)', fontWeight: 700, cursor: 'pointer' }}>
-            {step === AI_QUESTIONS.length - 1 ? 'Find spaces ✦' : 'Next →'}
-          </button>
-        )}
       </div>
     </div>
   )

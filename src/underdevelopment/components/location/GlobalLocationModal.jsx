@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
-import { useWeatherData } from '../../hooks/useWeatherData'
+import { useUserLocation } from '../../hooks/useUserLocation'
 import LocationModal from './LocationModal'
 
 export const OPEN_LOCATION_MODAL_EVENT = 'coolsafe:open-location-modal'
 
 export default function GlobalLocationModal() {
-  const { locationName, requestGps, fetchByPostcode } = useWeatherData()
+  const { locationName, requestGps, fetchByPostcode } = useUserLocation()
   const [open, setOpen] = useState(false)
 
   useEffect(() => {

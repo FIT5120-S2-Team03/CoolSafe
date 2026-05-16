@@ -49,7 +49,7 @@ export default function LocationModal({ open, onClose, requestGps, fetchByPostco
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
           <div style={{ flex: 1, height: 1, background: RULE }} />
-          <span style={{ fontFamily: 'var(--sans)', fontSize: '0.875rem', color: '#9C9A96' }}>or</span>
+          <span style={{ fontFamily: 'var(--sans)', fontSize: '1rem', color: '#9C9A96' }}>or</span>
           <div style={{ flex: 1, height: 1, background: RULE }} />
         </div>
 

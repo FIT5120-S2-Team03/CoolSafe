@@ -581,6 +581,7 @@ export default function TodayPage() {
     <div style={{ background: PAPER, minHeight: '100vh' }}>
       <style>{`
         @keyframes cs-pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+        @keyframes cs-shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
         @keyframes popIn { from{transform:scale(.9);opacity:0} to{transform:scale(1);opacity:1} }
         @keyframes toastIn { from{opacity:0;transform:translateX(-50%) translateY(8px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
         @keyframes cs-banner-in { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
@@ -707,7 +708,7 @@ export default function TodayPage() {
             />
             <WeatherCallout
               value={uvInfo ? String(uvInfo.index) : '—'}
-              label="UV index"
+              label="UVI"
               badge={uvInfo?.label ?? '—'}
               badgeColor={uvInfo?.color ?? FAINT}
               style={{ position: 'absolute', top: '30%', right: '-12%' }}

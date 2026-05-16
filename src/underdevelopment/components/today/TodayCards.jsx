@@ -14,7 +14,10 @@ const MED_LABELS = {
   'Pain relievers (NSAIDs)': 'Pain relievers',
 }
 
+const SHIMMER = 'linear-gradient(90deg, #EDE5D4 25%, #F5EFE3 50%, #EDE5D4 75%)'
+
 export function WeatherCallout({ value, label, badge, badgeColor, style: extraStyle }) {
+  const loading = value === '—'
   return (
     <div
       className="weather-callout"
@@ -35,12 +38,20 @@ export function WeatherCallout({ value, label, badge, badgeColor, style: extraSt
       ...extraStyle,
     }}>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-        <span style={{ fontFamily: "var(--font-title)", fontSize: '1.375rem', color: INK, letterSpacing: '-0.5px', lineHeight: 1 }}>{value}</span>
+        {loading ? (
+          <span style={{ display: 'inline-block', width: 52, height: 20, borderRadius: 6, background: SHIMMER, backgroundSize: '200% 100%', animation: 'cs-shimmer 1.6s ease-in-out infinite' }} />
+        ) : (
+          <span style={{ fontFamily: "var(--font-title)", fontSize: '1.375rem', color: INK, letterSpacing: '-0.5px', lineHeight: 1 }}>{value}</span>
+        )}
         <span style={{ fontFamily: "var(--font-body)", fontSize: '0.9375rem', color: MUTED, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700 }}>{label}</span>
       </div>
-      <span style={{ display: 'inline-block', padding: '3px 10px', borderRadius: 99, background: `${badgeColor}18`, fontFamily: "var(--font-body)", fontSize: '1rem', fontWeight: 600, color: badgeColor, alignSelf: 'flex-start' }}>
-        {badge}
-      </span>
+      {loading ? (
+        <span style={{ display: 'inline-block', width: 68, height: 18, borderRadius: 99, background: SHIMMER, backgroundSize: '200% 100%', animation: 'cs-shimmer 1.6s ease-in-out infinite', animationDelay: '0.2s' }} />
+      ) : (
+        <span style={{ display: 'inline-block', padding: '3px 10px', borderRadius: 99, background: `${badgeColor}18`, fontFamily: "var(--font-body)", fontSize: '1rem', fontWeight: 600, color: badgeColor, alignSelf: 'flex-start' }}>
+          {badge}
+        </span>
+      )}
     </div>
   )
 }

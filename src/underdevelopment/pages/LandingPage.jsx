@@ -215,7 +215,7 @@ export default function LandingPage() {
                 { value: current ? `${Math.round(current.apparentTemp)}°C` : '--°C', label: 'Feels like' },
                 { value: daily?.todayMax != null ? `${Math.round(daily.todayMax)}°C` : '--°C', label: 'Peak today' },
                 { value: aqi != null ? String(aqi) : '--', label: 'AQI' },
-                { value: uvInfo ? String(uvInfo.index) : '--', label: 'UV index' },
+                { value: uvInfo ? String(uvInfo.index) : '--', label: 'UVI' },
               ].map(({ value, label }, i) => (
                 <div key={label} style={{
                   minWidth: 0,

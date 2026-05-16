@@ -4,7 +4,7 @@
  * location marker that animates the map to the user's position.
  *
  * Props:
- *   selectedCategory {string} — 'All' or a specific category name to filter pins
+ *   selectedCategories {string[]} — empty = show all; otherwise filter to these categories
  */
 
 import { useRef, useState, useEffect } from 'react'
@@ -86,12 +86,12 @@ function VenuePopup({ venue, userLocation, onFastestRoute, routeLoading, onClose
   return (
     <div
       style={{
-        backgroundColor: '#fff',
+        backgroundColor: 'var(--color-surface)',
         borderRadius: 16,
         boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
         padding: 20,
         width: 300,
-        fontFamily: "var(--font-body)",
+        fontFamily: 'var(--font-body)',
         position: 'relative',
       }}
     >
@@ -110,7 +110,7 @@ function VenuePopup({ venue, userLocation, onFastestRoute, routeLoading, onClose
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          color: '#94a3b8',
+          color: 'var(--color-ink-disabled)',
           minWidth: 44,
           minHeight: 44,
         }}
@@ -121,17 +121,18 @@ function VenuePopup({ venue, userLocation, onFastestRoute, routeLoading, onClose
         </svg>
       </button>
 
-      <p style={{ fontFamily: "var(--font-body)", fontWeight: 700, fontSize: 16, color: '#1e293b', margin: '0 32px 8px 0' }}>
+      <p style={{ fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 'var(--text-caption)', color: 'var(--color-ink)', margin: '0 32px 8px 0' }}>
         {venue.name}
       </p>
 
       <span style={{
         display: 'inline-block',
-        backgroundColor: CATEGORY_UI_BACKGROUNDS[venue.category] ?? '#F0EDE8',
-        color: CATEGORY_UI_COLORS[venue.category] ?? '#5A5048',
-        borderRadius: 999,
+        backgroundColor: CATEGORY_UI_BACKGROUNDS[venue.category] ?? 'var(--color-warm)',
+        color: CATEGORY_UI_COLORS[venue.category] ?? 'var(--color-ink-muted)',
+        borderRadius: 'var(--radius-pill)',
         padding: '4px 10px',
-        fontSize: 15,
+        fontFamily: 'var(--font-body)',
+        fontSize: 'var(--text-caption)',
         fontWeight: 700,
         marginBottom: 10,
       }}>
@@ -139,32 +140,32 @@ function VenuePopup({ venue, userLocation, onFastestRoute, routeLoading, onClose
       </span>
 
       {venue.address && (
-        <p style={{ fontSize: 16, color: '#64748b', margin: '0 0 12px' }}>
+        <p style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-caption)', color: 'var(--color-ink-muted)', margin: '0 0 12px' }}>
           {venue.address}
         </p>
       )}
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', fontSize: 15, marginBottom: 16 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', fontFamily: 'var(--font-body)', fontSize: 'var(--text-caption)', marginBottom: 16 }}>
         {openStatus.status === 'unavailable' ? (
-          <span style={{ color: '#94a3b8' }}>Hours unavailable</span>
+          <span style={{ color: 'var(--color-ink-disabled)' }}>Hours unavailable</span>
         ) : (
           <>
-            <span style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: openStatus.status === 'open' ? '#16a34a' : '#ef4444', flexShrink: 0 }} />
-            <span style={{ color: openStatus.status === 'open' ? '#16a34a' : '#ef4444', fontWeight: 600 }}>
+            <span style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: openStatus.status === 'open' ? 'var(--color-green)' : 'var(--color-orange)', flexShrink: 0 }} />
+            <span style={{ color: openStatus.status === 'open' ? 'var(--color-green)' : 'var(--color-orange)', fontWeight: 600 }}>
               {openStatus.status === 'open' ? 'Open Now' : 'Closed'}
             </span>
             {openStatus.status === 'open' && (
               <>
-                <span style={{ color: '#cbd5e1' }}>•</span>
-                <span style={{ color: '#64748b' }}>Closes {openStatus.closeTime}</span>
+                <span style={{ color: 'var(--color-rule)' }}>•</span>
+                <span style={{ color: 'var(--color-ink-muted)' }}>Closes {openStatus.closeTime}</span>
               </>
             )}
           </>
         )}
         {walkMins != null && (
           <>
-            <span style={{ color: '#cbd5e1' }}>•</span>
-            <span style={{ color: '#64748b' }}>{walkMins} min walk</span>
+            <span style={{ color: 'var(--color-rule)' }}>•</span>
+            <span style={{ color: 'var(--color-ink-muted)' }}>{walkMins} min walk</span>
           </>
         )}
       </div>
@@ -175,36 +176,36 @@ function VenuePopup({ venue, userLocation, onFastestRoute, routeLoading, onClose
           disabled={routeLoading}
           style={{
             flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-            backgroundColor: selectedRoute === 'fastest' ? '#16a34a' : routeLoading ? '#f1f5f9' : '#fff',
-            border: selectedRoute === 'fastest' ? 'none' : '1px solid #e2e8f0',
+            backgroundColor: selectedRoute === 'fastest' ? 'var(--color-green)' : routeLoading ? 'var(--color-warm)' : 'var(--color-surface)',
+            border: selectedRoute === 'fastest' ? 'none' : '1px solid var(--color-rule)',
             borderRadius: 10, padding: '10px 0',
-            color: selectedRoute === 'fastest' ? '#fff' : '#1e293b',
-            fontFamily: "var(--font-body)", fontWeight: 600, fontSize: 15,
+            color: selectedRoute === 'fastest' ? '#fff' : 'var(--color-ink)',
+            fontFamily: 'var(--font-body)', fontWeight: 600, fontSize: 'var(--text-caption)',
             cursor: routeLoading ? 'not-allowed' : 'pointer', minHeight: 44,
           }}
         >
-          {routeLoading && selectedRoute === 'fastest' ? 'Loading...' : '⚡ Fastest'}
+          {routeLoading && selectedRoute === 'fastest' ? 'Loading...' : 'Fastest'}
         </button>
 
         <button
           onClick={() => setSelectedRoute('coolest')}
           style={{
             flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-            backgroundColor: selectedRoute === 'coolest' ? '#16a34a' : '#fff',
-            border: selectedRoute === 'coolest' ? 'none' : '1px solid #e2e8f0',
+            backgroundColor: selectedRoute === 'coolest' ? 'var(--color-green)' : 'var(--color-surface)',
+            border: selectedRoute === 'coolest' ? 'none' : '1px solid var(--color-rule)',
             borderRadius: 10, padding: '10px 0',
-            color: selectedRoute === 'coolest' ? '#fff' : '#1e293b',
-            fontFamily: "var(--font-body)", fontWeight: 600, fontSize: 15,
+            color: selectedRoute === 'coolest' ? '#fff' : 'var(--color-ink)',
+            fontFamily: 'var(--font-body)', fontWeight: 600, fontSize: 'var(--text-caption)',
             cursor: 'pointer', minHeight: 44,
           }}
         >
-          🌲 Coolest
+          Coolest
         </button>
       </div>
 
       <button
         onClick={() => navigate(`/venue/${venue.id}`, { state: { venue } })}
-        style={{ width: '100%', backgroundColor: '#003fa4', color: '#fff', border: 'none', borderRadius: 12, padding: '14px 0', fontSize: 16, fontWeight: 700, fontFamily: "var(--font-body)", cursor: 'pointer', minHeight: 44 }}
+        style={{ width: '100%', backgroundColor: 'var(--color-blue)', color: '#fff', border: 'none', borderRadius: 12, padding: '14px 0', fontSize: 'var(--text-caption)', fontWeight: 700, fontFamily: 'var(--font-body)', cursor: 'pointer', minHeight: 44 }}
       >
         View Full Details →
       </button>
@@ -256,7 +257,7 @@ function hviStyle(feature) {
   }
 }
 
-export default function CoolSpacesMap({ selectedCategory, flyTo, showHVI, openVenueId }) {
+export default function CoolSpacesMap({ selectedCategories, flyTo, showHVI, openVenueId }) {
   const mapRef = useRef(null)
   const [selectedVenue, setSelectedVenue] = useState(null)
   const [pinPos, setPinPos] = useState(null)
@@ -277,14 +278,15 @@ export default function CoolSpacesMap({ selectedCategory, flyTo, showHVI, openVe
   const { fountains, loading: fountainsLoading, error: fountainsError } = useFountains()
   const { hviData } = useHVI()
 
-  const isLoading = venuesLoading || (selectedCategory === 'Fountain' && fountainsLoading)
-  const error = venuesError || (selectedCategory === 'Fountain' ? fountainsError : null)
+  const needsFountains = selectedCategories.includes('Fountain')
+  const isLoading = venuesLoading || (needsFountains && fountainsLoading)
+  const error = venuesError || (needsFountains ? fountainsError : null)
 
   const allVenues = [...venues, ...fountains]
   const filtered =
-    selectedCategory === 'All'
+    selectedCategories.length === 0
       ? venues
-      : allVenues.filter((v) => v.category === selectedCategory)
+      : allVenues.filter((v) => selectedCategories.includes(v.category))
 
   // Auto-open venue card when arriving from detail page
   useEffect(() => {
@@ -296,6 +298,26 @@ export default function CoolSpacesMap({ selectedCategory, flyTo, showHVI, openVe
   function selectVenue(venue) {
     clearRoute()
     setSelectedVenue(venue)
+
+    if (mapRef.current) {
+      const map = mapRef.current
+      const pin = map.latLngToContainerPoint([venue.lat, venue.lng])
+      // Conservative estimate: tall card (long venue name wraps), plus 16px gap, plus 24px buffer
+      const cardH = 370
+      const cardW = 300
+      const { x: mapW } = map.getSize()
+
+      const overflowTop   = cardH - pin.y
+      const overflowLeft  = cardW / 2 - pin.x
+      const overflowRight = (pin.x + cardW / 2) - mapW
+
+      const panX = overflowRight > 0 ? overflowRight : overflowLeft > 0 ? -overflowLeft : 0
+      const panY = overflowTop > 0 ? -overflowTop : 0
+
+      if (panX !== 0 || panY !== 0) {
+        map.panBy([panX, panY], { animate: true })
+      }
+    }
   }
 
   function closeVenue() {
@@ -378,7 +400,7 @@ export default function CoolSpacesMap({ selectedCategory, flyTo, showHVI, openVe
 
       if (mapRef.current && coords.length > 0) {
         mapRef.current.fitBounds(L.latLngBounds(coords), {
-          paddingTopLeft: [60, 280],
+          paddingTopLeft: [60, 380],
           paddingBottomRight: [60, 60],
         })
       }

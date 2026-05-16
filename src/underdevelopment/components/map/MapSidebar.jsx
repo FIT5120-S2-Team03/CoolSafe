@@ -1,18 +1,9 @@
-/**
- * MapSidebar — left panel for the Cool Spaces Map page.
- * Contains category filter pills, Heat Vulnerability Layer toggle, and legend.
- *
- * Props:
- *   selectedCategory {string}   — currently active category ('All' or a category name)
- *   onCategoryChange {function} — called with the new category string when a pill is clicked
- *   showHVI          {boolean}  — whether the HVI choropleth layer is visible
- *   onHVIToggle      {function} — called when the HVI toggle is clicked
- */
-
+import { useMemo } from 'react'
+import useCoolSpaces from '../../hooks/useCoolSpaces'
+import useFountains from '../../hooks/useFountains'
 import { CATEGORY_MARKER_COLORS } from '../../utils/categoryMapping'
 
-const CATEGORIES = [
-  'All',
+const ORDERED_CATEGORIES = [
   'Arts & Culture',
   'Recreation',
   'Learning',
@@ -21,88 +12,102 @@ const CATEGORIES = [
   'Fountain',
 ]
 
-const LEGEND_ITEMS = [
-  { color: CATEGORY_MARKER_COLORS['Arts & Culture'], label: 'Arts & Culture' },
-  { color: CATEGORY_MARKER_COLORS.Recreation, label: 'Recreation' },
-  { color: CATEGORY_MARKER_COLORS.Learning, label: 'Learning' },
-  { color: CATEGORY_MARKER_COLORS['Community Support'], label: 'Support' },
-  { color: CATEGORY_MARKER_COLORS['Visitor Info'], label: 'Visitor Info' },
-  { color: CATEGORY_MARKER_COLORS.Fountain, label: 'Fountain' },
-]
+export default function MapSidebar({ selectedCategories, onCategoriesChange, showHVI, onHVIToggle }) {
+  const { venues } = useCoolSpaces()
+  const { fountains } = useFountains()
 
-export default function MapSidebar({ selectedCategory, onCategoryChange, showHVI, onHVIToggle }) {
+  const counts = useMemo(() => {
+    const result = {}
+    for (const v of venues) {
+      result[v.category] = (result[v.category] ?? 0) + 1
+    }
+    result['Fountain'] = fountains.length
+    return result
+  }, [venues, fountains])
+
+  const isAll = selectedCategories.length === 0
+
+  function toggleCategory(cat) {
+    if (cat === 'All') { onCategoriesChange([]); return }
+    const next = new Set(selectedCategories)
+    next.has(cat) ? next.delete(cat) : next.add(cat)
+    onCategoriesChange([...next])
+  }
+
   return (
     <aside
-      className="hidden md:flex flex-col gap-8 overflow-y-auto shrink-0"
+      className="hidden md:flex flex-col gap-5 overflow-y-auto shrink-0"
       style={{
-        width: 280,
+        width: 320,
         height: '100%',
-        backgroundColor: '#fff',
-        borderRight: '1px solid #f1f5f9',
-        padding: 24,
+        backgroundColor: 'var(--color-paper)',
+        borderRight: '1px solid var(--color-rule)',
+        padding: '24px 18px',
       }}
     >
-      {/* Category filter */}
+      {/* Category section */}
       <div>
-        <p
-          className="uppercase tracking-[0.7px]"
-          style={{ fontFamily: "var(--font-body)", fontWeight: 700, fontSize: 16, color: '#94a3b8' }}
-        >
+        <p style={{
+          fontFamily: 'var(--font-body)',
+          fontWeight: 800,
+          fontSize: 'var(--text-caption)',
+          color: 'var(--color-ink-muted)',
+          textTransform: 'uppercase',
+          letterSpacing: '0.1em',
+          marginBottom: 12,
+        }}>
           Category
         </p>
-        <div className="flex flex-wrap gap-2 mt-4">
-          {CATEGORIES.map((cat) => {
-            const active = cat === selectedCategory
-            return (
-              <button
-                key={cat}
-                onClick={() => onCategoryChange(cat)}
-                style={{
-                  fontFamily: "var(--font-body)",
-                  fontWeight: 600,
-                  fontSize: 16,
-                  borderRadius: 12,
-                  padding: '7px 12px',
-                  border: '1px solid',
-                  cursor: 'pointer',
-                  transition: 'background 0.15s, color 0.15s',
-                  backgroundColor: active ? '#003fa4' : '#f3f3f6',
-                  borderColor:     active ? '#003fa4' : 'transparent',
-                  color:           active ? '#fff'    : '#424654',
-                }}
-              >
-                {cat}
-              </button>
-            )
-          })}
+
+        {/* Natural-width flex-wrap pills — each pill sizes to its content */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
+          <CategoryPill
+            label="All"
+            count={venues.length}
+            dotColor="#1a1a1a"
+            isSelected={isAll}
+            onClick={() => toggleCategory('All')}
+          />
+          {ORDERED_CATEGORIES.map((cat) => (
+            <CategoryPill
+              key={cat}
+              label={cat}
+              count={counts[cat] ?? 0}
+              dotColor={CATEGORY_MARKER_COLORS[cat]}
+              isSelected={!isAll && selectedCategories.includes(cat)}
+              onClick={() => toggleCategory(cat)}
+            />
+          ))}
         </div>
       </div>
 
       {/* HVI Layer toggle */}
-      <div
-        style={{
-          backgroundColor: 'rgba(248,250,252,0.5)',
-          border: '1px solid #f1f5f9',
-          borderRadius: 8,
-          padding: 17,
-        }}
-      >
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <span style={{ fontSize: 18 }}>🔥</span>
-            <div className="flex flex-col">
-              <span
-                style={{ fontFamily: "var(--font-body)", fontWeight: 700, fontSize: 16, color: '#1e293b' }}
-              >
-                Heat Vulnerability Layer
-              </span>
-              <span
-                style={{ fontFamily: "var(--font-body)", fontWeight: 400, fontSize: 16, color: '#64748b' }}
-              >
-                Shows high-risk suburbs
-              </span>
-            </div>
-          </div>
+      <div style={{
+        backgroundColor: 'var(--color-warm)',
+        border: '1px solid var(--color-rule)',
+        borderRadius: 'var(--radius-md)',
+        padding: '14px 16px',
+      }}>
+        <p style={{
+          fontFamily: 'var(--font-body)',
+          fontWeight: 700,
+          fontSize: 'var(--text-caption)',
+          color: 'var(--color-ink)',
+          marginBottom: 6,
+        }}>
+          Heat Vulnerability
+        </p>
+
+        {/* subtitle + toggle on the same row */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+          <span style={{
+            fontFamily: 'var(--font-body)',
+            fontSize: 'var(--text-caption)',
+            color: 'var(--color-ink-muted)',
+            lineHeight: 1.4,
+          }}>
+            Shows high-risk suburbs
+          </span>
           <button
             onClick={onHVIToggle}
             aria-pressed={showHVI}
@@ -111,8 +116,8 @@ export default function MapSidebar({ selectedCategory, onCategoryChange, showHVI
               position: 'relative',
               width: 44,
               height: 24,
-              backgroundColor: showHVI ? '#003fa4' : '#e2e8f0',
-              borderRadius: 12,
+              backgroundColor: showHVI ? 'var(--color-blue)' : 'var(--color-rule)',
+              borderRadius: 'var(--radius-pill)',
               border: 'none',
               cursor: 'pointer',
               flexShrink: 0,
@@ -120,45 +125,67 @@ export default function MapSidebar({ selectedCategory, onCategoryChange, showHVI
               padding: 0,
             }}
           >
-            <div
-              style={{
-                position: 'absolute',
-                left: showHVI ? 24 : 4,
-                top: 4,
-                width: 16,
-                height: 16,
-                backgroundColor: '#fff',
-                borderRadius: '50%',
-                transition: 'left 0.2s',
-              }}
-            />
+            <div style={{
+              position: 'absolute',
+              left: showHVI ? 24 : 4,
+              top: 4,
+              width: 16,
+              height: 16,
+              backgroundColor: '#fff',
+              borderRadius: '50%',
+              transition: 'left 0.2s',
+            }} />
           </button>
         </div>
       </div>
-
-      {/* Legend */}
-      <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: 24 }}>
-        <p
-          className="uppercase tracking-[1.1px] mb-3"
-          style={{ fontFamily: "var(--font-body)", fontWeight: 700, fontSize: 15, color: '#94a3b8' }}
-        >
-          Legend
-        </p>
-        <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-          {LEGEND_ITEMS.map(({ color, label }) => (
-            <div key={label} className="flex items-center gap-2">
-              <span
-                style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: color, flexShrink: 0 }}
-              />
-              <span
-                style={{ fontFamily: "var(--font-body)", fontWeight: 500, fontSize: 16, color: '#475569' }}
-              >
-                {label}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
     </aside>
+  )
+}
+
+function CategoryPill({ label, count, dotColor, isSelected, onClick }) {
+  const isAllPill = label === 'All'
+
+  const pillStyle = isSelected
+    ? { background: 'var(--color-surface)', border: `2px solid ${dotColor}`, color: 'var(--color-ink)' }
+    : { background: 'var(--color-surface)', border: '1.5px solid var(--color-rule)', color: 'var(--color-ink)' }
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 6,
+        padding: '6px 12px',
+        borderRadius: 'var(--radius-pill)',
+        cursor: 'pointer',
+        fontFamily: 'var(--font-body)',
+        fontSize: 'var(--text-caption)',
+        fontWeight: isSelected ? 600 : 400,
+        whiteSpace: 'nowrap',
+        transition: 'background 0.15s, border-color 0.15s, color 0.15s',
+        ...pillStyle,
+      }}
+    >
+      {/* Legend dot */}
+      <span style={{
+        width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
+        background: dotColor,
+        opacity: isSelected ? 1 : 0.8,
+        display: 'inline-block',
+      }} />
+
+      <span>{label}</span>
+
+      {/* Count */}
+      <span style={{
+        flexShrink: 0,
+        opacity: isSelected ? 0.6 : 0.45,
+        fontWeight: 400,
+      }}>
+        {count}
+      </span>
+    </button>
   )
 }

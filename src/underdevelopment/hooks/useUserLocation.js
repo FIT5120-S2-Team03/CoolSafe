@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
 import mockLocation from '../data/mockLocation.json'
+import { STORAGE_KEYS } from '../constants/storageKeys'
 
-const COORDS_KEY = 'coolsafe_coords'
-const LOCATION_NAME_KEY = 'cs_location'
+const COORDS_KEY = STORAGE_KEYS.coords
+const LOCATION_NAME_KEY = STORAGE_KEYS.locationName
+const LOCATION_SOURCE_KEY = STORAGE_KEYS.locationSource
 
 export const LOCATION_UPDATED_EVENT = 'coolsafe:location-updated'
 
@@ -126,6 +128,11 @@ export function useUserLocation() {
           lng: pos.coords.longitude,
         }
         const nextName = await reverseGeocode(nextCoords.lat, nextCoords.lng)
+        try {
+          localStorage.setItem(LOCATION_SOURCE_KEY, 'gps')
+        } catch {
+          // localStorage may be unavailable in private browsing.
+        }
         applyLocation(nextCoords, nextName)
         setLoading(false)
       },
@@ -167,6 +174,11 @@ export function useUserLocation() {
         lng: parseFloat(result.lon),
       }
       const nextName = locationNameFromAddress(result.address) ?? result.display_name?.split(',')[0] ?? null
+      try {
+        localStorage.setItem(LOCATION_SOURCE_KEY, 'suburb')
+      } catch {
+        // localStorage may be unavailable in private browsing.
+      }
       applyLocation(nextCoords, nextName)
       setLoading(false)
     } catch {

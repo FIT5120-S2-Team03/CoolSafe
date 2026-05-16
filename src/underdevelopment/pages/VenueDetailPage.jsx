@@ -1,14 +1,14 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import L from 'leaflet'
-import { MapContainer, TileLayer, Marker, Polyline, Pane, useMap } from 'react-leaflet'
+import { MapContainer, TileLayer, Marker, Polyline, Pane } from 'react-leaflet'
 import Navbar from '../components/layout/Navbar'
 import { getWalkingMinutes } from '../utils/haversine'
 import useVenue from '../hooks/useVenue'
 import ShareRouteModal from '../components/venue/ShareRouteModal'
+import MapBoundsController from '../components/venue/MapBoundsController'
+import { DAYS, fmt, getHoursDisplay, maneuverIcon, maneuverLabel, fmtDist } from '../utils/venueDetailUtils'
 import mockLocation from '../data/mockLocation.json'
-
-const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
 const userPinIcon = L.divIcon({
   className: '',
@@ -32,77 +32,6 @@ const venuePinIcon = L.divIcon({
   </svg>`,
 })
 
-function fmt(time) {
-  const [h, m] = time.split(':').map(Number)
-  const period = h >= 12 ? 'PM' : 'AM'
-  const hour = h % 12 || 12
-  return `${hour}:${m.toString().padStart(2, '0')} ${period}`
-}
-
-function getHoursDisplay(openingHours) {
-  if (!openingHours || Object.keys(openingHours).length === 0) return null
-  const todayName = new Date().toLocaleDateString('en-AU', { weekday: 'long' })
-  const todayIdx = DAYS.indexOf(todayName)
-  const todayHours = openingHours[todayName] ?? null
-
-  const upcoming = []
-  for (let i = 1; upcoming.length < 6 && i <= 7; i++) {
-    const dayName = DAYS[(todayIdx + i) % 7]
-    const h = openingHours[dayName]
-    upcoming.push({ day: dayName, hours: h ?? null })
-  }
-
-  return { todayName, todayHours, upcoming }
-}
-
-function MapBoundsController({ routeCoords, venueLat, venueLng }) {
-  const map = useMap()
-  useEffect(() => {
-    if (routeCoords.length > 0) {
-      map.fitBounds(L.latLngBounds(routeCoords), { padding: [40, 40] })
-    } else {
-      map.setView([venueLat, venueLng], 16)
-    }
-  }, [routeCoords])
-  return null
-}
-
-function maneuverIcon(maneuver) {
-  const { type, modifier } = maneuver ?? {}
-  if (type === 'arrive') return 'ti-map-pin'
-  if (type === 'depart') return 'ti-walk'
-  if (type === 'roundabout' || type === 'rotary') return 'ti-rotate-clockwise'
-  if (modifier === 'uturn') return 'ti-arrow-back-up'
-  if (modifier === 'right' || modifier === 'sharp right') return 'ti-corner-up-right'
-  if (modifier === 'left' || modifier === 'sharp left') return 'ti-corner-up-left'
-  if (modifier === 'slight right') return 'ti-arrow-up-right'
-  if (modifier === 'slight left') return 'ti-arrow-up-left'
-  return 'ti-arrow-up'
-}
-
-function maneuverLabel(step) {
-  const { type, modifier } = step.maneuver ?? {}
-  const street = step.name ? ` on ${step.name}` : ''
-  if (type === 'depart') return `Start${street}`
-  if (type === 'arrive') return 'Arrive at destination'
-  if (type === 'roundabout' || type === 'rotary') return `Enter roundabout${street}`
-  if (!modifier || modifier === 'straight') return `Continue${street}`
-  if (modifier === 'uturn') return `Make a U-turn${street}`
-  if (modifier === 'slight right') return `Bear right${street}`
-  if (modifier === 'slight left') return `Bear left${street}`
-  if (modifier === 'sharp right') return `Turn sharp right${street}`
-  if (modifier === 'sharp left') return `Turn sharp left${street}`
-  if (modifier === 'right') return `Turn right${street}`
-  if (modifier === 'left') return `Turn left${street}`
-  return `Continue${street}`
-}
-
-function fmtDist(m) {
-  if (m < 50) return null
-  if (m < 1000) return `${Math.round(m / 10) * 10} m`
-  return `${(m / 1000).toFixed(1)} km`
-}
-
 export default function VenueDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -123,6 +52,7 @@ export default function VenueDetailPage() {
   const [routeLoading, setRouteLoading] = useState(false)
   const [routeError, setRouteError] = useState('')
   const [shareModalOpen, setShareModalOpen] = useState(false)
+  const directionsRef = useRef(null)
 
   useEffect(() => {
     if (mockLocation.enabled) {
@@ -150,6 +80,10 @@ export default function VenueDetailPage() {
     if (!isShareView || !venue || isNaN(shareLat) || isNaN(shareLng)) return
     fetchFastestRoute({ lat: shareLat, lng: shareLng })
   }, [isShareView, venue])
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+  }, [])
 
   async function fetchFastestRoute(from) {
     try {
@@ -206,8 +140,8 @@ export default function VenueDetailPage() {
       <main className="flex-1 pt-[68px] flex items-center justify-center">
         <div style={{ textAlign: 'center', fontFamily: 'var(--font-body)' }}>
           <p style={{ color: 'var(--color-orange)', marginBottom: 16 }}>Venue not found.</p>
-          <button onClick={() => navigate('/map')} style={{ color: 'var(--color-blue)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', fontFamily: 'var(--font-body)' }}>
-            Back to Map
+          <button onClick={() => navigate('/spaces')} style={{ color: 'var(--color-blue)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', fontFamily: 'var(--font-body)' }}>
+            Back to Spaces
           </button>
         </div>
       </main>
@@ -256,6 +190,40 @@ export default function VenueDetailPage() {
   return (
     <div className="flex flex-col min-h-screen" style={{ background: 'var(--color-paper)' }}>
       <Navbar />
+      <style>{`
+        .venue-detail-action,
+        .venue-detail-link,
+        .venue-route-tab {
+          transition: transform 0.16s ease, box-shadow 0.16s ease, background 0.16s ease, border-color 0.16s ease, color 0.16s ease;
+        }
+        .venue-detail-action:hover,
+        .venue-detail-link:hover,
+        .venue-route-tab:hover {
+          transform: translateY(-1px);
+        }
+        .venue-detail-action:hover {
+          box-shadow: 0 8px 20px rgba(24,82,180,0.18);
+          filter: brightness(0.96);
+        }
+        .venue-detail-link:hover {
+          background: var(--color-blue-soft) !important;
+          border-color: var(--color-blue-chip) !important;
+        }
+        .venue-route-tab:hover {
+          color: var(--color-blue) !important;
+        }
+        .venue-detail-action:active,
+        .venue-detail-link:active,
+        .venue-route-tab:active {
+          transform: translateY(0) scale(0.99);
+        }
+        .venue-detail-action:focus-visible,
+        .venue-detail-link:focus-visible,
+        .venue-route-tab:focus-visible {
+          outline: 3px solid rgba(24,82,180,0.18);
+          outline-offset: 3px;
+        }
+      `}</style>
 
       <main
         className="flex-1"
@@ -273,15 +241,15 @@ export default function VenueDetailPage() {
               Home
             </button>
             <span style={{ color: 'var(--color-rule)' }}>›</span>
-            <button onClick={() => navigate('/map')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-ink-muted)', fontFamily: 'var(--font-body)', fontSize: 'var(--text-caption)', padding: 0 }}>
-              Map
+            <button onClick={() => navigate('/spaces')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-ink-muted)', fontFamily: 'var(--font-body)', fontSize: 'var(--text-caption)', padding: 0 }}>
+              Spaces
             </button>
             <span style={{ color: 'var(--color-rule)' }}>›</span>
             <span style={{ color: 'var(--color-ink)', fontWeight: 700 }}>{venue.name}</span>
           </nav>
 
           {/* Venue name */}
-          <h1 style={{ fontFamily: 'var(--font-body)', fontWeight: 900, fontSize: 'var(--text-title-lg)', color: 'var(--color-ink)', margin: '0 0 24px', lineHeight: 1.15 }}>
+          <h1 style={{ fontFamily: 'var(--font-title)', fontWeight: 900, fontSize: 'var(--text-title-lg)', color: 'var(--color-ink)', margin: '0 0 24px', lineHeight: 1.15 }}>
             {venue.name}
           </h1>
 
@@ -290,7 +258,7 @@ export default function VenueDetailPage() {
 
             {/* Opening Hours card */}
             <div style={{ flex: '1 1 300px', minWidth: 0, background: 'var(--color-surface)', border: '1px solid var(--color-rule)', borderRadius: 12, padding: 20 }}>
-              <div className="flex items-center gap-2 mb-4">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-blue)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="12" cy="12" r="10" />
                   <polyline points="12 6 12 12 16 14" />
@@ -327,7 +295,7 @@ export default function VenueDetailPage() {
 
             {/* Location card */}
             <div style={{ flex: '1 1 300px', minWidth: 0, background: 'var(--color-surface)', border: '1px solid var(--color-rule)', borderRadius: 12, padding: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <div className="flex items-center gap-2">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-blue)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
                   <circle cx="12" cy="10" r="3" />
@@ -365,6 +333,7 @@ export default function VenueDetailPage() {
               {/* Phone */}
               {venue.phone && (
                 <button onClick={() => { window.location.href = `tel:${venue.phone}` }}
+                  className="venue-detail-link"
                   style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', background: 'var(--color-blue-soft)', border: '1px solid var(--color-blue-chip)', borderRadius: 8, padding: '13px 16px', fontFamily: 'var(--font-body)', fontWeight: 600, fontSize: 'var(--text-caption)', color: 'var(--color-blue-navy)', cursor: 'pointer', minHeight: 48 }}
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -377,7 +346,7 @@ export default function VenueDetailPage() {
           </div>
 
           {/* Get Directions section */}
-          <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-rule)', borderRadius: 12, padding: 20, marginBottom: 24 }}>
+          <div ref={directionsRef} style={{ background: 'var(--color-surface)', border: '1px solid var(--color-rule)', borderRadius: 12, padding: 20, marginBottom: 24 }}>
             <h2 style={{ fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 'var(--text-title-xs)', color: 'var(--color-ink)', margin: '0 0 4px' }}>Get Directions</h2>
             <p style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-caption)', color: 'var(--color-ink-muted)', margin: '0 0 16px' }}>Choose your preferred walking path based on shade.</p>
 
@@ -387,7 +356,7 @@ export default function VenueDetailPage() {
                 { key: 'fastest', label: routeLoading && routeMode === 'fastest' ? 'Loading…' : 'Fastest Route' },
                 { key: 'coolest', label: 'Coolest Route' },
               ].map(({ key, label }) => (
-                <button key={key} onClick={() => setRouteMode(key)}
+                <button key={key} className="venue-route-tab" onClick={() => setRouteMode(key)}
                   style={{ flex: 1, padding: '10px 16px', borderRadius: 50, border: 'none', cursor: 'pointer', background: routeMode === key ? 'var(--color-surface)' : 'transparent', color: routeMode === key ? 'var(--color-blue)' : 'var(--color-ink-muted)', fontWeight: routeMode === key ? 700 : 400, boxShadow: routeMode === key ? '0 1px 4px rgba(0,0,0,0.1)' : 'none', fontFamily: 'var(--font-body)', fontSize: 'var(--text-caption)', minHeight: 48, transition: 'all 0.15s ease' }}
                 >
                   {label}
@@ -419,7 +388,7 @@ export default function VenueDetailPage() {
             {/* Step-by-step directions */}
             {routeSteps.length > 0 && (
               <div style={{ marginTop: 20, borderTop: '1px solid var(--color-rule)', paddingTop: 16 }}>
-                <p style={{ fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 'var(--text-caption-sm)', color: 'var(--color-ink-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 10 }}>
+                <p style={{ fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 'var(--text-caption)', color: 'var(--color-ink-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 10 }}>
                   Step-by-step
                 </p>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -430,14 +399,14 @@ export default function VenueDetailPage() {
                     return (
                       <div key={i} style={{ display: 'flex', alignItems: dist ? 'flex-start' : 'center', gap: 12, padding: '10px 0', borderBottom: isLast ? 'none' : '1px solid var(--color-rule-soft)' }}>
                         <div style={{ width: 32, height: 32, borderRadius: 8, flexShrink: 0, marginTop: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: isArrive ? 'var(--color-blue-callout)' : 'var(--color-tint)' }}>
-                          <i className={`ti ${maneuverIcon(step.maneuver)}`} style={{ fontSize: 15, color: isArrive ? 'var(--color-blue)' : 'var(--color-ink-muted)' }} />
+                          <i className={`ti ${maneuverIcon(step.maneuver)}`} style={{ fontSize: 16, color: isArrive ? 'var(--color-blue)' : 'var(--color-ink-muted)' }} />
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <p style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-caption)', fontWeight: 500, color: 'var(--color-ink)', margin: 0 }}>
                             {maneuverLabel(step)}
                           </p>
                           {dist && (
-                            <p style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-caption-sm)', color: 'var(--color-ink-muted)', margin: '2px 0 0' }}>
+                            <p style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-caption)', color: 'var(--color-ink-muted)', margin: '2px 0 0' }}>
                               {dist}
                             </p>
                           )}
@@ -451,7 +420,7 @@ export default function VenueDetailPage() {
           </div>
 
           {/* Share This Route with Family button */}
-          <button onClick={() => setShareModalOpen(true)}
+          <button className="venue-detail-link" onClick={() => setShareModalOpen(true)}
             style={{ width: '100%', background: 'var(--color-surface)', color: 'var(--color-green)', border: '2px solid var(--color-green)', borderRadius: 12, padding: '18px 0', fontSize: 'var(--text-body)', fontWeight: 700, fontFamily: 'var(--font-body)', cursor: 'pointer', minHeight: 48, marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -464,11 +433,11 @@ export default function VenueDetailPage() {
             Let your family know where you're going
           </p>
 
-          {/* View on Full Map button */}
-          <button onClick={() => navigate('/map', { state: { flyTo: { lat: venue.lat, lng: venue.lng }, openVenueId: venue.id } })}
+          {/* View on Spaces button */}
+          <button className="venue-detail-action" onClick={() => navigate('/spaces', { state: { flyTo: { lat: venue.lat, lng: venue.lng }, openVenueId: venue.id } })}
             style={{ width: '100%', background: 'var(--color-blue)', color: '#fff', border: 'none', borderRadius: 12, padding: '18px 0', fontSize: 'var(--text-body)', fontWeight: 700, fontFamily: 'var(--font-body)', cursor: 'pointer', minHeight: 48, marginBottom: 40 }}
           >
-            View on Full Map →
+            View in Spaces →
           </button>
 
         </div>

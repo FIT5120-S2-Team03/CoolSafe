@@ -3,7 +3,7 @@
  * Matches the HTML prototype's page-landing layout:
  *   1. Hero card  — full-bleed video background, text + weather strip on the left
  *   2. Spotlight  — 4-card carousel with hand-drawn illustrations
- *   3. How it works — 2-step section with UI snippet cards
+ *   3. How it works — 3-step section with UI snippet cards
  */
 import { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
@@ -11,7 +11,9 @@ import { useWeatherData } from '../hooks/useWeatherData'
 import { useAirQuality } from '../hooks/useAirQuality'
 import { getRiskLevel } from '../utils/riskLevel'
 import Navbar from '../components/layout/Navbar'
-import { toggleAIFinder } from '../components/ai/AIFinderButton'
+import { toggleAIFinder } from '../components/ai/aiFinderEvents'
+import StepRow from '../components/landing/StepRow'
+import { SPOTLIGHT_CARDS } from '../data/landingSpotlightCards'
 import bgVideo from '../../assets/8939276-uhd_3840_2160_25fps.mp4'
 
 const UV_BY_RISK = {
@@ -20,41 +22,6 @@ const UV_BY_RISK = {
   High:     { index: 7 },
   Extreme:  { index: 10 },
 }
-
-const SPOTLIGHT_CARDS = [
-  {
-    tag: 'Indoor heat',
-    tagColor: 'var(--color-terracotta)',
-    title: "Staying home doesn't mean staying safe.",
-    body: "During Victoria's 2009 heatwave, most deaths happened indoors. An unventilated room can exceed outdoor temperatures by midday — making home feel safe while the risk quietly climbs.",
-    img: '/spotlight-indoor.png',
-    bg: 'linear-gradient(135deg, #FDF0E8, #FFF8EC)',
-  },
-  {
-    tag: 'Body signals',
-    tagColor: 'var(--color-dustblue)',
-    title: "You won't feel heat stroke coming.",
-    body: "The body's temperature sensing dulls with age. By the time an older adult notices something is wrong, they may already be in heat exhaustion. There's rarely a clear warning signal.",
-    img: '/spotlight-body-signals.png',
-    bg: 'linear-gradient(135deg, var(--color-dustblue-pale), #FAF8F5)',
-  },
-  {
-    tag: 'Medications',
-    tagColor: 'var(--color-green)',
-    title: "Some medications can change heat risk.",
-    body: "Some blood pressure medicines, diuretics, antidepressants, and other regular medications can affect sweating, hydration, or how the body handles heat. CoolSafer factors this into your risk score.",
-    img: '/spotlight-medications.png',
-    bg: 'linear-gradient(135deg, #EDF5EE, #FFF8EC)',
-  },
-  {
-    tag: 'Hydration',
-    tagColor: 'var(--color-olive)',
-    title: "Not feeling thirsty doesn't always mean you're hydrated.",
-    body: "Thirst can become less reliable with age. Older adults may become dehydrated before they feel a strong urge to drink, so regular water breaks matter when heat builds.",
-    img: '/spotlight-hydration.png',
-    bg: 'linear-gradient(135deg, #F5F0EA, #F8F4EA)',
-  },
-]
 
 export default function LandingPage() {
   const { current, daily, locationName, lat, lng } = useWeatherData()
@@ -102,7 +69,7 @@ export default function LandingPage() {
       {/* ══════════════════════════════════════════════════════════════════
           1. HERO — large card, video fills entire card, text overlaid left
       ══════════════════════════════════════════════════════════════════ */}
-      <section style={{
+      <section className="cs-hero-section" style={{
         minHeight: 'calc(100vh - 64px)',
         padding: '92px var(--content-gutter) 36px',
         background: 'linear-gradient(180deg, var(--color-paper) 0%, #FBF9F6 68%, var(--color-warm) 100%)',
@@ -110,7 +77,7 @@ export default function LandingPage() {
         justifyContent: 'center',
         alignItems: 'center',
       }}>
-        <div style={{
+        <div className="cs-hero-card" style={{
           position: 'relative',
           maxWidth: 'var(--content-width)',
           width: '100%',
@@ -123,7 +90,7 @@ export default function LandingPage() {
         }}>
 
           {/* Left gradient overlay so text is readable over video */}
-          <div style={{
+          <div className="cs-hero-overlay" style={{
             position: 'absolute',
             inset: 0,
             zIndex: 1,
@@ -132,7 +99,7 @@ export default function LandingPage() {
           }} />
 
           {/* Video background */}
-          <div style={{ position: 'absolute', inset: 0, zIndex: 0, borderRadius: 'inherit', overflow: 'hidden', background: 'var(--color-paper-warm)' }}>
+          <div className="cs-hero-video-bg" style={{ position: 'absolute', inset: 0, zIndex: 0, borderRadius: 'inherit', overflow: 'hidden', background: 'var(--color-paper-warm)' }}>
             <video
               ref={videoRef}
               autoPlay muted loop playsInline
@@ -152,7 +119,7 @@ export default function LandingPage() {
           </div>
 
           {/* Left text column */}
-          <div style={{
+          <div className="cs-hero-text" style={{
             position: 'relative',
             zIndex: 3,
             width: 'min(62%, 700px)',
@@ -187,7 +154,7 @@ export default function LandingPage() {
             </p>
 
             {/* Weather climate strip */}
-            <div style={{
+            <div className="cs-hero-conditions" style={{
               display: 'grid',
               gridTemplateColumns: 'minmax(92px,1fr) minmax(100px,1fr) minmax(54px,0.62fr) minmax(82px,0.88fr)',
               alignItems: 'stretch',
@@ -232,7 +199,7 @@ export default function LandingPage() {
               ))}
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+            <div className="cs-hero-cta" style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
               <button
                 onClick={() => navigate('/today')}
                 style={{
@@ -265,7 +232,7 @@ export default function LandingPage() {
       {/* ══════════════════════════════════════════════════════════════════
           2. SPOTLIGHT — carousel with illustrations
       ══════════════════════════════════════════════════════════════════ */}
-      <section ref={spotlightRef} style={{ padding: 'clamp(64px,9vh,100px) var(--content-gutter)', background: 'linear-gradient(180deg, var(--color-warm) 0%, var(--color-paper) 100%)' }}>
+      <section ref={spotlightRef} className="cs-spotlight-section" style={{ padding: 'clamp(64px,9vh,100px) var(--content-gutter)', background: 'linear-gradient(180deg, var(--color-warm) 0%, var(--color-paper) 100%)' }}>
         <div style={{ maxWidth: 'var(--content-width)', margin: '0 auto' }}>
           <h2 style={{
             fontFamily: 'var(--serif)',
@@ -278,7 +245,7 @@ export default function LandingPage() {
           }}>
             Heat doesn’t always feel dangerous.
           </h2>
-          <p style={{
+          <p className="cs-spotlight-subtitle" style={{
             fontFamily: 'var(--sans)',
             fontSize: 'clamp(0.9375rem, 1.2vw, 1.0625rem)',
             lineHeight: 1.7,
@@ -298,6 +265,7 @@ export default function LandingPage() {
             {/* Prev arrow */}
             {SPOTLIGHT_CARDS.length > 1 && (
               <button
+                className="cs-spotlight-arrow"
                 onClick={() => setActiveCard((i) => (i - 1 + SPOTLIGHT_CARDS.length) % SPOTLIGHT_CARDS.length)}
                 aria-label="Previous"
                 style={{ position: 'absolute', left: -80, top: '50%', transform: 'translateY(-50%)', zIndex: 10, width: 44, height: 44, borderRadius: '50%', border: '1.5px solid rgba(0,0,0,0.1)', background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(8px)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, color: 'var(--color-ink-soft)', boxShadow: '0 2px 12px rgba(0,0,0,0.12)', transition: 'background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease' }}
@@ -308,6 +276,7 @@ export default function LandingPage() {
             {/* Next arrow */}
             {SPOTLIGHT_CARDS.length > 1 && (
               <button
+                className="cs-spotlight-arrow"
                 onClick={() => setActiveCard((i) => (i + 1) % SPOTLIGHT_CARDS.length)}
                 aria-label="Next"
                 style={{ position: 'absolute', right: -80, top: '50%', transform: 'translateY(-50%)', zIndex: 10, width: 44, height: 44, borderRadius: '50%', border: '1.5px solid rgba(0,0,0,0.1)', background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(8px)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, color: 'var(--color-ink-soft)', boxShadow: '0 2px 12px rgba(0,0,0,0.12)', transition: 'background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease' }}
@@ -326,9 +295,9 @@ export default function LandingPage() {
                 willChange: 'transform',
               }}>
                 {SPOTLIGHT_CARDS.map((card) => (
-                  <div key={card.tag} style={{ flex: `0 0 ${100 / SPOTLIGHT_CARDS.length}%`, display: 'grid', gridTemplateColumns: '1fr 1fr', height: 440, background: card.bg }}>
+                  <div key={card.tag} className="cs-spotlight-card" style={{ flex: `0 0 ${100 / SPOTLIGHT_CARDS.length}%`, display: 'grid', gridTemplateColumns: '1fr 1fr', height: 440, background: card.bg }}>
                     {/* Left — text */}
-                    <div style={{ padding: 'clamp(28px,3.5vw,52px) clamp(24px,3vw,44px)', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 18 }}>
+                    <div className="cs-spotlight-text" style={{ padding: 'clamp(28px,3.5vw,52px) clamp(24px,3vw,44px)', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 18 }}>
                       <p style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontFamily: 'var(--mono)', fontSize: 'var(--text-caption)', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 500, background: 'var(--color-surface)', border: '0.5px solid rgba(0,0,0,0.05)', boxShadow: '0 2px 8px rgba(0,0,0,0.03)', borderRadius: 20, padding: '5px 13px', width: 'fit-content' }}>
                         <span style={{ width: 6, height: 6, borderRadius: '50%', background: card.tagColor, display: 'inline-block', flexShrink: 0 }} />
                         <span style={{ color: 'var(--color-ink)' }}>{card.tag}</span>
@@ -342,8 +311,7 @@ export default function LandingPage() {
                     </div>
 
                     {/* Right — illustration */}
-                    <div style={{ position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 'clamp(22px,3vw,42px)' }}>
-                      <div style={{ position: 'absolute', inset: 'clamp(22px,3vw,42px)', borderRadius: 22, background: 'rgba(255,252,246,0.5)', border: '1px solid rgba(229,220,200,0.72)', boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.52)' }} />
+                    <div className="cs-spotlight-image" style={{ position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 'clamp(22px,3vw,42px)' }}>
                       <img
                         src={card.img}
                         alt={card.title}
@@ -379,16 +347,16 @@ export default function LandingPage() {
       </section>
 
       {/* ══════════════════════════════════════════════════════════════════
-          3. HOW IT WORKS — 2 steps, vertical stack, alternating layout
+          3. HOW IT WORKS — 3 steps, vertical stack, alternating layout
              Big decorative numbers, tilted UI snippet cards
       ══════════════════════════════════════════════════════════════════ */}
-      <section style={{ padding: 'clamp(64px,9vh,100px) var(--content-gutter)', background: 'var(--color-paper)' }}>
+      <section className="cs-steps-section" style={{ padding: 'clamp(42px,6vh,64px) var(--content-gutter)', background: 'var(--color-paper)' }}>
         <div style={{ maxWidth: 'var(--content-width)', margin: '0 auto' }}>
-          <h2 style={{ fontFamily: 'var(--serif)', fontSize: 'var(--text-section)', lineHeight: 1.05, letterSpacing: '-0.02em', color: 'var(--color-ink)', textAlign: 'center', marginBottom: 20 }}>
+          <h2 className="cs-steps-heading" style={{ fontFamily: 'var(--serif)', fontSize: 'var(--text-section)', lineHeight: 1.05, letterSpacing: '-0.02em', color: 'var(--color-ink)', textAlign: 'center', marginBottom: 48 }}>
             How CoolSafer helps day to day.
           </h2>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 100, padding: '40px 0 80px' }}>
+          <div className="cs-steps-list" style={{ display: 'flex', flexDirection: 'column', gap: 62, padding: '10px 0 42px' }}>
 
             {/* ── Step 1 ── */}
             <StepRow
@@ -409,21 +377,23 @@ export default function LandingPage() {
                 </Link>
               }
               rotateCard={3}
-              snippetShiftX={-128}
+              snippetShiftX={-96}
               snippet={
-                <div style={{ padding: 24 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                    <div style={{ position: 'relative', width: 64, height: 64, flexShrink: 0 }}>
-                      <svg width="64" height="64" viewBox="0 0 80 80">
+                <div style={{ padding: '16px 20px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                    <div style={{ position: 'relative', width: 52, height: 52, flexShrink: 0 }}>
+                      <svg width="52" height="52" viewBox="0 0 80 80">
                         <circle cx="40" cy="40" r="33" fill="none" stroke="rgba(0,0,0,0.06)" strokeWidth="6"/>
                         <circle cx="40" cy="40" r="33" fill="none" stroke="#B87200" strokeWidth="6" strokeLinecap="round" strokeDasharray="207.3" strokeDashoffset="60" transform="rotate(-90 40 40)"/>
                       </svg>
-                      <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--serif)', fontSize: '1.5rem', color: 'var(--color-amber)', letterSpacing: '-0.5px', lineHeight: 1 }}>72</div>
+                      <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--serif)', fontSize: '1.1rem', color: 'var(--color-amber)', letterSpacing: '-0.5px', lineHeight: 1 }}>72</div>
                     </div>
-                    <div style={{ fontFamily: 'var(--sans)', fontSize: 'var(--text-body-sm)', color: 'var(--color-ink)', fontWeight: 500 }}>Moderate risk</div>
-                  </div>
-                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(201,75,26,0.08)', color: 'var(--color-orange)', fontFamily: 'var(--mono)', fontSize: 'var(--text-caption)', padding: '5px 12px', borderRadius: 20, marginTop: 16 }}>
-                    <i className="ti ti-pill" /> Medications added
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+                      <div style={{ fontFamily: 'var(--sans)', fontSize: 'var(--text-body-sm)', color: 'var(--color-ink)', fontWeight: 600 }}>Moderate risk</div>
+                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: 'rgba(201,75,26,0.08)', color: 'var(--color-orange)', fontFamily: 'var(--mono)', fontSize: 'var(--text-caption)', padding: '4px 10px', borderRadius: 20, width: 'fit-content', whiteSpace: 'nowrap' }}>
+                        <i className="ti ti-info-circle" style={{ fontSize: 13 }} /> Medications added
+                      </div>
+                    </div>
                   </div>
                 </div>
               }
@@ -439,29 +409,94 @@ export default function LandingPage() {
               desc="Browse nearby cool spaces yourself, or get personalised suggestions based on comfort, accessibility, and local activities."
               actions={
                 <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
-                  <Link to="/map" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '14px 28px', borderRadius: 50, background: 'transparent', color: 'var(--color-ink)', border: '1px solid var(--color-ink-disabled)', fontFamily: 'var(--sans)', fontSize: 'var(--text-body-sm)', fontWeight: 500, textDecoration: 'none', transition: 'all 0.2s' }}
+                  <Link to="/spaces" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '14px 28px', borderRadius: 50, background: 'transparent', color: 'var(--color-ink)', border: '1px solid var(--color-ink-disabled)', fontFamily: 'var(--sans)', fontSize: 'var(--text-body-sm)', fontWeight: 500, textDecoration: 'none', transition: 'all 0.2s' }}
                     onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--color-ink)'; e.currentTarget.style.background = 'var(--color-warm)'; e.currentTarget.style.transform = 'translateY(-2px)' }}
                     onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--color-ink-disabled)'; e.currentTarget.style.background = 'transparent'; e.currentTarget.style.transform = 'none' }}
-                  >Browse the map <span>→</span></Link>
+                  >Browse spaces <span>→</span></Link>
                   <span style={{ fontFamily: 'var(--sans)', fontSize: 'var(--text-label)', color: 'var(--color-ink-disabled)', fontStyle: 'italic', padding: '0 4px' }}>or</span>
-                  <button type="button" onClick={toggleAIFinder} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '14px 28px', borderRadius: 50, background: 'var(--color-blue)', color: '#fff', border: 'none', fontFamily: 'var(--sans)', fontSize: 'var(--text-body-sm)', fontWeight: 500, textDecoration: 'none', transition: 'all 0.2s', cursor: 'pointer' }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-blue-deep, #0E3D8F)'; e.currentTarget.style.transform = 'translateY(-2px)' }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--color-blue)'; e.currentTarget.style.transform = 'none' }}
+                  <button type="button" onClick={toggleAIFinder} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '14px 28px', borderRadius: 50, background: 'var(--color-ai)', color: '#fff', border: 'none', fontFamily: 'var(--sans)', fontSize: 'var(--text-body-sm)', fontWeight: 500, textDecoration: 'none', transition: 'all 0.2s', cursor: 'pointer', boxShadow: '0 10px 24px rgba(80,112,200,0.18)' }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-ai-deep)'; e.currentTarget.style.transform = 'translateY(-2px)' }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--color-ai)'; e.currentTarget.style.transform = 'none' }}
                   ><i className="ti ti-sparkles" /> Find with AI</button>
                 </div>
               }
               rotateCard={-3}
               textShiftX={32}
               snippet={
-                <div style={{ padding: 24, display: 'flex', flexDirection: 'column' }}>
-                  <div style={{ width: 32, height: 32, background: 'rgba(24,82,180,0.1)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: 'var(--color-blue)', marginBottom: 12 }}>
-                    <i className="ti ti-sparkles" />
-                  </div>
-                  <div style={{ background: 'var(--color-warm)', padding: '12px 16px', borderRadius: '16px 16px 16px 4px', fontFamily: 'var(--sans)', fontSize: 'var(--text-caption)', color: 'var(--color-ink)', marginBottom: 12, lineHeight: 1.5 }}>
+                <div style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <div style={{ background: 'var(--color-warm)', padding: '10px 14px', borderRadius: '14px 14px 14px 4px', fontFamily: 'var(--sans)', fontSize: 'var(--text-caption)', color: 'var(--color-ink)', lineHeight: 1.5 }}>
                     Finding cool spaces near you. Any accessibility needs?
                   </div>
-                  <div style={{ alignSelf: 'flex-end', background: 'var(--color-blue)', color: '#fff', padding: '10px 16px', borderRadius: '16px 16px 4px 16px', fontFamily: 'var(--sans)', fontSize: 'var(--text-caption)', fontWeight: 500, boxShadow: '0 4px 12px rgba(24,82,180,0.2)' }}>
+                  <div style={{ alignSelf: 'flex-end', background: 'var(--color-ai)', color: '#fff', padding: '9px 14px', borderRadius: '14px 14px 4px 14px', fontFamily: 'var(--sans)', fontSize: 'var(--text-caption)', fontWeight: 500, boxShadow: '0 4px 12px rgba(80,112,200,0.2)' }}>
                     Wheelchair accessible
+                  </div>
+                </div>
+              }
+            />
+
+            {/* ── Step 3 ── */}
+            <StepRow
+              num="3"
+              numColor="rgba(91,122,140,0.14)"
+              numRight={false}
+              reverse={false}
+              title="Check symptoms if something feels off"
+              desc="Use the symptom checker to spot heat warning signs and see what to do next."
+              actions={
+                <Link
+                  to="/health"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '14px 28px', borderRadius: 50, background: 'var(--color-dustblue-deep)', color: '#fff', fontFamily: 'var(--sans)', fontSize: 'var(--text-body-sm)', fontWeight: 500, textDecoration: 'none', boxShadow: '0 10px 24px rgba(30,70,90,0.16)', transition: 'transform 0.2s, background 0.2s, box-shadow 0.2s' }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-dustblue)'; e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 14px 30px rgba(30,70,90,0.22)' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--color-dustblue-deep)'; e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 10px 24px rgba(30,70,90,0.16)' }}
+                >
+                  Check symptoms <span>→</span>
+                </Link>
+              }
+              rotateCard={2.6}
+              snippetShiftX={-64}
+              snippet={
+                <div style={{ padding: 18, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 10px', borderRadius: 999, background: 'var(--color-dustblue-pale)', color: 'var(--color-dustblue-deep)', fontFamily: 'var(--mono)', fontSize: 'var(--text-caption)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                      <i className="ti ti-medical-cross" /> Heat signs
+                    </div>
+                    <span style={{ width: 28, height: 28, borderRadius: '50%', display: 'grid', placeItems: 'center', background: 'var(--color-dustblue-soft)', color: 'var(--color-dustblue-deep)' }}>
+                      <i className="ti ti-heartbeat" />
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 7 }}>
+                    {[
+                      { label: 'Dizziness', icon: 'airline_seat_recline_normal', active: true },
+                      { label: 'Headache', icon: 'sentiment_very_dissatisfied', active: false },
+                    ].map((item) => (
+                      <div
+                        key={item.label}
+                        style={{
+                          minHeight: 64,
+                          borderRadius: 14,
+                          border: item.active ? '1.5px solid var(--color-dustblue-deep)' : '1px solid rgba(34,30,26,0.10)',
+                          background: item.active ? 'var(--color-dustblue-pale)' : '#fff',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: 4,
+                        }}
+                      >
+                        <span className="material-symbols-outlined" style={{ fontSize: 20, color: item.active ? 'var(--color-dustblue-deep)' : 'var(--color-ink-faint)' }}>{item.icon}</span>
+                        <span style={{ fontFamily: 'var(--sans)', fontSize: 'var(--text-caption)', fontWeight: 700, color: item.active ? 'var(--color-dustblue-deep)' : 'var(--color-ink)' }}>{item.label}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div style={{ borderRadius: 14, background: 'rgba(232,240,245,0.72)', border: '1px solid var(--color-dustblue-soft)', padding: '10px 12px' }}>
+                    <div style={{ fontFamily: 'var(--sans)', fontSize: 'var(--text-caption)', fontWeight: 700, color: 'var(--color-dustblue-deep)', marginBottom: 4 }}>
+                      Cool down and rest.
+                    </div>
+                    <div style={{ fontFamily: 'var(--sans)', fontSize: 'var(--text-caption)', color: 'var(--color-ink-muted)', lineHeight: 1.35 }}>
+                      Sit somewhere cool, sip water, and watch for symptoms getting worse.
+                    </div>
                   </div>
                 </div>
               }
@@ -471,66 +506,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-    </div>
-  )
-}
-
-// ── Step row: decorative number + body + tilted UI card ──────────────────────
-
-function StepRow({ num, numColor, numRight, reverse, title, desc, actions, rotateCard, snippet, textShiftX = 0, snippetShiftX = 0 }) {
-  const [hovered, setHovered] = useState(false)
-
-  return (
-    <div
-      style={{ display: 'flex', alignItems: 'center', gap: 60, position: 'relative', flexDirection: reverse ? 'row-reverse' : 'row' }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-    >
-      {/* Decorative oversized background number */}
-      <div style={{
-        position: 'absolute',
-        top: -70,
-        [numRight ? 'right' : 'left']: 0,
-        fontFamily: 'var(--serif)',
-        fontSize: 'clamp(8rem, 12vw, 14rem)',
-        lineHeight: 1,
-        color: numColor,
-        zIndex: 0,
-        pointerEvents: 'none',
-        userSelect: 'none',
-      }}>
-        {num}
-      </div>
-
-      {/* Text body */}
-      <div style={{ flex: 1, position: 'relative', zIndex: 1, paddingLeft: reverse ? 0 : 128, transform: textShiftX ? `translateX(${textShiftX}px)` : 'none', display: 'flex', flexDirection: 'column', gap: 16 }}>
-        <h3 style={{ fontFamily: 'var(--serif)', fontSize: '2rem', letterSpacing: '-0.5px', color: 'var(--color-ink)', lineHeight: 1.1, fontWeight: 'normal' }}>
-          {title}
-        </h3>
-        <p style={{ fontFamily: 'var(--sans)', fontSize: 'var(--text-body)', lineHeight: 1.65, color: 'var(--color-ink-soft)', maxWidth: 480 }}>
-          {desc}
-        </p>
-        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center', marginTop: 10 }}>
-          {actions}
-        </div>
-      </div>
-
-      {/* Tilted UI snippet card */}
-      <div style={{ flex: 0.8, display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative', zIndex: 1, transform: snippetShiftX ? `translateX(${snippetShiftX}px)` : 'none' }}>
-        <div style={{
-          background: 'var(--color-surface)',
-          borderRadius: 20,
-          boxShadow: hovered
-            ? '0 32px 64px rgba(0,0,0,0.08), 0 0 0 0.5px rgba(0,0,0,0.05)'
-            : '0 24px 48px rgba(0,0,0,0.06), 0 0 0 0.5px rgba(0,0,0,0.05)',
-          transform: hovered ? `rotate(0deg) translateY(-8px)` : `rotate(${rotateCard}deg)`,
-          transition: 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.4s ease',
-          width: '100%',
-          maxWidth: 300,
-        }}>
-          {snippet}
-        </div>
-      </div>
     </div>
   )
 }

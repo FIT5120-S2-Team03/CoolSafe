@@ -1,77 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-
-// ── Design tokens ──────────────────────────────────────────────────────────
-const C = {
-  ink:           '#14110d',
-  blue:          '#1852B4',
-  blueDeep:      '#0E3D8F',
-  blueSoft:      '#EEF3FF',
-  bluePanel:     '#F4F7FF',
-  blueHeader:    '#EEF3FF',
-  bgWarm:        '#EEF3FF',
-  surface:       '#F4F7FF',
-  optionSurface: '#FFFFFF',
-  border:        '#C9D8F6',
-  borderStrong:  '#AFC2EC',
-  textSecondary: '#475467',
-  textMuted:     '#667085',
-  green:         '#2d5e3e',
-  selectedBg:    '#E6EEFF',
-  skeletonA:     '#CFD9F2',
-  skeletonB:     '#DDE6FA',
-}
-const SERIF = "var(--font-title)"
-const SANS  = "var(--font-body)"
-const MONO  = "var(--font-mono)"
-
-// ── Icons ──────────────────────────────────────────────────────────────────
-const SparkleIcon = ({ size = 18, color = 'currentColor' }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <path d="M12 3 L13.6 9.4 L20 11 L13.6 12.6 L12 19 L10.4 12.6 L4 11 L10.4 9.4 Z" fill={color} />
-    <path d="M19 4 L19.6 6 L21.5 6.5 L19.6 7 L19 9 L18.4 7 L16.5 6.5 L18.4 6 Z" fill={color} opacity="0.7" />
-  </svg>
-)
-const CloseIcon = ({ size = 16 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
-    <line x1="6" y1="6" x2="18" y2="18" />
-    <line x1="18" y1="6" x2="6" y2="18" />
-  </svg>
-)
-const BackIcon = ({ size = 12 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="15 18 9 12 15 6" />
-  </svg>
-)
-const RefreshIcon = ({ size = 14 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="23 4 23 10 17 10" />
-    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
-  </svg>
-)
-const WalkIcon = ({ size = 13, color = 'currentColor' }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
-    <circle cx="13" cy="4" r="2" />
-    <path d="M7 22l2-7-2.5-2.2L5 17H3l1.8-5.5c.3-.8.7-1.4 1.5-1.7L11 8l1.5 3 3 1.5V11l-2-1 1.6-3.6c.4-.9 1.5-1.2 2.3-.7l3.6 2.4-1.1 1.6-2.6-1.7-1.6 3.6 2.7 1.5V17h-2v-2.6L12 13l-2 8H8z" />
-  </svg>
-)
-const CoinIcon = ({ size = 13, color = 'currentColor' }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="9" />
-    <path d="M12 7v10 M9.5 9.5h4 a2 2 0 0 1 0 4 h-4 a2 2 0 0 0 0 4 h5" />
-  </svg>
-)
-const ArrowRight = ({ size = 14 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-    <line x1="5" y1="12" x2="19" y2="12" />
-    <polyline points="12 5 19 12 12 19" />
-  </svg>
-)
-const CheckIcon = ({ size = 12 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="20 6 9 17 4 12" />
-  </svg>
-)
+import { C, SERIF, SANS, MONO } from './AIFinderTheme'
+import { SparkleIcon, CloseIcon, BackIcon, RefreshIcon, ArrowRight, CheckIcon } from './AIFinderIcons'
+import { VibeChip, SkeletonCard, PlaceCard } from './AIFinderCards'
 
 // ── Option data ────────────────────────────────────────────────────────────
 const OPTIONS = [
@@ -82,134 +13,7 @@ const OPTIONS = [
   { key: 'quiet_sit',       icon: 'menu_book',       label: 'Quiet place to sit' },
 ]
 
-// ── Sub-components ─────────────────────────────────────────────────────────
-function VibeChip({ option, selected, onToggle }) {
-  return (
-    <button
-      type="button"
-      onClick={onToggle}
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 10,
-        padding: '11px 16px',
-        background: selected ? C.selectedBg : C.optionSurface,
-        border: `1px solid ${selected ? C.blue : C.border}`,
-        borderRadius: 999,
-        fontSize: 15.5,
-        fontWeight: selected ? 600 : 500,
-        fontFamily: SANS,
-        color: selected ? C.blue : C.ink,
-        textAlign: 'left',
-        cursor: 'pointer',
-        transition: 'background 0.15s, border-color 0.15s',
-        width: '100%',
-      }}
-      onMouseDown={(e) => { e.currentTarget.style.transform = 'scale(0.98)' }}
-      onMouseUp={(e) => { e.currentTarget.style.transform = 'scale(1)' }}
-      onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)' }}
-    >
-      <span className="material-symbols-outlined" style={{ fontSize: 19, lineHeight: 1, color: C.blue, flexShrink: 0 }}>{option.icon}</span>
-      <span style={{ flex: 1 }}>{option.label}</span>
-      {selected && (
-        <span style={{
-          width: 18, height: 18, borderRadius: '50%',
-          background: C.blue, color: '#fff',
-          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-          flexShrink: 0,
-        }}>
-          <CheckIcon size={12} />
-        </span>
-      )}
-    </button>
-  )
-}
-
-function ThinkingDots() {
-  return (
-    <span style={{ display: 'inline-flex', gap: 4 }}>
-      {[0, 1, 2].map(i => (
-        <span key={i} style={{
-          width: 6, height: 6, borderRadius: '50%',
-          background: C.blue, display: 'inline-block',
-          animation: `aiDot 1.2s ease-in-out ${i * 0.15}s infinite`,
-        }} />
-      ))}
-    </span>
-  )
-}
-
-function SkeletonCard() {
-  return (
-    <div style={{ background: C.bgWarm, borderRadius: 14, padding: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <div style={{ height: 14, width: '70%', background: C.skeletonA, borderRadius: 4, animation: 'aiShimmer 1.4s linear infinite' }} />
-      <div style={{ height: 11, width: '50%', background: C.skeletonB, borderRadius: 4, animation: 'aiShimmer 1.4s linear infinite' }} />
-      <div style={{ height: 11, width: '85%', background: C.skeletonB, borderRadius: 4, animation: 'aiShimmer 1.4s linear infinite' }} />
-    </div>
-  )
-}
-
-function PriceChip({ cost }) {
-  const isFree = cost?.toLowerCase() === 'free'
-  return (
-    <span style={{
-      display: 'inline-flex', alignItems: 'center', gap: 4,
-      padding: '3px 10px', borderRadius: 999, flexShrink: 0,
-      fontSize: 15, fontWeight: 700, fontFamily: SANS,
-      background: isFree ? '#e8f5ee' : C.bgWarm,
-      color: isFree ? C.green : C.textSecondary,
-      border: `1px solid ${isFree ? '#b8deca' : C.border}`,
-    }}>
-      {isFree && <CheckIcon size={10} />}
-      {isFree ? 'FREE' : cost}
-    </span>
-  )
-}
-
-function PlaceCard({ event, onGo }) {
-  return (
-    <div style={{
-      background: C.optionSurface, border: `1px solid ${C.border}`,
-      borderRadius: 14, padding: '14px 16px',
-      display: 'flex', flexDirection: 'column', gap: 10,
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-        <div style={{
-          fontSize: 16, fontWeight: 700, color: C.blueDeep,
-          textTransform: 'uppercase', letterSpacing: '0.1em',
-          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-        }}>
-          {event.venue}
-        </div>
-        <PriceChip cost={event.cost} />
-      </div>
-      <div style={{
-        fontFamily: SERIF, fontSize: 20, fontWeight: 400, color: C.ink,
-        letterSpacing: '-0.015em', lineHeight: 1.1,
-      }}>
-        {event.activity}
-      </div>
-      <div style={{ fontSize: 16, color: C.textMuted, lineHeight: 1.45, fontFamily: MONO }}>
-        {event.address}
-      </div>
-      <button
-        type="button"
-        onClick={onGo}
-        style={{
-          marginTop: 4, alignSelf: 'stretch',
-          display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-          background: C.blue, border: 'none', color: '#fff',
-          fontSize: 16, fontWeight: 500, padding: '11px 18px',
-          borderRadius: 999, fontFamily: SANS, cursor: 'pointer',
-        }}
-      >
-        Go <ArrowRight />
-      </button>
-    </div>
-  )
-}
-
-function PanelHeader({ view, selectedCount, onRefine, onClose }) {
+function PanelHeader({ view, onRefine, onClose }) {
   const title = {
     pick:    <span>What sounds <span style={{ fontStyle: 'italic', color: C.blue }}>good?</span></span>,
     loading: <span style={{ fontStyle: 'italic' }}>Finding places…</span>,
@@ -219,7 +23,7 @@ function PanelHeader({ view, selectedCount, onRefine, onClose }) {
   const subtitle = {
     pick:    "Pick one — we'll match the rest.",
     loading: "Checking what's open and cool right now",
-    results: `Based on ${selectedCount} preference${selectedCount === 1 ? '' : 's'}`,
+    results: 'Here are the best matches I found.',
   }[view]
 
   return (
@@ -247,14 +51,16 @@ function PanelHeader({ view, selectedCount, onRefine, onClose }) {
       {view === 'results' && (
         <button
           type="button"
+          className="ai-secondary-action"
           onClick={onRefine}
           style={{
             padding: '6px 12px',
-            border: `1px solid rgba(24,82,180,0.22)`,
+            border: `1px solid rgba(80,112,200,0.28)`,
             background: '#fff', borderRadius: 999,
             fontSize: 15.5, fontWeight: 500, color: C.blue,
             display: 'inline-flex', alignItems: 'center', gap: 4,
             fontFamily: SANS, cursor: 'pointer',
+            transition: 'background 0.16s ease, border-color 0.16s ease, transform 0.12s ease',
           }}
         >
           <BackIcon size={12} /> Refine
@@ -263,13 +69,15 @@ function PanelHeader({ view, selectedCount, onRefine, onClose }) {
 
       <button
         type="button"
+        className="ai-icon-action"
         onClick={onClose}
         aria-label="Close"
         style={{
           width: 30, height: 30, borderRadius: '50%',
-          background: '#fff', border: `1px solid rgba(24,82,180,0.22)`,
+          background: '#fff', border: `1px solid rgba(80,112,200,0.28)`,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           color: C.blue, cursor: 'pointer', flexShrink: 0,
+          transition: 'background 0.16s ease, border-color 0.16s ease, color 0.16s ease, transform 0.12s ease',
         }}
       >
         <CloseIcon size={16} />
@@ -385,17 +193,61 @@ export default function AIFinderModal({
         }
         .ai-extra-input:focus {
           background: #fff !important;
-          border-color: #1852B4 !important;
+          border-color: #5070C8 !important;
+          box-shadow: 0 0 0 3px rgba(80, 112, 200, 0.14);
           outline: none;
+        }
+        .ai-vibe-chip:hover {
+          background: #F4F6FD !important;
+          border-color: #9AAAE0 !important;
+          box-shadow: 0 8px 18px rgba(51,80,168,0.08);
+          transform: translateY(-1px);
+        }
+        .ai-vibe-chip:active {
+          transform: translateY(0) scale(0.985);
+          box-shadow: 0 3px 8px rgba(51,80,168,0.08);
+        }
+        .ai-vibe-chip:focus-visible,
+        .ai-primary-action:focus-visible,
+        .ai-secondary-action:focus-visible,
+        .ai-icon-action:focus-visible {
+          outline: 3px solid rgba(80, 112, 200, 0.22);
+          outline-offset: 3px;
+        }
+        .ai-primary-action:not(:disabled):hover {
+          background: #3350A8 !important;
+          box-shadow: 0 10px 22px rgba(80,112,200,0.26);
+          transform: translateY(-1px);
+        }
+        .ai-find-action:not(:disabled):hover {
+          background: #5070C8 !important;
+        }
+        .ai-primary-action:not(:disabled):active {
+          transform: translateY(0) scale(0.99);
+          box-shadow: 0 5px 12px rgba(80,112,200,0.2);
+        }
+        .ai-primary-action:disabled {
+          opacity: 0.82;
+        }
+        .ai-secondary-action:hover,
+        .ai-icon-action:hover {
+          background: #F4F6FD !important;
+          border-color: #9AAAE0 !important;
+          color: #3350A8 !important;
+          transform: translateY(-1px);
+        }
+        .ai-secondary-action:active,
+        .ai-icon-action:active {
+          transform: translateY(0) scale(0.97);
         }
       `}</style>
 
-      <div style={{
+      <div className="cs-ai-panel" style={{
         position: 'fixed',
-        bottom: 100, right: 28, zIndex: 1099,
-        width: 380,
+        bottom: 96, right: 24, zIndex: 1399,
+        width: 370,
         maxWidth: 'calc(100vw - 32px)',
-        maxHeight: 'calc(100vh - 140px)',
+        maxHeight: 'min(720px, calc(100vh - 190px))',
         background: C.bluePanel,
         borderRadius: 18,
         boxShadow: '0 24px 60px rgba(20,17,13,0.16), 0 4px 12px rgba(20,17,13,0.06)',
@@ -408,7 +260,6 @@ export default function AIFinderModal({
 
         <PanelHeader
           view={view}
-          selectedCount={selectedIntent ? 1 : 0}
           onRefine={onRefine}
           onClose={onClose}
         />
@@ -484,6 +335,7 @@ export default function AIFinderModal({
               ))}
               <button
                 type="button"
+                className="ai-secondary-action"
                 onClick={onShowDifferent}
                 style={{
                   marginTop: 4, padding: 11,
@@ -492,6 +344,7 @@ export default function AIFinderModal({
                   fontSize: 15, fontWeight: 500,
                   display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                   fontFamily: SANS, cursor: 'pointer',
+                  transition: 'background 0.16s ease, border-color 0.16s ease, transform 0.12s ease',
                 }}
               >
                 <RefreshIcon size={14} /> Show different picks
@@ -513,17 +366,18 @@ export default function AIFinderModal({
           <div style={{ padding: '14px 18px 16px', borderTop: `1px solid ${C.border}`, background: C.bluePanel }}>
             <button
               type="button"
+              className="ai-primary-action ai-find-action"
               onClick={onFind}
               disabled={!selectedIntent}
               style={{
                 width: '100%', padding: 14,
-                background: selectedIntent ? C.blue : C.bgWarm,
+                background: selectedIntent ? C.blueDeep : C.bgWarm,
                 color: selectedIntent ? '#fff' : C.textMuted,
                 border: 'none', borderRadius: 999,
                 fontWeight: 500, fontSize: 15,
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 10,
                 cursor: selectedIntent ? 'pointer' : 'not-allowed',
-                boxShadow: selectedIntent ? '0 8px 18px rgba(24,82,180,0.22)' : 'none',
+                boxShadow: selectedIntent ? '0 8px 18px rgba(80,112,200,0.22)' : 'none',
                 transition: 'background 0.15s, box-shadow 0.15s',
                 fontFamily: SANS,
               }}

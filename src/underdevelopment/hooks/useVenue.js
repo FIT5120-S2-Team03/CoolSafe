@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
+import { SESSION_CACHE_KEYS } from '../constants/storageKeys'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'https://coolsafe.onrender.com'
-const DETAIL_CACHE_PREFIX = 'coolsafe_venue_'
-const LIST_CACHE_KEYS = ['coolsafe_coolspaces', 'coolsafe_fountains']
+const DETAIL_CACHE_PREFIX = SESSION_CACHE_KEYS.venueDetailPrefix
+const LIST_CACHE_KEYS = [SESSION_CACHE_KEYS.coolSpaces, SESSION_CACHE_KEYS.fountains]
 const CACHE_TTL_MS = 2 * 60 * 60 * 1000 // 2 hours
 
 function readJson(key) {
@@ -24,7 +25,9 @@ function readDetailCache(id) {
 function writeDetailCache(id, data) {
   try {
     sessionStorage.setItem(`${DETAIL_CACHE_PREFIX}${id}`, JSON.stringify({ data, cachedAt: Date.now() }))
-  } catch {}
+  } catch {
+    // sessionStorage may be unavailable in private browsing.
+  }
 }
 
 function findCachedVenue(id) {

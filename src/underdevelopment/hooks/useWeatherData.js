@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react'
 import mockWeather from '../data/mockWeather.json'
 import mockLocation from '../data/mockLocation.json'
 import { useUserLocation } from './useUserLocation'
+import { SESSION_CACHE_KEYS } from '../constants/storageKeys'
 
-const CACHE_KEY = 'coolsafe_weather'
+const CACHE_KEY = SESSION_CACHE_KEYS.weather
 const CACHE_TTL_MS = 30 * 60 * 1000 // 30 minutes
 
 function sameCoords(a, b) {
@@ -34,12 +35,16 @@ function writeWeatherCache(data) {
   }
 }
 
+function localDateStr(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 function getMockHourly() {
   const today = new Date()
-  const dateStr = today.toISOString().split('T')[0]
+  const dateStr = localDateStr(today)
   const tomorrow = new Date(today)
   tomorrow.setDate(tomorrow.getDate() + 1)
-  const tomorrowStr = tomorrow.toISOString().split('T')[0]
+  const tomorrowStr = localDateStr(tomorrow)
   const temps = mockWeather.hourly.apparent_temperature
 
   return {
@@ -78,8 +83,8 @@ export function useWeatherData() {
         apparentTemp: data.current.apparent_temperature,
       }
       const dailyData = {
-        todayMax: data.daily.temperature_2m_max[0],
-        tomorrowMax: data.daily.temperature_2m_max[1],
+        todayMax: data.daily.apparent_temperature_max[0],
+        tomorrowMax: data.daily.apparent_temperature_max[1],
       }
 
       setCurrent(currentData)
@@ -131,7 +136,7 @@ export function useWeatherData() {
     }
 
     fetchWeather(coords.lat, coords.lng)
-  }, [coords?.lat, coords?.lng])
+  }, [coords])
 
   useEffect(() => {
     if (mockWeather.enabled || !coords) return undefined
@@ -141,7 +146,7 @@ export function useWeatherData() {
     }, CACHE_TTL_MS)
 
     return () => clearInterval(timer)
-  }, [coords?.lat, coords?.lng])
+  }, [coords])
 
   const fallbackMockCoords = mockLocation.enabled
     ? { lat: mockLocation.lat, lng: mockLocation.lng }

@@ -1,45 +1,16 @@
 import { useState, useCallback } from 'react'
-import { getWalkingMinutes } from '../utils/haversine'
+import { haversineKm, getWalkingMinutes } from '../utils/haversine'
+import {
+  EVENT_SUBTYPES,
+  INDOOR_SUBTYPES,
+  INTENT_INSTRUCTIONS,
+  INTENT_LABELS,
+  PAID_SUBTYPES,
+  QUIET_SUBTYPES,
+} from '../data/aiRecommendationConfig'
 
 const MELBOURNE_LAT = -37.8136
 const MELBOURNE_LNG = 144.9631
-
-function haversineKm(lat1, lng1, lat2, lng2) {
-  const R = 6371
-  const dLat = ((lat2 - lat1) * Math.PI) / 180
-  const dLng = ((lng2 - lng1) * Math.PI) / 180
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLng / 2) ** 2
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-}
-
-export const INTENT_LABELS = {
-  cool_down:       'Just need to cool down',
-  something_to_do: 'Something to do today',
-  free_nearby:     'Free & nearby',
-  easy_walk:       'Close enough to walk',
-  quiet_sit:       'Quiet place to sit',
-}
-
-const INTENT_INSTRUCTIONS = {
-  cool_down: 
-    'Search specifically for venues with confirmed strong air conditioning — shopping centres, libraries, or indoor pools. Do NOT recommend outdoor parks or gardens.',
-  
-  something_to_do: 
-    'Search specifically for a real event, class, exhibition or community program running TODAY that elderly people aged 65+ can attend — e.g. art exhibition opening, gentle yoga, craft workshop, morning tea. Do NOT recommend venues based on permanent features alone.',
-  
-  free_nearby: 
-    'Search specifically for venues that are completely free to enter with no booking required — libraries, free galleries, public gardens with shade. Exclude any venue with an entry fee.',
-  
-  easy_walk: 
-    'Only recommend venues under 10 minutes walk. Rank strictly by walking_minutes — closest first. Exclude any venue over 10 min walk even if it matches other criteria.',
-  
-  quiet_sit: 
-    'Search specifically for quiet, calm indoor spaces — libraries reading rooms, botanical gardens conservatories, quiet gallery wings. Exclude shopping centres, markets, and any noisy or crowded venues.',
-}
 
 function buildWeatherForecast(hourly) {
   if (!hourly?.time || !hourly?.apparent_temperature) return 'Forecast unavailable'
@@ -149,41 +120,18 @@ export function useAIRecommend() {
           }
 
           if (intent === 'cool_down') {
-            // Indoor venues likely to have air conditioning
-            const INDOOR_SUBTYPES = [
-              'art gallery/museum', 'theatre live', 'cinema', 'library',
-              'indoor recreation facility', 'gymnasium/health club',
-              'function/conference/exhibition centre', 'aquarium',
-              'observation tower/wheel', 'major sports & recreation facility',
-            ]
             return INDOOR_SUBTYPES.includes(sub) || vname.includes('library')
           }
 
           if (intent === 'something_to_do') {
-            // Venues that host scheduled events or activities
-            const EVENT_SUBTYPES = [
-              'art gallery/museum', 'theatre live', 'cinema',
-              'indoor recreation facility', 'function/conference/exhibition centre',
-              'aquarium', 'observation tower/wheel', 'major sports & recreation facility',
-            ]
             return EVENT_SUBTYPES.includes(sub)
           }
 
           if (intent === 'free_nearby') {
-            // Exclude venues that almost always charge entry
-            const PAID_SUBTYPES = [
-              'theatre live', 'major sports & recreation facility',
-              'gymnasium/health club', 'aquarium', 'observation tower/wheel',
-            ]
             return !PAID_SUBTYPES.includes(sub)
           }
 
           if (intent === 'quiet_sit') {
-            // Calm, low-noise spaces only
-            const QUIET_SUBTYPES = [
-              'library', 'art gallery/museum',
-              'informal outdoor facility (park/garden/reserve)',
-            ]
             return QUIET_SUBTYPES.includes(sub) || vname.includes('library')
           }
 
@@ -196,8 +144,6 @@ export function useAIRecommend() {
         }))
         .sort((a, b) => a._km - b._km)
         .slice(0, 10);
-
-      console.log('[AIRecommend] venues sent to Gemini:', allVenues.length)
 
       const prompt = buildPrompt({
         intent,
@@ -222,26 +168,18 @@ export function useAIRecommend() {
         }),
       })
 
-      if (!res.ok) {
-        const body = await res.text()
-        console.error('[AIRecommend] API error:', body)
-        throw new Error(`Gemini API error: ${res.status}`)
-      }
+      if (!res.ok) throw new Error(`Gemini API error: ${res.status}`)
 
       const data  = await res.json()
       const text  = (data.candidates?.[0]?.content?.parts ?? []).map(p => p.text ?? '').join('')
-      console.log('[AIRecommend] raw text:', text.slice(0, 600))
 
       // Strip markdown fences then extract the outermost JSON object
       const cleaned = text.replace(/```(?:json)?\s*/gi, '').replace(/```/g, '').trim()
       const match   = cleaned.match(/\{[\s\S]*\}/)
       if (!match) throw new Error('No JSON found in AI response')
 
-      const parsed = JSON.parse(match[0])
-      console.log('[AIRecommend] parsed events:', parsed?.events?.length)
-      setResults(parsed)
+      setResults(JSON.parse(match[0]))
     } catch (err) {
-      console.error('[AIRecommend] error:', err)
       setError(err.message || 'Something went wrong. Please try again.')
     } finally {
       setLoading(false)

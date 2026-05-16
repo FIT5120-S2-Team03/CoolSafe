@@ -19,17 +19,12 @@ import {
   Polyline,
   useMap,
 } from 'react-leaflet'
-import { useNavigate } from 'react-router-dom'
 import useCoolSpaces from '../../hooks/useCoolSpaces'
 import useFountains from '../../hooks/useFountains'
 import useHVI from '../../hooks/useHVI'
-import {
-  CATEGORY_MARKER_COLORS,
-  CATEGORY_UI_BACKGROUNDS,
-  CATEGORY_UI_COLORS,
-} from '../../utils/categoryMapping'
-import { getWalkingMinutes } from '../../utils/haversine'
+import { CATEGORY_MARKER_COLORS } from '../../utils/categoryMapping'
 import mockLocation from '../../data/mockLocation.json'
+import VenuePopup from './VenuePopupCard'
 
 const locationPinIcon = L.divIcon({
   className: '',
@@ -44,174 +39,6 @@ const locationPinIcon = L.divIcon({
 })
 
 const MELBOURNE = [-37.8136, 144.9631]
-
-function getOpenStatus(openingHours) {
-  if (!openingHours || Object.keys(openingHours).length === 0) {
-    return { status: 'unavailable' }
-  }
-
-  const today = new Date().toLocaleDateString('en-AU', { weekday: 'long' })
-  const hours = openingHours[today]
-
-  if (!hours) {
-    return { status: 'closed' }
-  }
-
-  const now = new Date()
-  const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(
-    now.getMinutes()
-  ).padStart(2, '0')}`
-
-  const isOpen = currentTime >= hours.open && currentTime < hours.close
-
-  return isOpen
-    ? { status: 'open', closeTime: hours.close }
-    : { status: 'closed' }
-}
-
-function VenuePopup({ venue, userLocation, onFastestRoute, routeLoading, onClose }) {
-  const navigate = useNavigate()
-  const openStatus = getOpenStatus(venue.opening_hours)
-  const [selectedRoute, setSelectedRoute] = useState('fastest')
-
-  useEffect(() => {
-    onFastestRoute(venue)
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
-  const walkMins =
-    userLocation != null
-      ? getWalkingMinutes(userLocation.lat, userLocation.lng, venue.lat, venue.lng)
-      : null
-
-  return (
-    <div
-      style={{
-        backgroundColor: 'var(--color-surface)',
-        borderRadius: 16,
-        boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
-        padding: 20,
-        width: 300,
-        fontFamily: 'var(--font-body)',
-        position: 'relative',
-      }}
-    >
-      {/* Close button */}
-      <button
-        onClick={onClose}
-        aria-label="Close"
-        style={{
-          position: 'absolute',
-          top: 12,
-          right: 12,
-          background: 'none',
-          border: 'none',
-          cursor: 'pointer',
-          padding: 4,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: 'var(--color-ink-disabled)',
-          minWidth: 44,
-          minHeight: 44,
-        }}
-      >
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <line x1="2" y1="2" x2="14" y2="14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-          <line x1="14" y1="2" x2="2" y2="14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-        </svg>
-      </button>
-
-      <p style={{ fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 'var(--text-caption)', color: 'var(--color-ink)', margin: '0 32px 8px 0' }}>
-        {venue.name}
-      </p>
-
-      <span style={{
-        display: 'inline-block',
-        backgroundColor: CATEGORY_UI_BACKGROUNDS[venue.category] ?? 'var(--color-warm)',
-        color: CATEGORY_UI_COLORS[venue.category] ?? 'var(--color-ink-muted)',
-        borderRadius: 'var(--radius-pill)',
-        padding: '4px 10px',
-        fontFamily: 'var(--font-body)',
-        fontSize: 'var(--text-caption)',
-        fontWeight: 700,
-        marginBottom: 10,
-      }}>
-        {venue.category}
-      </span>
-
-      {venue.address && (
-        <p style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-caption)', color: 'var(--color-ink-muted)', margin: '0 0 12px' }}>
-          {venue.address}
-        </p>
-      )}
-
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', fontFamily: 'var(--font-body)', fontSize: 'var(--text-caption)', marginBottom: 16 }}>
-        {openStatus.status === 'unavailable' ? (
-          <span style={{ color: 'var(--color-ink-disabled)' }}>Hours unavailable</span>
-        ) : (
-          <>
-            <span style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: openStatus.status === 'open' ? 'var(--color-green)' : 'var(--color-orange)', flexShrink: 0 }} />
-            <span style={{ color: openStatus.status === 'open' ? 'var(--color-green)' : 'var(--color-orange)', fontWeight: 600 }}>
-              {openStatus.status === 'open' ? 'Open Now' : 'Closed'}
-            </span>
-            {openStatus.status === 'open' && (
-              <>
-                <span style={{ color: 'var(--color-rule)' }}>•</span>
-                <span style={{ color: 'var(--color-ink-muted)' }}>Closes {openStatus.closeTime}</span>
-              </>
-            )}
-          </>
-        )}
-        {walkMins != null && (
-          <>
-            <span style={{ color: 'var(--color-rule)' }}>•</span>
-            <span style={{ color: 'var(--color-ink-muted)' }}>{walkMins} min walk</span>
-          </>
-        )}
-      </div>
-
-      <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-        <button
-          onClick={() => { setSelectedRoute('fastest'); onFastestRoute(venue) }}
-          disabled={routeLoading}
-          style={{
-            flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-            backgroundColor: selectedRoute === 'fastest' ? 'var(--color-green)' : routeLoading ? 'var(--color-warm)' : 'var(--color-surface)',
-            border: selectedRoute === 'fastest' ? 'none' : '1px solid var(--color-rule)',
-            borderRadius: 10, padding: '10px 0',
-            color: selectedRoute === 'fastest' ? '#fff' : 'var(--color-ink)',
-            fontFamily: 'var(--font-body)', fontWeight: 600, fontSize: 'var(--text-caption)',
-            cursor: routeLoading ? 'not-allowed' : 'pointer', minHeight: 44,
-          }}
-        >
-          {routeLoading && selectedRoute === 'fastest' ? 'Loading...' : 'Fastest'}
-        </button>
-
-        <button
-          onClick={() => setSelectedRoute('coolest')}
-          style={{
-            flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-            backgroundColor: selectedRoute === 'coolest' ? 'var(--color-green)' : 'var(--color-surface)',
-            border: selectedRoute === 'coolest' ? 'none' : '1px solid var(--color-rule)',
-            borderRadius: 10, padding: '10px 0',
-            color: selectedRoute === 'coolest' ? '#fff' : 'var(--color-ink)',
-            fontFamily: 'var(--font-body)', fontWeight: 600, fontSize: 'var(--text-caption)',
-            cursor: 'pointer', minHeight: 44,
-          }}
-        >
-          Coolest
-        </button>
-      </div>
-
-      <button
-        onClick={() => navigate(`/venue/${venue.id}`, { state: { venue } })}
-        style={{ width: '100%', backgroundColor: 'var(--color-blue)', color: '#fff', border: 'none', borderRadius: 12, padding: '14px 0', fontSize: 'var(--text-caption)', fontWeight: 700, fontFamily: 'var(--font-body)', cursor: 'pointer', minHeight: 44 }}
-      >
-        View Full Details →
-      </button>
-    </div>
-  )
-}
 
 // Tracks the screen position of the selected venue pin and updates on map move/zoom.
 function PinTracker({ venue, onPosition }) {
@@ -267,6 +94,7 @@ export default function CoolSpacesMap({ selectedCategories, flyTo, showHVI, open
   const [routeCoords, setRouteCoords] = useState([])
   const [routeLoading, setRouteLoading] = useState(false)
   const [routeError, setRouteError] = useState('')
+  const [mapReady, setMapReady] = useState(false)
 
   useEffect(() => {
     if (flyTo && mapRef.current) {
@@ -288,36 +116,46 @@ export default function CoolSpacesMap({ selectedCategories, flyTo, showHVI, open
       ? venues
       : allVenues.filter((v) => selectedCategories.includes(v.category))
 
-  // Auto-open venue card when arriving from detail page
+  // Auto-open venue card when arriving from another page.
   useEffect(() => {
-    if (!openVenueId || filtered.length === 0) return
+    if (!openVenueId || filtered.length === 0 || !mapReady) return
     const target = filtered.find(v => String(v.id) === String(openVenueId))
-    if (target) setSelectedVenue(target)
-  }, [openVenueId, filtered.length]) // eslint-disable-line react-hooks/exhaustive-deps
+    if (target) selectVenue(target)
+  }, [openVenueId, filtered.length, mapReady]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  function keepVenueCardInView(venue) {
+    if (!mapRef.current || !venue) return
+
+    const map = mapRef.current
+    const pin = map.latLngToContainerPoint([venue.lat, venue.lng])
+    const { x: mapW, y: mapH } = map.getSize()
+    const cardW = 340
+    const cardH = 420
+    const gap = 40
+    const pad = 28
+
+    const cardLeft = pin.x - cardW / 2
+    const cardRight = pin.x + cardW / 2
+    const cardTop = pin.y - gap - cardH
+    const cardBottom = pin.y - gap
+
+    const overflowLeft = pad - cardLeft
+    const overflowRight = cardRight - (mapW - pad)
+    const overflowTop = pad - cardTop
+    const overflowBottom = cardBottom - (mapH - pad)
+
+    const panX = overflowRight > 0 ? overflowRight : overflowLeft > 0 ? -overflowLeft : 0
+    const panY = overflowBottom > 0 ? overflowBottom : overflowTop > 0 ? -overflowTop : 0
+
+    if (panX !== 0 || panY !== 0) {
+      map.panBy([panX, panY], { animate: true })
+    }
+  }
 
   function selectVenue(venue) {
     clearRoute()
     setSelectedVenue(venue)
-
-    if (mapRef.current) {
-      const map = mapRef.current
-      const pin = map.latLngToContainerPoint([venue.lat, venue.lng])
-      // Conservative estimate: tall card (long venue name wraps), plus 16px gap, plus 24px buffer
-      const cardH = 370
-      const cardW = 300
-      const { x: mapW } = map.getSize()
-
-      const overflowTop   = cardH - pin.y
-      const overflowLeft  = cardW / 2 - pin.x
-      const overflowRight = (pin.x + cardW / 2) - mapW
-
-      const panX = overflowRight > 0 ? overflowRight : overflowLeft > 0 ? -overflowLeft : 0
-      const panY = overflowTop > 0 ? -overflowTop : 0
-
-      if (panX !== 0 || panY !== 0) {
-        map.panBy([panX, panY], { animate: true })
-      }
-    }
+    keepVenueCardInView(venue)
   }
 
   function closeVenue() {
@@ -400,9 +238,10 @@ export default function CoolSpacesMap({ selectedCategories, flyTo, showHVI, open
 
       if (mapRef.current && coords.length > 0) {
         mapRef.current.fitBounds(L.latLngBounds(coords), {
-          paddingTopLeft: [60, 380],
-          paddingBottomRight: [60, 60],
+          paddingTopLeft: [60, 440],
+          paddingBottomRight: [60, 260],
         })
+        setTimeout(() => keepVenueCardInView(venue), 350)
       }
     } catch (err) {
       setRouteError(err.message)
@@ -414,6 +253,44 @@ export default function CoolSpacesMap({ selectedCategories, flyTo, showHVI, open
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+      <style>{`
+        .cs-map-venue-card {
+          transition: transform 0.18s ease, box-shadow 0.18s ease;
+        }
+        .cs-map-venue-card:hover {
+          box-shadow: 0 24px 70px rgba(0,0,0,0.18) !important;
+        }
+        .cs-map-route-button,
+        .cs-map-primary-action,
+        .cs-map-location-button,
+        .cs-map-icon-action {
+          transition: transform 0.16s ease, box-shadow 0.16s ease, background 0.16s ease, border-color 0.16s ease, color 0.16s ease, filter 0.16s ease;
+        }
+        .cs-map-route-button:not(:disabled):hover,
+        .cs-map-location-button:hover,
+        .cs-map-icon-action:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 6px 16px rgba(34,30,26,0.10);
+        }
+        .cs-map-primary-action:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 8px 20px rgba(24,82,180,0.20);
+          filter: brightness(0.96);
+        }
+        .cs-map-route-button:not(:disabled):active,
+        .cs-map-primary-action:active,
+        .cs-map-location-button:active,
+        .cs-map-icon-action:active {
+          transform: translateY(0) scale(0.99);
+        }
+        .cs-map-route-button:focus-visible,
+        .cs-map-primary-action:focus-visible,
+        .cs-map-location-button:focus-visible,
+        .cs-map-icon-action:focus-visible {
+          outline: 3px solid rgba(24,82,180,0.18);
+          outline-offset: 3px;
+        }
+      `}</style>
 
       {/* Venue card — positioned above the pin, follows map movement via pinPos */}
       {selectedVenue && pinPos && (
@@ -457,6 +334,7 @@ export default function CoolSpacesMap({ selectedCategories, flyTo, showHVI, open
         zoom={14}
         style={{ width: '100%', height: '100%' }}
         ref={mapRef}
+        whenReady={() => setMapReady(true)}
       >
         <TileLayer
           url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
@@ -492,7 +370,17 @@ export default function CoolSpacesMap({ selectedCategories, flyTo, showHVI, open
               weight: 2,
               fillOpacity: 0.9,
             }}
-            eventHandlers={{ click: () => selectVenue(venue) }}
+            eventHandlers={{
+              click: () => selectVenue(venue),
+              mouseover: (e) => {
+                e.target.setRadius(venue.category === 'Fountain' ? 7 : 10)
+                e.target.setStyle({ weight: 3 })
+              },
+              mouseout: (e) => {
+                e.target.setRadius(venue.category === 'Fountain' ? 5 : 8)
+                e.target.setStyle({ weight: 2 })
+              },
+            }}
           />
         ))}
 
@@ -512,14 +400,16 @@ export default function CoolSpacesMap({ selectedCategories, flyTo, showHVI, open
       {/* My Location button */}
       <button
         onClick={handleMyLocation}
-        style={{ position: 'absolute', bottom: 32, right: 32, zIndex: 1000, display: 'flex', alignItems: 'center', gap: 8, backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: 12, padding: '12px 20px', boxShadow: '0 10px 40px rgba(0,0,0,0.18)', cursor: 'pointer', fontFamily: "var(--font-body)", fontWeight: 700, fontSize: 16, color: '#1e293b' }}
+        className="cs-map-location-button"
+        style={{ position: 'absolute', bottom: 32, left: 32, zIndex: 1000, display: 'flex', alignItems: 'center', gap: 8, backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: 12, padding: '12px 20px', boxShadow: '0 10px 40px rgba(0,0,0,0.18)', cursor: 'pointer', fontFamily: "var(--font-body)", fontWeight: 700, fontSize: 16, color: '#1e293b' }}
       >
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#003fa4" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="12" r="4" />
-          <line x1="12" y1="2" x2="12" y2="6" />
-          <line x1="12" y1="18" x2="12" y2="22" />
-          <line x1="2" y1="12" x2="6" y2="12" />
-          <line x1="18" y1="12" x2="22" y2="12" />
+        <svg width="18" height="23" viewBox="0 0 28 36" aria-hidden="true">
+          <path
+            d="M14 0C6.7 0 1 5.7 1 12.8c0 9.5 13 23.2 13 23.2s13-13.7 13-23.2C27 5.7 21.3 0 14 0Z"
+            fill="#003fa4"
+          />
+          <circle cx="14" cy="13" r="6.2" fill="white" />
+          <circle cx="14" cy="13" r="3.4" fill="#003fa4" />
         </svg>
         My Location
       </button>

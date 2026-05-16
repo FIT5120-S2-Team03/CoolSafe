@@ -12,7 +12,7 @@ const ORDERED_CATEGORIES = [
   'Fountain',
 ]
 
-export default function MapSidebar({ selectedCategories, onCategoriesChange, showHVI, onHVIToggle }) {
+export default function MapSidebar({ mobile = false, selectedCategories, onCategoriesChange, showHVI, onHVIToggle }) {
   const { venues } = useCoolSpaces()
   const { fountains } = useFountains()
 
@@ -36,15 +36,37 @@ export default function MapSidebar({ selectedCategories, onCategoriesChange, sho
 
   return (
     <aside
-      className="hidden md:flex flex-col gap-5 overflow-y-auto shrink-0"
+      className={mobile ? 'cs-map-sidebar cs-map-sidebar-mobile' : 'cs-map-sidebar hidden md:flex flex-col gap-5 overflow-y-auto shrink-0'}
       style={{
-        width: 320,
-        height: '100%',
+        width: mobile ? '100%' : 320,
+        height: mobile ? 'auto' : '100%',
         backgroundColor: 'var(--color-paper)',
-        borderRight: '1px solid var(--color-rule)',
-        padding: '24px 18px',
+        borderRight: mobile ? 'none' : '1px solid var(--color-rule)',
+        padding: mobile ? 0 : '24px 18px',
       }}
     >
+      <style>{`
+        .cs-map-pill,
+        .cs-map-hvi {
+          transition: transform 0.16s ease, box-shadow 0.16s ease, background 0.16s ease, border-color 0.16s ease;
+        }
+        .cs-map-pill:hover,
+        .cs-map-hvi:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 8px 18px rgba(34,30,26,0.08);
+        }
+        .cs-map-pill:active,
+        .cs-map-hvi:active {
+          transform: translateY(0) scale(0.985);
+          box-shadow: 0 3px 8px rgba(34,30,26,0.08);
+        }
+        .cs-map-pill:focus-visible,
+        .cs-map-hvi:focus-visible {
+          outline: 3px solid rgba(24,82,180,0.16);
+          outline-offset: 3px;
+        }
+      `}</style>
+
       {/* Category section */}
       <div>
         <p style={{
@@ -82,12 +104,20 @@ export default function MapSidebar({ selectedCategories, onCategoriesChange, sho
       </div>
 
       {/* HVI Layer toggle */}
-      <div style={{
-        backgroundColor: 'var(--color-warm)',
-        border: '1px solid var(--color-rule)',
-        borderRadius: 'var(--radius-md)',
-        padding: '14px 16px',
-      }}>
+      <button
+        type="button"
+        className="cs-map-hvi"
+        onClick={onHVIToggle}
+        aria-pressed={showHVI}
+        aria-label="Toggle Heat Vulnerability Layer"
+        style={{
+          backgroundColor: 'var(--color-warm)',
+          border: '1px solid var(--color-rule)',
+          borderRadius: 'var(--radius-md)',
+          padding: '14px 16px',
+          textAlign: 'left',
+          cursor: 'pointer',
+        }}>
         <p style={{
           fontFamily: 'var(--font-body)',
           fontWeight: 700,
@@ -108,18 +138,15 @@ export default function MapSidebar({ selectedCategories, onCategoriesChange, sho
           }}>
             Shows high-risk suburbs
           </span>
-          <button
-            onClick={onHVIToggle}
-            aria-pressed={showHVI}
-            aria-label="Toggle Heat Vulnerability Layer"
+          <span
+            aria-hidden="true"
             style={{
               position: 'relative',
+              display: 'inline-block',
               width: 44,
               height: 24,
               backgroundColor: showHVI ? 'var(--color-blue)' : 'var(--color-rule)',
               borderRadius: 'var(--radius-pill)',
-              border: 'none',
-              cursor: 'pointer',
               flexShrink: 0,
               transition: 'background-color 0.2s',
               padding: 0,
@@ -135,16 +162,14 @@ export default function MapSidebar({ selectedCategories, onCategoriesChange, sho
               borderRadius: '50%',
               transition: 'left 0.2s',
             }} />
-          </button>
+          </span>
         </div>
-      </div>
+      </button>
     </aside>
   )
 }
 
 function CategoryPill({ label, count, dotColor, isSelected, onClick }) {
-  const isAllPill = label === 'All'
-
   const pillStyle = isSelected
     ? { background: 'var(--color-surface)', border: `2px solid ${dotColor}`, color: 'var(--color-ink)' }
     : { background: 'var(--color-surface)', border: '1.5px solid var(--color-rule)', color: 'var(--color-ink)' }
@@ -152,6 +177,7 @@ function CategoryPill({ label, count, dotColor, isSelected, onClick }) {
   return (
     <button
       type="button"
+      className="cs-map-pill"
       onClick={onClick}
       style={{
         display: 'inline-flex',
@@ -164,7 +190,7 @@ function CategoryPill({ label, count, dotColor, isSelected, onClick }) {
         fontSize: 'var(--text-caption)',
         fontWeight: isSelected ? 600 : 400,
         whiteSpace: 'nowrap',
-        transition: 'background 0.15s, border-color 0.15s, color 0.15s',
+        transition: 'transform 0.16s ease, box-shadow 0.16s ease, background 0.15s, border-color 0.15s, color 0.15s',
         ...pillStyle,
       }}
     >

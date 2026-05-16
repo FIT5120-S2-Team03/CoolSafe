@@ -1,7 +1,4 @@
-const RULE = '#E5DCC8'
-const INK = '#0F0F0F'
-const MUTED = '#5A5048'
-const FAINT = '#6E6358'
+import { FAINT, INK, MUTED, RULE } from '../../styles/colors'
 
 const MED_LABELS = {
   'Blood pressure medication': 'Blood pressure',
@@ -56,7 +53,7 @@ export function WeatherCallout({ value, label, badge, badgeColor, style: extraSt
   )
 }
 
-export function ThingCard({ icon, iconBg, title, desc, extra, extraBeforeDesc = false, cta, ctaIcon = 'arrow_forward', onClick, windowTime, windowLabel }) {
+export function ThingCard({ icon, iconBg, title, desc, extra, extraBeforeDesc = false, cta, ctaIcon = 'arrow_forward', onClick, windowIntro, windowTime, windowLabel }) {
   return (
     <div
       onClick={onClick}
@@ -72,13 +69,16 @@ export function ThingCard({ icon, iconBg, title, desc, extra, extraBeforeDesc = 
           {title}
         </h3>
         {extraBeforeDesc && extra && <div style={{ marginTop: 16, marginBottom: 16 }}>{extra}</div>}
-        {windowTime && (
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, margin: '12px 0 14px' }}>
-            <span style={{ fontFamily: 'var(--serif)', fontSize: 'clamp(1.75rem,2.5vw,2.25rem)', color: INK, lineHeight: 1 }}>{windowTime}</span>
-            {windowLabel && <span style={{ fontFamily: 'var(--sans)', fontSize: '1rem', color: FAINT }}>{windowLabel}</span>}
-          </div>
+        {(windowIntro || windowTime) && (
+          <p style={{ fontFamily: "var(--font-body)", fontSize: '1rem', color: MUTED, lineHeight: 1.45, margin: '14px 0 12px' }}>
+            {windowTime && <strong style={{ color: INK, fontWeight: 700 }}>{windowTime}</strong>}
+            {windowTime && windowLabel ? ' ' : ''}
+            {windowLabel && <span>{windowLabel}</span>}
+            {(windowTime || windowLabel) && windowIntro ? ' — ' : ''}
+            {windowIntro}
+          </p>
         )}
-        <p style={{ fontFamily: "var(--font-body)", fontSize: '1rem', color: MUTED, lineHeight: 1.45, margin: 0 }}>
+        <p style={{ fontFamily: "var(--font-body)", fontSize: '1rem', color: MUTED, lineHeight: 1.45, margin: windowIntro || windowTime ? '0' : 0 }}>
           {desc}
         </p>
         {!extraBeforeDesc && extra && <div style={{ marginTop: 12 }}>{extra}</div>}

@@ -1,26 +1,19 @@
 import { useState } from 'react'
-
-const RULE = '#E5DCC8'
-const INK = '#0F0F0F'
+import { INK, RULE } from '../../styles/colors'
+import ModalFrame from '../layout/ModalFrame'
 
 export default function LocationModal({ open, onClose, requestGps, fetchByPostcode, canDismiss = false }) {
   const [postcode, setPostcode] = useState('')
 
   if (!open) return null
 
-  function closeIfAllowed() {
-    if (canDismiss) onClose()
-  }
-
   return (
-    <div
-      onClick={closeIfAllowed}
-      style={{ position: 'fixed', inset: 0, zIndex: 900, background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, cursor: canDismiss ? 'pointer' : 'default' }}
+    <ModalFrame
+      closeOnBackdrop={canDismiss}
+      onClose={onClose}
+      overlayStyle={{ zIndex: 900, background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)', padding: 24, cursor: canDismiss ? 'pointer' : 'default' }}
+      panelStyle={{ background: '#fff', borderRadius: 20, padding: '36px 32px 32px', maxWidth: 420, width: '100%', boxShadow: '0 24px 64px rgba(0,0,0,0.3)', animation: 'popIn .3s cubic-bezier(.34,1.56,.64,1)', cursor: 'default' }}
     >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        style={{ background: '#fff', borderRadius: 20, padding: '36px 32px 32px', maxWidth: 420, width: '100%', boxShadow: '0 24px 64px rgba(0,0,0,0.3)', animation: 'popIn .3s cubic-bezier(.34,1.56,.64,1)', cursor: 'default' }}
-      >
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
           <div style={{ width: 52, height: 52, borderRadius: '50%', background: '#EEF3FF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1852B4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -76,7 +69,6 @@ export default function LocationModal({ open, onClose, requestGps, fetchByPostco
             Go
           </button>
         </form>
-      </div>
-    </div>
+    </ModalFrame>
   )
 }

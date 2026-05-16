@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { useEffect } from 'react'
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import PasswordGate from './PasswordGate'
 import useFountains from './underdevelopment/hooks/useFountains'
 import useHVI from './underdevelopment/hooks/useHVI'
@@ -13,8 +14,8 @@ function Prefetch() {
 
 import LandingPage from './underdevelopment/pages/LandingPage'
 import TodayPage from './underdevelopment/pages/TodayPage'
-import MapPageDev from './underdevelopment/pages/MapPage'
-import SafetyPage from './underdevelopment/pages/SafetyPage'
+import SpacesPage from './underdevelopment/pages/SpacesPage'
+import HealthPage from './underdevelopment/pages/HealthPage'
 import VenueDetailPage from './underdevelopment/pages/VenueDetailPage'
 import AIFinderButton from './underdevelopment/components/ai/AIFinderButton'
 
@@ -34,10 +35,22 @@ function DevLayout({ children }) {
   )
 }
 
+function ScrollToTop() {
+  const { pathname, state } = useLocation()
+
+  useEffect(() => {
+    if (state?.scrollTo === 'directions') return
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+  }, [pathname, state?.scrollTo])
+
+  return null
+}
+
 export default function App() {
   return (
     <BrowserRouter>
       <Prefetch />
+      <ScrollToTop />
       <Routes>
 
         {/* ── Landing page — logo always navigates here ── */}
@@ -54,17 +67,17 @@ export default function App() {
           </PasswordGate>
         } />
 
-        {/* ── Map page (kept as-is) ── */}
-        <Route path="/map" element={
+        {/* ── Spaces page ── */}
+        <Route path="/spaces" element={
           <PasswordGate storageKey="auth_dev">
-            <DevLayout><MapPageDev /></DevLayout>
+            <DevLayout><SpacesPage /></DevLayout>
           </PasswordGate>
         } />
 
-        {/* ── Safety check page ── */}
-        <Route path="/safety" element={
+        {/* ── Health check page ── */}
+        <Route path="/health" element={
           <PasswordGate storageKey="auth_dev">
-            <DevLayout><SafetyPage /></DevLayout>
+            <DevLayout><HealthPage /></DevLayout>
           </PasswordGate>
         } />
 
@@ -86,14 +99,14 @@ export default function App() {
             <DevLayout><TodayPage /></DevLayout>
           </PasswordGate>
         } />
-        <Route path="/underdevelopment/map" element={
+        <Route path="/underdevelopment/spaces" element={
           <PasswordGate storageKey="auth_dev">
-            <DevLayout><MapPageDev /></DevLayout>
+            <DevLayout><SpacesPage /></DevLayout>
           </PasswordGate>
         } />
-        <Route path="/underdevelopment/safety" element={
+        <Route path="/underdevelopment/health" element={
           <PasswordGate storageKey="auth_dev">
-            <DevLayout><SafetyPage /></DevLayout>
+            <DevLayout><HealthPage /></DevLayout>
           </PasswordGate>
         } />
         <Route path="/underdevelopment/venue/:id" element={

@@ -422,7 +422,7 @@ export default function CoolSpacesMap({ selectedCategories, flyTo, showHVI, open
             position: 'absolute',
             left: pinPos.x,
             top: pinPos.y,
-            transform: 'translate(-50%, calc(-100% - 16px))',
+            transform: 'translate(-50%, calc(-100% - 40px))',
             zIndex: 1000,
             pointerEvents: 'auto',
           }}

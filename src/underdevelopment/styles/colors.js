@@ -1,0 +1,5 @@
+export const INK   = '#0F0F0F'
+export const MUTED = '#5A5048'
+export const FAINT = '#6E6358'
+export const RULE  = '#E5DCC8'
+export const PAPER = '#FAF8F5'

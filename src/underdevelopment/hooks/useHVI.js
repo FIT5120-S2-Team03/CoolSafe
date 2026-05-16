@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
+import { SESSION_CACHE_KEYS } from '../constants/storageKeys'
 
-const CACHE_KEY = 'coolsafe_hvi'
+const CACHE_KEY = SESSION_CACHE_KEYS.heatVulnerability
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000 // 24 hours (matches server cache header)
 
 function readCache() {
@@ -14,7 +15,11 @@ function readCache() {
 }
 
 function writeCache(data) {
-  try { sessionStorage.setItem(CACHE_KEY, JSON.stringify({ data, cachedAt: Date.now() })) } catch {}
+  try {
+    sessionStorage.setItem(CACHE_KEY, JSON.stringify({ data, cachedAt: Date.now() }))
+  } catch {
+    // sessionStorage may be unavailable in private browsing.
+  }
 }
 
 export default function useHVI() {
@@ -29,7 +34,7 @@ export default function useHVI() {
     let cancelled = false
     async function load() {
       try {
-        const res = await fetch('https://coolsafe-api.onrender.com/api/hvi')
+        const res = await fetch('https://coolsafe.onrender.com/api/hvi')
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
         const json = await res.json()
         if (!cancelled) { setHviData(json); writeCache(json) }

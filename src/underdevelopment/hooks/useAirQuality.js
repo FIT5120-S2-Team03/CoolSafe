@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import mockWeather from '../data/mockWeather.json'
+import { SESSION_CACHE_KEYS } from '../constants/storageKeys'
 
-const CACHE_KEY = 'coolsafe_aqi'
+const CACHE_KEY = SESSION_CACHE_KEYS.airQuality
 const CACHE_TTL_MS = 30 * 60 * 1000 // 30 minutes
 
 function readAqiCache(lat, lng) {
@@ -32,27 +33,25 @@ function writeAqiCache(lat, lng, aqi) {
 }
 
 export function useAirQuality({ lat, lng }) {
-  const [aqi, setAqi] = useState(null)
+  const [aqi, setAqi] = useState(() => mockWeather.enabled ? mockWeather.aqi.value : null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(false)
 
   useEffect(() => {
-    if (mockWeather.enabled) {
-      setAqi(mockWeather.aqi.value)
-      setLoading(false)
-      return
-    }
+    if (mockWeather.enabled) return
     if (lat == null || lng == null) return
 
     // Return cached value if fresh and for same location
     const cached = readAqiCache(lat, lng)
     if (cached) {
-      setAqi(cached.aqi)
+      queueMicrotask(() => setAqi(cached.aqi))
       return
     }
 
-    setLoading(true)
-    setError(false)
+    queueMicrotask(() => {
+      setLoading(true)
+      setError(false)
+    })
 
     const now = new Date()
     const hourStr =

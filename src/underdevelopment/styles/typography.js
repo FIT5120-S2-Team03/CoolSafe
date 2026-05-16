@@ -1,27 +1,31 @@
 export const TYPOGRAPHY = {
-  // Banner (HeatRiskBanner only — keep large)
-  bannerHeading:  "font-serif text-4xl leading-tight tracking-[-2px]",
-  bannerSubtitle: "font-sans font-medium text-xl leading-snug",
-  bannerBadge:    "font-sans font-bold text-sm uppercase tracking-[3px]",
+  headline: "font-headline",
+  bodyFace: "font-body",
+  monoFace: "font-mono",
 
-  // 4-tier type scale: 30 / 22 / 18 / 16
-  h1:        "font-serif text-3xl leading-tight text-[#0F0F0F]",
-  h2:        "font-serif text-xl leading-snug text-[#0F0F0F]",
-  h3:        "font-sans font-bold text-lg leading-snug text-[#0F0F0F]",
-  subtitle:  "font-sans font-medium text-lg leading-normal text-[#3A3A3A]",
-  label:     "font-sans font-medium text-base uppercase tracking-[0.05em] text-[#5C5C5C]",
-  body:      "font-sans font-normal text-lg leading-relaxed text-[#0F0F0F]",
-  bodySmall: "font-sans font-normal text-base leading-relaxed text-[#3A3A3A]",
-  dataLarge:  "font-mono font-medium text-xl text-[#0F0F0F]",
-  dataMedium: "font-mono font-medium text-lg text-[#0F0F0F]",
-  dataSmall:  "font-mono font-medium text-base",
+  display:   "font-headline text-[clamp(48px,6vw,76px)] leading-[0.98] tracking-normal text-[#0F0F0F]",
+  section:   "font-headline text-[var(--text-section)] leading-[1.05] tracking-normal text-[#0F0F0F]",
+  titleSm:   "font-headline text-[var(--text-title-sm)] leading-[1.15] tracking-normal text-[#0F0F0F]",
+  titleMd:   "font-headline text-[var(--text-title-md)] leading-[1.1] tracking-normal text-[#0F0F0F]",
+  body:      "font-body text-[var(--text-body)] leading-[1.55] text-[#5A5048]",
+  bodySmall: "font-body text-[var(--text-body-sm)] leading-[1.5] text-[#5A5048]",
+  label:     "font-body text-[var(--text-label)] font-medium text-[#0F0F0F]",
+  eyebrow:   "font-mono text-[var(--text-caption)] uppercase tracking-[0.12em] text-[#6E6358]",
+  caption:   "font-mono text-[var(--text-caption)] text-[#6E6358]",
+  score:     "font-headline text-[var(--text-score)] leading-[0.8] tracking-normal",
 }
 
 // Pixel values for inline styles (SVG, style={{ fontSize }}, etc.)
 // Always reference these instead of hardcoding numbers in components.
 export const FONT_SIZE = {
-  heading:    30,
-  subheading: 22,
-  body:       18,
-  small:      16,
+  caption: 14,
+  label: 16,
+  bodySmall: 18,
+  body: 18,
+  titleXs: 22,
+  titleSm: 26,
+  titleMd: 30,
+  titleLg: 32,
+  displaySm: 40,
+  score: 72,
 }

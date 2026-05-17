@@ -123,7 +123,7 @@ export default function TodayPage() {
     : hasMedications
     ? 'The worst of the heat has passed. Your personalised plan is ready below.'
     : 'The worst of the heat has passed. Add your medications below for a more accurate plan.'
-  const verdict = scoreVerdict(score, hasMedications, band)
+  const verdict = scoreVerdict(score)
 
   const locationModalOpen = showLocModal
 

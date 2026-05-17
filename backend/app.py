@@ -6,9 +6,7 @@ import os
 import psycopg2
 import psycopg2.extras
 
-from shapely.geometry import LineString, shape
-from shapely.ops import transform, unary_union
-from pyproj import Transformer
+from shapely.geometry import LineString
 
 load_dotenv()
 
@@ -22,11 +20,6 @@ with open(HVI_PATH) as f:
     HVI_DATA = json.load(f)
 
 DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-
-# Convert latitude/longitude coordinates into metre-based coordinates.
-# This makes route length and shade buffer calculations more meaningful.
-TO_METERS = Transformer.from_crs("EPSG:4326", "EPSG:7855", always_xy=True).transform
-
 
 def get_db():
     if 'db' not in g:
@@ -181,9 +174,9 @@ def calculate_shade_coverage(route_coords):
 
     Main logic:
     1. Convert route coordinates into a LineString.
-    2. Find nearby tree canopy polygons from PostGIS.
-    3. Convert geometry into metre-based coordinates.
-    4. Calculate how much route length is close to tree canopy.
+    2. Let PostGIS find nearby tree canopy polygons.
+    3. Clip the route against 5 metre canopy buffers in SQL.
+    4. Merge only the clipped route segments so overlaps are not double-counted.
     5. Return shade coverage percentage.
     """
 
@@ -205,59 +198,61 @@ def calculate_shade_coverage(route_coords):
 
     cur = get_db().cursor()
 
+    # Keep the heavy spatial work inside PostGIS instead of materialising
+    # thousands of canopy polygons in the Flask worker. The previous Python
+    # path fetched up to 5000 polygons, projected each one, then ran
+    # unary_union() on the whole set; on Render's 512 MB instances that can
+    # exhaust the web process before a response is sent.
     cur.execute("""
         WITH route AS (
             SELECT ST_SetSRID(ST_GeomFromText(%s), 4326) AS geom
+        ),
+        nearby_canopies AS (
+            SELECT tc.geom
+            FROM tree_canopies tc, route
+            WHERE ST_DWithin(
+                tc.geom::geography,
+                route.geom::geography,
+                20
+            )
+        ),
+        canopy_stats AS (
+            SELECT COUNT(*) AS nearby_canopy_count
+            FROM nearby_canopies
+        ),
+        clipped_segments AS (
+            SELECT ST_Intersection(
+                route.geom,
+                ST_Buffer(nearby_canopies.geom::geography, 5)::geometry
+            ) AS geom
+            FROM nearby_canopies, route
+        ),
+        merged_segments AS (
+            SELECT
+                ST_UnaryUnion(ST_Collect(geom)) AS geom
+            FROM clipped_segments
+            WHERE NOT ST_IsEmpty(geom)
         )
-        SELECT ST_AsGeoJSON(tree_canopies.geom) AS geojson
-        FROM tree_canopies, route
-        WHERE ST_Intersects(
-            tree_canopies.geom,
-            ST_Buffer(route.geom::geography, 20)::geometry
-        )
-        LIMIT 5000;
+        SELECT
+            ST_Length(route.geom::geography) AS total_length_m,
+            COALESCE(ST_Length(merged_segments.geom::geography), 0) AS shaded_length_m,
+            canopy_stats.nearby_canopy_count AS nearby_canopy_count
+        FROM route
+        CROSS JOIN canopy_stats
+        LEFT JOIN merged_segments ON TRUE;
     """, (route_line.wkt,))
 
-    rows = cur.fetchall()
+    row = cur.fetchone()
     cur.close()
 
-    route_m = transform(TO_METERS, route_line)
-    total_length_m = route_m.length
+    total_length_m = float(row['total_length_m']) if row and row['total_length_m'] is not None else 0
 
     if total_length_m == 0:
         return None
 
-    canopy_shapes_m = []
-
-    for row in rows:
-        geojson_value = row['geojson']
-
-        if isinstance(geojson_value, str):
-            geojson_value = json.loads(geojson_value)
-
-        canopy_geom = shape(geojson_value)
-        canopy_geom_m = transform(TO_METERS, canopy_geom)
-        canopy_shapes_m.append(canopy_geom_m)
-
-    nearby_canopy_count = len(canopy_shapes_m)
-
-    if nearby_canopy_count == 0:
-        shaded_length_m = 0
-        shade_coverage_percent = 0
-    else:
-        canopy_union = unary_union(canopy_shapes_m)
-
-        # A 5 metre buffer means the route is counted as shaded
-        # if it is close to tree canopy.
-        shade_area = canopy_union.buffer(5)
-
-        shaded_route = route_m.intersection(shade_area)
-        shaded_length_m = shaded_route.length
-
-        shade_coverage_percent = (shaded_length_m / total_length_m) * 100
-
-        if shade_coverage_percent > 100:
-            shade_coverage_percent = 100
+    shaded_length_m = float(row['shaded_length_m']) if row and row['shaded_length_m'] is not None else 0
+    nearby_canopy_count = int(row['nearby_canopy_count']) if row and row['nearby_canopy_count'] is not None else 0
+    shade_coverage_percent = min((shaded_length_m / total_length_m) * 100, 100)
 
     shade_score = round(shade_coverage_percent)
 

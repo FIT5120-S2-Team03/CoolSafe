@@ -48,5 +48,3 @@ export const CATEGORY_UI_BACKGROUNDS = {
   'Visitor Info':      '#F8EEDB',
   'Fountain':          '#E5F4FA',
 }
-
-export const CATEGORY_COLORS = CATEGORY_MARKER_COLORS

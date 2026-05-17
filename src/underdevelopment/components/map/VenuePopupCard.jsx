@@ -30,19 +30,21 @@ function getOpenStatus(openingHours) {
     : { status: 'closed' }
 }
 
-export default function VenuePopup({ venue, userLocation, onFastestRoute, routeLoading, onClose }) {
+export default function VenuePopup({ venue, userLocation, routeDurationMin, onFastestRoute, onCoolestRoute, onPrefetchCoolestRoute, routeLoading, onClose }) {
   const navigate = useNavigate()
   const openStatus = getOpenStatus(venue.opening_hours)
   const [selectedRoute, setSelectedRoute] = useState('fastest')
 
   useEffect(() => {
     onFastestRoute(venue)
+    onPrefetchCoolestRoute?.(venue)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const walkMins =
+  const estimatedWalkMins =
     userLocation != null
       ? getWalkingMinutes(userLocation.lat, userLocation.lng, venue.lat, venue.lng)
       : null
+  const walkMins = routeDurationMin ?? estimatedWalkMins
 
   return (
     <div
@@ -152,19 +154,20 @@ export default function VenuePopup({ venue, userLocation, onFastestRoute, routeL
         </button>
 
         <button
-          onClick={() => setSelectedRoute('coolest')}
+          onClick={() => { setSelectedRoute('coolest'); onCoolestRoute(venue) }}
+          disabled={routeLoading}
           className="cs-map-route-button"
           style={{
             flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-            backgroundColor: selectedRoute === 'coolest' ? 'var(--color-green)' : 'var(--color-surface)',
+            backgroundColor: selectedRoute === 'coolest' ? 'var(--color-green)' : routeLoading ? 'var(--color-warm)' : 'var(--color-surface)',
             border: selectedRoute === 'coolest' ? 'none' : '1px solid var(--color-rule)',
             borderRadius: 10, padding: '10px 0',
             color: selectedRoute === 'coolest' ? '#fff' : 'var(--color-ink)',
             fontFamily: 'var(--font-body)', fontWeight: 600, fontSize: 'var(--text-caption)',
-            cursor: 'pointer', minHeight: 44,
+            cursor: routeLoading ? 'not-allowed' : 'pointer', minHeight: 44,
           }}
         >
-          Coolest
+          {routeLoading && selectedRoute === 'coolest' ? 'Loading...' : 'Coolest'}
         </button>
       </div>
 

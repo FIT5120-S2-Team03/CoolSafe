@@ -26,7 +26,7 @@ function decodePolyline(str) {
   return coords
 }
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'https://coolsafe.onrender.com'
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'https://coolsafe-api.onrender.com'
 const ROUTE_SIMILARITY_DISTANCE_M = 15
 const ROUTE_SIMILARITY_THRESHOLD = 0.8
 
@@ -179,9 +179,11 @@ export default function VenueDetailPage() {
 
   const fetchCoolestRoute = useCallback(async (from) => {
     if (!venue) return
+
     try {
       setRouteLoading(true)
       setRouteError('')
+
       const cacheKey = getRouteCacheKey(from, venue)
       const cachedRoute = getCachedRoute(cacheKey)
 
@@ -191,9 +193,14 @@ export default function VenueDetailPage() {
         return
       }
 
-      const url = `https://router.project-osrm.org/route/v1/foot/${from.lng},${from.lat};${venue.lng},${venue.lat}?overview=full&geometries=geojson&alternatives=true&steps=true`
+      const url =
+        `https://router.project-osrm.org/route/v1/foot/` +
+        `${from.lng},${from.lat};${venue.lng},${venue.lat}` +
+        `?overview=full&geometries=geojson&alternatives=true&steps=true`
+
       const res = await fetch(url)
       if (!res.ok) throw new Error(`Coolest route request failed: HTTP ${res.status}`)
+
       const data = await res.json()
       if (!data.routes || data.routes.length === 0) throw new Error('No coolest route found.')
 
@@ -209,11 +216,20 @@ export default function VenueDetailPage() {
 
       if (routesAreSimilar) {
         const waypoint = getOffsetWaypoint(from, venue)
-        const waypointUrl = `https://router.project-osrm.org/route/v1/foot/${from.lng},${from.lat};${waypoint.lng},${waypoint.lat};${venue.lng},${venue.lat}?overview=full&geometries=geojson&steps=true`
+
+        const waypointUrl =
+          `https://router.project-osrm.org/route/v1/foot/` +
+          `${from.lng},${from.lat};` +
+          `${waypoint.lng},${waypoint.lat};` +
+          `${venue.lng},${venue.lat}` +
+          `?overview=full&geometries=geojson&steps=true`
+
         const waypointRes = await fetch(waypointUrl)
+
         if (waypointRes.ok) {
           const waypointData = await waypointRes.json()
           const waypointRoute = waypointData.routes?.[0]
+
           if (waypointRoute) {
             candidateRoutes.push({
               coords: waypointRoute.geometry.coordinates.map(([lng, lat]) => [lat, lng]),
@@ -224,25 +240,64 @@ export default function VenueDetailPage() {
         }
       }
 
-      const scoreRes = await fetch(`${API_BASE}/api/coolest-route`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ routes: candidateRoutes.slice(0, 3), routes_are_similar: routesAreSimilar }),
-      })
-      if (!scoreRes.ok) throw new Error(`Shade score request failed: HTTP ${scoreRes.status}`)
-      const scoreData = await scoreRes.json()
-      const selectedCoords = scoreData.route?.coords ?? candidateRoutes[scoreData.selected_route_index]?.coords
-      const selectedSteps = candidateRoutes[scoreData.selected_route_index]?.steps ?? []
-      if (!selectedCoords || selectedCoords.length === 0) throw new Error('No selected coolest route returned.')
+      if (candidateRoutes.length === 0) {
+        throw new Error('No coolest route candidates found.')
+      }
 
-      setRouteCoords(selectedCoords)
-      setRouteSteps(selectedSteps)
-      setCachedRoute(cacheKey, {
-        fastestCoords: candidateRoutes[0].coords,
-        coolestCoords: selectedCoords,
-        coolestSteps: selectedSteps,
-        scoreData,
-      })
+      const fallbackRoute = candidateRoutes[candidateRoutes.length - 1]
+      setRouteCoords(fallbackRoute.coords)
+      setRouteSteps(fallbackRoute.steps ?? [])
+
+      try {
+        const scoreRes = await fetch(`${API_BASE}/api/coolest-route`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            routes: candidateRoutes.slice(0, 3),
+            routes_are_similar: routesAreSimilar,
+          }),
+        })
+
+        if (!scoreRes.ok) {
+          throw new Error(`Shade score request failed: HTTP ${scoreRes.status}`)
+        }
+
+        const scoreData = await scoreRes.json()
+
+        const selectedIndex =
+          typeof scoreData.selected_route_index === 'number'
+            ? scoreData.selected_route_index
+            : candidateRoutes.length - 1
+
+        const selectedRoute = candidateRoutes[selectedIndex] ?? fallbackRoute
+        const selectedCoords = scoreData.route?.coords ?? selectedRoute.coords
+        const selectedSteps = selectedRoute.steps ?? []
+
+        if (!selectedCoords || selectedCoords.length === 0) {
+          throw new Error('No selected coolest route returned.')
+        }
+
+        setRouteCoords(selectedCoords)
+        setRouteSteps(selectedSteps)
+
+        setCachedRoute(cacheKey, {
+          fastestCoords: candidateRoutes[0].coords,
+          coolestCoords: selectedCoords,
+          coolestSteps: selectedSteps,
+          scoreData,
+        })
+      } catch (shadeErr) {
+        console.warn('Shade scoring failed, showing fallback coolest route:', shadeErr.message)
+
+        setCachedRoute(cacheKey, {
+          fastestCoords: candidateRoutes[0].coords,
+          coolestCoords: fallbackRoute.coords,
+          coolestSteps: fallbackRoute.steps ?? [],
+          scoreData: null,
+        })
+      }
     } catch (err) {
       setRouteError(err.message)
     } finally {
@@ -425,7 +480,6 @@ export default function VenueDetailPage() {
       >
         <div style={{ width: 'min(100%, 760px)', margin: '0 auto' }}>
 
-          {/* Breadcrumb */}
           <nav className="flex items-center gap-1 mb-6" style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-label)', color: 'var(--color-ink-muted)' }}>
             <button onClick={() => navigate('/')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-ink-muted)', fontFamily: 'var(--font-body)', fontSize: 'var(--text-label)', padding: 0 }}>
               Home
@@ -438,15 +492,11 @@ export default function VenueDetailPage() {
             <span style={{ color: 'var(--color-ink)', fontWeight: 700 }}>{venue.name}</span>
           </nav>
 
-          {/* Venue name */}
           <h1 style={{ fontFamily: 'var(--font-title)', fontWeight: 900, fontSize: 'var(--text-title-lg)', color: 'var(--color-ink)', margin: '0 0 24px', lineHeight: 1.15 }}>
             {venue.name}
           </h1>
 
-          {/* Info cards row */}
           <div style={{ display: 'flex', gap: 16, marginBottom: 28, alignItems: 'stretch', flexWrap: 'wrap' }}>
-
-            {/* Opening Hours card */}
             <div style={{ flex: '1 1 300px', minWidth: 0, background: 'var(--color-surface)', border: '1px solid var(--color-rule)', borderRadius: 12, padding: 20 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-blue)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -460,7 +510,6 @@ export default function VenueDetailPage() {
                 <p style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-body-sm)', color: 'var(--color-ink-disabled)' }}>Hours unavailable</p>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  {/* Today row — highlighted */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 10px', borderRadius: 8, background: 'var(--color-spotlight-green)', border: '1px solid rgba(42,125,79,0.2)' }}>
                     <span style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-label)', fontWeight: 700, color: 'var(--color-green)' }}>
                       Today ({hoursDisplay.todayName.slice(0, 3)})
@@ -470,7 +519,6 @@ export default function VenueDetailPage() {
                     </span>
                   </div>
 
-                  {/* Rest of the week */}
                   {hoursDisplay.upcoming.map(({ day, hours }) => (
                     <div key={day} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 10px' }}>
                       <span style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-body-sm)', color: 'var(--color-ink-muted)' }}>{day}</span>
@@ -483,7 +531,6 @@ export default function VenueDetailPage() {
               )}
             </div>
 
-            {/* Location card */}
             <div style={{ flex: '1 1 300px', minWidth: 0, background: 'var(--color-surface)', border: '1px solid var(--color-rule)', borderRadius: 12, padding: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-blue)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -497,7 +544,6 @@ export default function VenueDetailPage() {
                 {[venue.address, venue.suburb].filter(Boolean).join(', ')}
               </p>
 
-              {/* Walking time */}
               {userLocation && walkMins !== null ? (
                 <div className="flex items-center gap-2">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-ink-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -520,7 +566,6 @@ export default function VenueDetailPage() {
                 </button>
               )}
 
-              {/* Phone */}
               {venue.phone && (
                 <button onClick={() => { window.location.href = `tel:${venue.phone}` }}
                   className="venue-detail-link"
@@ -535,16 +580,14 @@ export default function VenueDetailPage() {
             </div>
           </div>
 
-          {/* Get Directions section */}
           <div ref={directionsRef} style={{ background: 'var(--color-surface)', border: '1px solid var(--color-rule)', borderRadius: 12, padding: 20, marginBottom: 24 }}>
             <h2 style={{ fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 'var(--text-title-xs)', color: 'var(--color-ink)', margin: '0 0 4px' }}>Get Directions</h2>
             <p style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-body-sm)', color: 'var(--color-ink-muted)', margin: '0 0 16px', lineHeight: 'var(--leading-body)' }}>Choose your preferred walking path based on shade.</p>
 
-            {/* Route toggle */}
             <div style={{ display: 'flex', background: 'var(--color-warm)', borderRadius: 50, padding: 4, marginBottom: 16 }}>
               {[
                 { key: 'fastest', label: routeLoading && routeMode === 'fastest' ? 'Loading…' : 'Fastest Route' },
-                { key: 'coolest', label: 'Coolest Route' },
+                { key: 'coolest', label: routeLoading && routeMode === 'coolest' ? 'Loading…' : 'Coolest Route' },
               ].map(({ key, label }) => (
                 <button key={key} className="venue-route-tab" onClick={() => setRouteMode(key)}
                   style={{ flex: 1, padding: '10px 16px', borderRadius: 50, border: 'none', cursor: 'pointer', background: routeMode === key ? 'var(--color-surface)' : 'transparent', color: routeMode === key ? 'var(--color-blue)' : 'var(--color-ink-muted)', fontWeight: routeMode === key ? 700 : 500, boxShadow: routeMode === key ? '0 1px 4px rgba(0,0,0,0.1)' : 'none', fontFamily: 'var(--font-body)', fontSize: 'var(--text-label)', minHeight: 48, transition: 'all 0.15s ease' }}
@@ -558,7 +601,6 @@ export default function VenueDetailPage() {
               <p style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-body-sm)', color: 'var(--color-orange)', marginBottom: 12 }}>{routeError}</p>
             )}
 
-            {/* Inline map */}
             <div style={{ borderRadius: 12, overflow: 'hidden', height: 300 }}>
               <MapContainer center={[venue.lat, venue.lng]} zoom={16} style={{ width: '100%', height: '100%' }} zoomControl={false}>
                 <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" attribution="&copy; OpenStreetMap contributors &copy; CARTO" />
@@ -579,10 +621,9 @@ export default function VenueDetailPage() {
               </MapContainer>
             </div>
 
-            {/* Step-by-step directions */}
             {routeSteps.length > 0 && (
               <div style={{ marginTop: 20, borderTop: '1px solid var(--color-rule)', paddingTop: 16 }}>
-              <p style={{ fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 'var(--text-label)', color: 'var(--color-ink-muted)', marginBottom: 10 }}>
+                <p style={{ fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 'var(--text-label)', color: 'var(--color-ink-muted)', marginBottom: 10 }}>
                   Step-by-step
                 </p>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -613,7 +654,6 @@ export default function VenueDetailPage() {
             )}
           </div>
 
-          {/* Share This Route with Family button */}
           <button className="venue-detail-link" onClick={() => setShareModalOpen(true)}
             style={{ width: '100%', background: 'var(--color-surface)', color: 'var(--color-green)', border: '2px solid var(--color-green)', borderRadius: 12, padding: '18px 0', fontSize: 'var(--text-body)', fontWeight: 700, fontFamily: 'var(--font-body)', cursor: 'pointer', minHeight: 48, marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
           >
@@ -627,13 +667,11 @@ export default function VenueDetailPage() {
             Let your family know where you're going
           </p>
 
-          {/* View on Spaces button */}
           <button className="venue-detail-action" onClick={() => navigate('/spaces', { state: { flyTo: { lat: venue.lat, lng: venue.lng }, openVenueId: venue.id } })}
             style={{ width: '100%', background: 'var(--color-blue)', color: '#fff', border: 'none', borderRadius: 12, padding: '18px 0', fontSize: 'var(--text-body)', fontWeight: 700, fontFamily: 'var(--font-body)', cursor: 'pointer', minHeight: 48, marginBottom: 40 }}
           >
             View in Spaces →
           </button>
-
         </div>
       </main>
 

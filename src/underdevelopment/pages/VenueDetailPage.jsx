@@ -331,8 +331,12 @@ export default function VenueDetailPage() {
           <MapContainer center={[venue.lat, venue.lng]} zoom={15} style={{ height: '100%', width: '100%' }} zoomControl={true}>
             <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" attribution="&copy; OpenStreetMap contributors &copy; CARTO" />
             <Marker position={[venue.lat, venue.lng]} icon={venuePinIcon} />
+            <Marker position={[venue.lat, venue.lng]} icon={destinationLabelIcon} interactive={false} />
             {!isNaN(shareLat) && !isNaN(shareLng) && (
-              <Marker position={[shareLat, shareLng]} icon={userPinIcon} />
+              <>
+                <Marker position={[shareLat, shareLng]} icon={userPinIcon} />
+                <Marker position={[shareLat, shareLng]} icon={startLabelIcon} interactive={false} />
+              </>
             )}
             {routeCoords.length > 0 && (
               <Polyline positions={routeCoords} pathOptions={{ color: '#1852B4', weight: 6, opacity: 0.85 }} />

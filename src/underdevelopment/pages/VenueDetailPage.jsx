@@ -366,7 +366,7 @@ export default function VenueDetailPage() {
               </>
             )}
             {routeCoords.length > 0 && (
-              <Polyline positions={routeCoords} pathOptions={{ color: '#1852B4', weight: 6, opacity: 0.85 }} />
+              <Polyline positions={routeCoords} pathOptions={{ color: routeMode === 'coolest' ? '#16a34a' : '#1852B4', weight: 6, opacity: 0.85 }} />
             )}
             {routeCoords.length > 0 && (
               <MapBoundsController routeCoords={routeCoords} venueLat={venue.lat} venueLng={venue.lng} />

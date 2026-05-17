@@ -264,6 +264,154 @@ def calculate_shade_coverage(route_coords):
     }
 
 
+def calculate_shade_coverage_batch(routes):
+    valid_routes = []
+
+    for route in routes:
+        coords = route.get('coords', []) if isinstance(route, dict) else []
+        distance_m = route.get('distance_m') if isinstance(route, dict) else None
+
+        if not coords or len(coords) < 2:
+            continue
+
+        lng_lat_points = []
+
+        try:
+            for point in coords:
+                if len(point) < 2:
+                    raise ValueError
+                lat = float(point[0])
+                lng = float(point[1])
+                lng_lat_points.append((lng, lat))
+        except (TypeError, ValueError):
+            continue
+
+        if len(lng_lat_points) < 2:
+            continue
+
+        route_line = LineString(lng_lat_points)
+
+        if route_line.is_empty or route_line.length == 0:
+            continue
+
+        try:
+            parsed_distance_m = float(distance_m)
+        except (TypeError, ValueError):
+            parsed_distance_m = None
+
+        valid_routes.append({
+            'coords': coords,
+            'distance_m': parsed_distance_m,
+            'wkt': route_line.wkt,
+        })
+
+    if not valid_routes:
+        return []
+
+    cur = get_db().cursor()
+    cur.execute("""
+        WITH input_routes AS (
+            SELECT
+                route_index,
+                ST_SetSRID(ST_GeomFromText(route_wkt), 4326) AS geom
+            FROM unnest(%s::text[]) WITH ORDINALITY AS routes(route_wkt, route_index)
+        ),
+        nearby_canopies AS (
+            SELECT
+                input_routes.route_index,
+                tree_canopies.geom
+            FROM input_routes
+            JOIN tree_canopies
+              ON ST_Intersects(
+                  tree_canopies.geom,
+                  ST_Buffer(input_routes.geom::geography, 20)::geometry
+              )
+        ),
+        canopy_stats AS (
+            SELECT
+                input_routes.route_index,
+                COUNT(nearby_canopies.geom) AS nearby_canopy_count
+            FROM input_routes
+            LEFT JOIN nearby_canopies
+              ON nearby_canopies.route_index = input_routes.route_index
+            GROUP BY input_routes.route_index
+        ),
+        clipped_segments AS (
+            SELECT
+                nearby_canopies.route_index,
+                ST_Intersection(
+                    input_routes.geom,
+                    ST_Buffer(nearby_canopies.geom::geography, 5)::geometry
+                ) AS geom
+            FROM nearby_canopies
+            JOIN input_routes
+              ON input_routes.route_index = nearby_canopies.route_index
+        ),
+        merged_segments AS (
+            SELECT
+                route_index,
+                ST_UnaryUnion(ST_Collect(geom)) AS geom
+            FROM clipped_segments
+            WHERE NOT ST_IsEmpty(geom)
+            GROUP BY route_index
+        )
+        SELECT
+            input_routes.route_index,
+            ST_Length(input_routes.geom::geography) AS total_length_m,
+            COALESCE(ST_Length(merged_segments.geom::geography), 0) AS shaded_length_m,
+            canopy_stats.nearby_canopy_count
+        FROM input_routes
+        JOIN canopy_stats
+          ON canopy_stats.route_index = input_routes.route_index
+        LEFT JOIN merged_segments
+          ON merged_segments.route_index = input_routes.route_index
+        ORDER BY input_routes.route_index;
+    """, ([route['wkt'] for route in valid_routes],))
+
+    rows = cur.fetchall()
+    cur.close()
+
+    scored_routes = []
+
+    for row in rows:
+        route_index = int(row['route_index']) - 1
+        source_route = valid_routes[route_index]
+        total_length_m = float(row['total_length_m']) if row['total_length_m'] is not None else 0
+        shaded_length_m = float(row['shaded_length_m']) if row['shaded_length_m'] is not None else 0
+        shade_coverage_percent = min((shaded_length_m / total_length_m) * 100, 100) if total_length_m else 0
+
+        scored_routes.append({
+            'coords': source_route['coords'],
+            'distance_m': round(source_route['distance_m'], 2) if source_route['distance_m'] is not None else round(total_length_m, 2),
+            'total_length_m': round(total_length_m, 2),
+            'shaded_length_m': round(shaded_length_m, 2),
+            'shade_coverage_percent': round(shade_coverage_percent, 1),
+            'nearby_canopy_count': int(row['nearby_canopy_count'] or 0),
+            'shade_score': round(shade_coverage_percent),
+        })
+
+    return scored_routes
+
+
+def select_coolest_route(scored_routes):
+    if not scored_routes:
+        return None
+
+    selected_route_index = 0
+    fastest_route = scored_routes[0]
+    fastest_distance_m = fastest_route['distance_m']
+
+    for index, route in enumerate(scored_routes[1:], start=1):
+        distance_is_acceptable = route['distance_m'] <= fastest_distance_m * 1.20
+        shade_is_better = route['shade_coverage_percent'] > fastest_route['shade_coverage_percent']
+
+        if distance_is_acceptable and shade_is_better:
+            selected_route_index = index
+            fastest_route = route
+
+    return selected_route_index
+
+
 @app.route('/api/coolest-route', methods=['GET', 'POST', 'OPTIONS'])
 @cross_origin()
 def get_coolest_route():
@@ -276,34 +424,50 @@ def get_coolest_route():
     Uses a sample route for browser testing.
 
     POST:
-    Receives real route coordinates from the frontend and calculates
-    shade coverage percentage using Shapely.
+    Receives candidate routes from the frontend, scores them in one batch,
+    and returns the coolest acceptable route.
     """
 
     if request.method == 'POST':
         data = request.get_json()
-        route_coords = data.get('route_coords', []) if data else []
+        routes = data.get('routes', []) if data else []
+        routes_are_similar = bool(data.get('routes_are_similar')) if data else False
     else:
         # Sample route for quick browser testing only.
-        route_coords = [
-            [-37.8136, 144.9631],
-            [-37.8142, 144.9626],
-            [-37.8150, 144.9620],
-            [-37.8160, 144.9630]
+        routes = [
+            {
+                'coords': [
+                    [-37.8136, 144.9631],
+                    [-37.8142, 144.9626],
+                    [-37.8150, 144.9620],
+                    [-37.8160, 144.9630]
+                ],
+                'distance_m': 325
+            }
         ]
+        routes_are_similar = False
 
-    result = calculate_shade_coverage(route_coords)
+    if not isinstance(routes, list):
+        return jsonify({'error': 'routes must be a list'}), 400
 
-    if result is None:
-        return jsonify({
-            'error': 'Invalid route coordinates'
-        }), 400
+    candidates = calculate_shade_coverage_batch(routes[:3])
+    selected_route_index = select_coolest_route(candidates)
+
+    if selected_route_index is None:
+        return jsonify({'error': 'No valid routes provided'}), 400
+
+    selected_route = candidates[selected_route_index]
 
     return jsonify({
         'route_name': 'Coolest Route',
-        'algorithm': 'Shapely shade coverage',
-        'message': 'Shade coverage is calculated from the percentage of route length near tree canopy polygons.',
-        'route': result
+        'algorithm': 'Candidate reranking with PostGIS shade coverage',
+        'message': 'The selected route is the shadiest acceptable candidate within 120% of the fastest route distance.',
+        'fastest_route_index': 0,
+        'selected_route_index': selected_route_index,
+        'routes_are_similar': routes_are_similar,
+        'same_as_fastest': selected_route_index == 0,
+        'candidates': candidates,
+        'route': selected_route
     })
 
 

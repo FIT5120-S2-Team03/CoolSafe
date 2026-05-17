@@ -26,10 +26,12 @@ import HomePageV2 from './version2/pages/HomePage'
 import MapPageV2 from './version2/pages/MapPage'
 
 function DevLayout({ children }) {
+  const { search } = useLocation()
+  const isShareView = new URLSearchParams(search).get('share') === 'true'
   return (
     <>
       <GlobalLocationModal />
-      <AIFinderButton />
+      {!isShareView && <AIFinderButton />}
       {children}
     </>
   )

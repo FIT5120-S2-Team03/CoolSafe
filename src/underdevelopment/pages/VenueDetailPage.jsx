@@ -11,6 +11,21 @@ import { DAYS, fmt, getHoursDisplay, maneuverIcon, maneuverLabel, fmtDist } from
 import mockLocation from '../data/mockLocation.json'
 import { getCachedRoute, getRouteCacheKey, setCachedRoute } from '../utils/routeCache'
 
+function decodePolyline(str) {
+  const coords = []
+  let index = 0, lat = 0, lng = 0
+  while (index < str.length) {
+    let b, shift = 0, result = 0
+    do { b = str.charCodeAt(index++) - 63; result |= (b & 0x1f) << shift; shift += 5 } while (b >= 0x20)
+    lat += result & 1 ? ~(result >> 1) : result >> 1
+    shift = 0; result = 0
+    do { b = str.charCodeAt(index++) - 63; result |= (b & 0x1f) << shift; shift += 5 } while (b >= 0x20)
+    lng += result & 1 ? ~(result >> 1) : result >> 1
+    coords.push([lat / 1e5, lng / 1e5])
+  }
+  return coords
+}
+
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'https://coolsafe.onrender.com'
 const ROUTE_SIMILARITY_DISTANCE_M = 15
 const ROUTE_SIMILARITY_THRESHOLD = 0.8
@@ -128,6 +143,7 @@ export default function VenueDetailPage() {
   const shareLat = parseFloat(searchParams.get('from_lat'))
   const shareLng = parseFloat(searchParams.get('from_lng'))
   const shareRouteType = searchParams.get('route_type') ?? 'fastest'
+  const sharePolylineParam = searchParams.get('polyline')
 
   const { venue, loading, error } = useVenue(id, location.state?.venue)
 
@@ -256,13 +272,18 @@ export default function VenueDetailPage() {
   }, [userLocation, routeMode, venue, isShareView, fetchFastestRoute, fetchCoolestRoute])
 
   useEffect(() => {
-    if (!isShareView || !venue || isNaN(shareLat) || isNaN(shareLng)) return
+    if (!isShareView || !venue) return
+    if (sharePolylineParam) {
+      setRouteCoords(decodePolyline(sharePolylineParam))
+      return
+    }
+    if (isNaN(shareLat) || isNaN(shareLng)) return
     if (shareRouteType === 'coolest') {
       fetchCoolestRoute({ lat: shareLat, lng: shareLng })
     } else {
       fetchFastestRoute({ lat: shareLat, lng: shareLng })
     }
-  }, [isShareView, venue, shareLat, shareLng, shareRouteType, fetchFastestRoute])
+  }, [isShareView, venue, shareLat, shareLng, shareRouteType, sharePolylineParam, fetchFastestRoute, fetchCoolestRoute])
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
@@ -623,6 +644,7 @@ export default function VenueDetailPage() {
         venueName={venue.name}
         routeType={routeMode}
         userLocation={userLocation}
+        routeCoords={routeCoords}
       />
     </div>
   )

@@ -3,6 +3,27 @@ import { QRCodeCanvas } from 'qrcode.react'
 import ModalFrame from '../layout/ModalFrame'
 import { INK, MUTED, RULE } from '../../styles/colors'
 
+function encodePolyline(coords) {
+  let result = ''
+  let prevLat = 0
+  let prevLng = 0
+  for (const [lat, lng] of coords) {
+    const dLat = Math.round((lat - prevLat) * 1e5)
+    const dLng = Math.round((lng - prevLng) * 1e5)
+    prevLat = lat
+    prevLng = lng
+    for (const v of [dLat, dLng]) {
+      let x = v < 0 ? ~(v << 1) : v << 1
+      while (x >= 0x20) {
+        result += String.fromCharCode(((0x20 | (x & 0x1f)) + 63))
+        x >>= 5
+      }
+      result += String.fromCharCode((x + 63))
+    }
+  }
+  return result
+}
+
 const FONT_HEADING = "var(--font-title)"
 const FONT_BODY = "var(--font-body)"
 
@@ -41,16 +62,17 @@ function AppButton({ label, bg, children, href, onClick }) {
   )
 }
 
-export default function ShareRouteModal({ isOpen, onClose, venueId, venueName, routeType, userLocation }) {
+export default function ShareRouteModal({ isOpen, onClose, venueId, venueName, routeType, userLocation, routeCoords }) {
   const qrRef = useRef(null)
   const [copied, setCopied] = useState(false)
 
   if (!isOpen) return null
 
   const base = import.meta.env.VITE_SITE_URL || window.location.origin
+  const encodedPolyline = routeCoords && routeCoords.length > 0 ? encodePolyline(routeCoords) : null
   const shareUrl = userLocation
-    ? `${base}/venue/${venueId}?share=true&from_lat=${userLocation.lat}&from_lng=${userLocation.lng}&route_type=${routeType}`
-    : `${base}/venue/${venueId}?share=true&route_type=${routeType}`
+    ? `${base}/venue/${venueId}?share=true&from_lat=${userLocation.lat}&from_lng=${userLocation.lng}&route_type=${routeType}${encodedPolyline ? `&polyline=${encodeURIComponent(encodedPolyline)}` : ''}`
+    : `${base}/venue/${venueId}?share=true&route_type=${routeType}${encodedPolyline ? `&polyline=${encodeURIComponent(encodedPolyline)}` : ''}`
   const routeLabel = routeType === 'fastest' ? 'Fastest Route' : 'Coolest Route'
 
   function handleSaveImage() {

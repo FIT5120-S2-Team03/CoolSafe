@@ -16,7 +16,8 @@ export const UV_BY_RISK = {
 
 export function scoreColour(score) {
   if (score >= 75) return '#B85A3C'
-  if (score >= 50) return '#D49A3A'
+  if (score >= 55) return '#B87200'
+  if (score >= 30) return '#D49A3A'
   return '#6B7A3A'
 }
 
@@ -36,12 +37,11 @@ export function aqiBadgeColor(info, fallbackColor = '#6E6358') {
   return '#8B0000'
 }
 
-export function scoreVerdict(score, hasMed, band) {
-  if (!hasMed) return heatCopy(band).baseVerdict
-  if (score >= 90 || band === 'extreme') return 'Stay indoors'
-  if (score >= 75) return 'Take action'
-  if (score >= 50) return 'Be careful'
-  return 'Mostly safe'
+export function scoreVerdict(score) {
+  if (score >= 75) return 'Stay indoors'
+  if (score >= 55) return 'Take action'
+  if (score >= 30) return 'Be careful'
+  return 'All clear'
 }
 
 export function heatBand(maxTemp) {

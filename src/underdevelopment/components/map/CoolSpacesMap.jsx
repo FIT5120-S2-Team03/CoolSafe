@@ -25,6 +25,19 @@ import useHVI from '../../hooks/useHVI'
 import { CATEGORY_MARKER_COLORS } from '../../utils/categoryMapping'
 import mockLocation from '../../data/mockLocation.json'
 import VenuePopup from './VenuePopupCard'
+import {
+  clearRoutePrefetch,
+  getCachedRoute,
+  getRouteCacheKey,
+  getRoutePrefetch,
+  setCachedRoute,
+  setRoutePrefetch,
+} from '../../utils/routeCache'
+
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'https://coolsafe.onrender.com'
+const ROUTE_SIMILARITY_DISTANCE_M = 15
+const ROUTE_SIMILARITY_THRESHOLD = 0.8
+const WALKING_SPEED_KMH = 4.5
 
 const locationPinIcon = L.divIcon({
   className: '',
@@ -84,6 +97,65 @@ function hviStyle(feature) {
   }
 }
 
+function toRadians(value) {
+  return (value * Math.PI) / 180
+}
+
+function haversineMeters(a, b) {
+  const earthRadiusM = 6371000
+  const dLat = toRadians(b[0] - a[0])
+  const dLng = toRadians(b[1] - a[1])
+  const lat1 = toRadians(a[0])
+  const lat2 = toRadians(b[0])
+  const sinLat = Math.sin(dLat / 2)
+  const sinLng = Math.sin(dLng / 2)
+  const h = sinLat * sinLat + Math.cos(lat1) * Math.cos(lat2) * sinLng * sinLng
+  return 2 * earthRadiusM * Math.asin(Math.sqrt(h))
+}
+
+function getRouteOverlapRatio(routeA, routeB) {
+  if (!routeA?.length || !routeB?.length) return 0
+
+  const sampleStep = Math.max(1, Math.floor(routeA.length / 40))
+  let samples = 0
+  let overlappingSamples = 0
+
+  for (let i = 0; i < routeA.length; i += sampleStep) {
+    samples += 1
+    const point = routeA[i]
+    const overlaps = routeB.some((candidatePoint) => haversineMeters(point, candidatePoint) <= ROUTE_SIMILARITY_DISTANCE_M)
+    if (overlaps) overlappingSamples += 1
+  }
+
+  return samples === 0 ? 0 : overlappingSamples / samples
+}
+
+function routesAreVisuallySimilar(routeA, routeB) {
+  return (
+    getRouteOverlapRatio(routeA, routeB) >= ROUTE_SIMILARITY_THRESHOLD &&
+    getRouteOverlapRatio(routeB, routeA) >= ROUTE_SIMILARITY_THRESHOLD
+  )
+}
+
+function getOffsetWaypoint(start, end) {
+  const midLat = (start.lat + end.lat) / 2
+  const midLng = (start.lng + end.lng) / 2
+  const dLat = end.lat - start.lat
+  const dLng = end.lng - start.lng
+  const magnitude = Math.hypot(dLat, dLng) || 1
+  const offset = 0.0018
+
+  return {
+    lat: midLat - (dLng / magnitude) * offset,
+    lng: midLng + (dLat / magnitude) * offset,
+  }
+}
+
+function getWalkingMinutesFromDistance(distanceM) {
+  if (distanceM == null) return null
+  return Math.max(1, Math.round((distanceM / 1000 / WALKING_SPEED_KMH) * 60))
+}
+
 export default function CoolSpacesMap({ selectedCategories, flyTo, showHVI, openVenueId }) {
   const mapRef = useRef(null)
   const [selectedVenue, setSelectedVenue] = useState(null)
@@ -91,9 +163,13 @@ export default function CoolSpacesMap({ selectedCategories, flyTo, showHVI, open
   const [userLocation, setUserLocation] = useState(
     mockLocation.enabled ? { lat: mockLocation.lat, lng: mockLocation.lng } : null
   )
-  const [routeCoords, setRouteCoords] = useState([])
+  const [fastestRouteCoords, setFastestRouteCoords] = useState([])
+  const [coolestRouteCoords, setCoolestRouteCoords] = useState([])
   const [routeLoading, setRouteLoading] = useState(false)
   const [routeError, setRouteError] = useState('')
+  const [routeType, setRouteType] = useState('fastest')
+  const [routeScore, setRouteScore] = useState(null)
+  const [fastestDurationMin, setFastestDurationMin] = useState(null)
   const [mapReady, setMapReady] = useState(false)
 
   useEffect(() => {
@@ -213,14 +289,19 @@ export default function CoolSpacesMap({ selectedCategories, flyTo, showHVI, open
   }
 
   function clearRoute() {
-    setRouteCoords([])
+    setFastestRouteCoords([])
+    setCoolestRouteCoords([])
     setRouteError('')
+    setRouteScore(null)
+    setFastestDurationMin(null)
   }
 
   async function handleFastestRoute(venue) {
     try {
       setRouteLoading(true)
       setRouteError('')
+      setRouteType('fastest')
+      setRouteScore(null)
 
       const currentLocation = userLocation || (await getCurrentLocation())
       setUserLocation(currentLocation)
@@ -234,10 +315,138 @@ export default function CoolSpacesMap({ selectedCategories, flyTo, showHVI, open
       if (!data.routes || data.routes.length === 0) throw new Error('No route found.')
 
       const coords = data.routes[0].geometry.coordinates.map((point) => [point[1], point[0]])
-      setRouteCoords(coords)
+      setFastestRouteCoords(coords)
+      setCoolestRouteCoords([])
+      setFastestDurationMin(getWalkingMinutesFromDistance(data.routes[0].distance))
 
       if (mapRef.current && coords.length > 0) {
         mapRef.current.fitBounds(L.latLngBounds(coords), {
+          paddingTopLeft: [60, 440],
+          paddingBottomRight: [60, 260],
+        })
+        setTimeout(() => keepVenueCardInView(venue), 350)
+      }
+    } catch (err) {
+      setRouteError(err.message)
+      window.alert(err.message)
+    } finally {
+      setRouteLoading(false)
+    }
+  }
+
+  async function buildCoolestRouteResult(venue, currentLocation) {
+    const url =
+      `https://router.project-osrm.org/route/v1/foot/` +
+      `${currentLocation.lng},${currentLocation.lat};` +
+      `${venue.lng},${venue.lat}` +
+      `?overview=full&geometries=geojson&alternatives=true&steps=true`
+
+    const res = await fetch(url)
+    if (!res.ok) throw new Error(`Coolest route request failed: HTTP ${res.status}`)
+
+    const data = await res.json()
+    if (!data.routes || data.routes.length === 0) throw new Error('No coolest route found.')
+
+    const candidateRoutes = data.routes.slice(0, 2).map((route) => ({
+      coords: route.geometry.coordinates.map((point) => [point[1], point[0]]),
+      distance_m: route.distance,
+      steps: route.legs?.[0]?.steps ?? [],
+    }))
+
+    const routesAreSimilar =
+      candidateRoutes.length < 2 ||
+      routesAreVisuallySimilar(candidateRoutes[0].coords, candidateRoutes[1].coords)
+
+    if (routesAreSimilar) {
+      const waypoint = getOffsetWaypoint(currentLocation, venue)
+      const waypointUrl =
+        `https://router.project-osrm.org/route/v1/foot/` +
+        `${currentLocation.lng},${currentLocation.lat};` +
+        `${waypoint.lng},${waypoint.lat};` +
+        `${venue.lng},${venue.lat}` +
+        `?overview=full&geometries=geojson&steps=true`
+
+      const waypointRes = await fetch(waypointUrl)
+      if (waypointRes.ok) {
+        const waypointData = await waypointRes.json()
+        const waypointRoute = waypointData.routes?.[0]
+        if (waypointRoute) {
+          candidateRoutes.push({
+            coords: waypointRoute.geometry.coordinates.map((point) => [point[1], point[0]]),
+            distance_m: waypointRoute.distance,
+            steps: waypointRoute.legs?.flatMap((leg) => leg.steps ?? []) ?? [],
+          })
+        }
+      }
+    }
+
+    const scoreRes = await fetch(`${API_BASE}/api/coolest-route`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ routes: candidateRoutes.slice(0, 3), routes_are_similar: routesAreSimilar }),
+    })
+    if (!scoreRes.ok) throw new Error(`Shade score request failed: HTTP ${scoreRes.status}`)
+
+    const scoreData = await scoreRes.json()
+    const selectedCoords = scoreData.route?.coords ?? candidateRoutes[scoreData.selected_route_index]?.coords
+    const selectedSteps = candidateRoutes[scoreData.selected_route_index]?.steps ?? []
+    if (!selectedCoords || selectedCoords.length === 0) throw new Error('No selected coolest route returned.')
+
+    return {
+      fastestCoords: candidateRoutes[0].coords,
+      coolestCoords: selectedCoords,
+      coolestSteps: selectedSteps,
+      scoreData,
+    }
+  }
+
+  async function prefetchCoolestRoute(venue) {
+    try {
+      const currentLocation = userLocation || (await getCurrentLocation())
+      const cacheKey = getRouteCacheKey(currentLocation, venue)
+
+      if (getCachedRoute(cacheKey)) return
+      if (getRoutePrefetch(cacheKey)) return getRoutePrefetch(cacheKey)
+
+      const prefetchPromise = buildCoolestRouteResult(venue, currentLocation)
+        .then((result) => {
+          setCachedRoute(cacheKey, result)
+          return result
+        })
+        .finally(() => {
+          clearRoutePrefetch(cacheKey)
+        })
+
+      setRoutePrefetch(cacheKey, prefetchPromise)
+      return prefetchPromise
+    } catch {
+      return null
+    }
+  }
+
+  async function handleCoolestRoute(venue) {
+    try {
+      setRouteLoading(true)
+      setRouteError('')
+      setRouteType('coolest')
+      setRouteScore(null)
+
+      const currentLocation = userLocation || (await getCurrentLocation())
+      setUserLocation(currentLocation)
+      const cacheKey = getRouteCacheKey(currentLocation, venue)
+
+      const result =
+        getCachedRoute(cacheKey) ??
+        (await getRoutePrefetch(cacheKey)) ??
+        (await buildCoolestRouteResult(venue, currentLocation))
+
+      setCachedRoute(cacheKey, result)
+      setFastestRouteCoords(result.fastestCoords)
+      setCoolestRouteCoords(result.coolestCoords)
+      setRouteScore(result.scoreData)
+
+      if (mapRef.current && result.coolestCoords.length > 0) {
+        mapRef.current.fitBounds(L.latLngBounds(result.coolestCoords), {
           paddingTopLeft: [60, 440],
           paddingBottomRight: [60, 260],
         })
@@ -308,7 +517,10 @@ export default function CoolSpacesMap({ selectedCategories, flyTo, showHVI, open
             key={selectedVenue.id}
             venue={selectedVenue}
             userLocation={userLocation}
+            routeDurationMin={fastestDurationMin}
             onFastestRoute={handleFastestRoute}
+            onCoolestRoute={handleCoolestRoute}
+            onPrefetchCoolestRoute={prefetchCoolestRoute}
             routeLoading={routeLoading}
             onClose={closeVenue}
           />
@@ -329,6 +541,100 @@ export default function CoolSpacesMap({ selectedCategories, flyTo, showHVI, open
         </div>
       )}
 
+      {routeType === 'fastest' && fastestDurationMin != null && selectedVenue && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 18,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 1000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 12,
+            flexWrap: 'wrap',
+            maxWidth: 'calc(100% - 32px)',
+            backgroundColor: 'rgba(255, 255, 255, 0.92)',
+            border: '1px solid rgba(24, 82, 180, 0.18)',
+            borderRadius: 999,
+            padding: '10px 16px',
+            boxShadow: '0 10px 28px rgba(24, 82, 180, 0.14)',
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
+            fontFamily: 'var(--font-body)',
+            color: '#1d4ed8',
+            pointerEvents: 'none',
+          }}
+        >
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 14, fontWeight: 700, color: '#17304f', whiteSpace: 'nowrap' }}>
+            <span style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#2563eb', boxShadow: '0 0 0 4px rgba(37, 99, 235, 0.14)' }} />
+            Navigating to {selectedVenue.name}
+          </span>
+          <span style={{ width: 1, height: 18, backgroundColor: 'rgba(29, 78, 216, 0.16)' }} />
+          <span style={{ fontSize: 14, fontWeight: 700, whiteSpace: 'nowrap' }}>
+            ⚡ Fastest route
+          </span>
+          <span style={{ width: 1, height: 18, backgroundColor: 'rgba(29, 78, 216, 0.16)' }} />
+          <span style={{ fontSize: 15, fontWeight: 700, whiteSpace: 'nowrap' }}>
+            {fastestDurationMin} min
+          </span>
+        </div>
+      )}
+
+      {routeType === 'coolest' && routeScore?.route && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 18,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 1000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 12,
+            flexWrap: 'wrap',
+            maxWidth: 'calc(100% - 32px)',
+            backgroundColor: 'rgba(255, 255, 255, 0.92)',
+            border: '1px solid rgba(22, 163, 74, 0.18)',
+            borderRadius: 999,
+            padding: '10px 16px',
+            boxShadow: '0 10px 28px rgba(22, 101, 52, 0.14)',
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
+            fontFamily: 'var(--font-body)',
+            color: '#166534',
+            pointerEvents: 'none',
+          }}
+        >
+          {selectedVenue && (
+            <>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 14, fontWeight: 700, color: '#173326', whiteSpace: 'nowrap' }}>
+                <span style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#22c55e', boxShadow: '0 0 0 4px rgba(34, 197, 94, 0.14)' }} />
+                Navigating to {selectedVenue.name}
+              </span>
+              <span style={{ width: 1, height: 18, backgroundColor: 'rgba(22, 101, 52, 0.16)' }} />
+            </>
+          )}
+          <span style={{ fontSize: 14, fontWeight: 700, whiteSpace: 'nowrap' }}>
+            🌿 Coolest route
+          </span>
+          <span style={{ width: 1, height: 18, backgroundColor: 'rgba(22, 101, 52, 0.16)' }} />
+          <span style={{ fontSize: 15, fontWeight: 700, whiteSpace: 'nowrap' }}>
+            {routeScore.route.shade_coverage_percent}% shade
+          </span>
+          <span style={{ fontSize: 14, color: '#15803d', whiteSpace: 'nowrap' }}>
+            {(routeScore.route.shaded_length_m / 1000).toFixed(2)} km shaded
+          </span>
+          {routeScore.same_as_fastest && (
+            <span style={{ fontSize: 13, color: '#4b7f62', whiteSpace: 'nowrap' }}>
+              also fastest
+            </span>
+          )}
+        </div>
+      )}
+
       <MapContainer
         center={MELBOURNE}
         zoom={14}
@@ -345,10 +651,16 @@ export default function CoolSpacesMap({ selectedCategories, flyTo, showHVI, open
         <PinTracker venue={selectedVenue} onPosition={setPinPos} />
 
         <Pane name="route" style={{ zIndex: 450 }}>
-          {routeCoords.length > 0 && (
+          {routeType === 'fastest' && fastestRouteCoords.length > 0 && (
             <Polyline
-              positions={routeCoords}
+              positions={fastestRouteCoords}
               pathOptions={{ color: '#003fa4', weight: 6, opacity: 0.85 }}
+            />
+          )}
+          {routeType === 'coolest' && coolestRouteCoords.length > 0 && (
+            <Polyline
+              positions={coolestRouteCoords}
+              pathOptions={{ color: '#16a34a', weight: 6, opacity: 0.9 }}
             />
           )}
         </Pane>

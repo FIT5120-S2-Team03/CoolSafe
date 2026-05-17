@@ -9,6 +9,11 @@ import ShareRouteModal from '../components/venue/ShareRouteModal'
 import MapBoundsController from '../components/venue/MapBoundsController'
 import { DAYS, fmt, getHoursDisplay, maneuverIcon, maneuverLabel, fmtDist } from '../utils/venueDetailUtils'
 import mockLocation from '../data/mockLocation.json'
+import { getCachedRoute, getRouteCacheKey, setCachedRoute } from '../utils/routeCache'
+
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'https://coolsafe.onrender.com'
+const ROUTE_SIMILARITY_DISTANCE_M = 15
+const ROUTE_SIMILARITY_THRESHOLD = 0.8
 
 const userPinIcon = L.divIcon({
   className: '',
@@ -31,6 +36,88 @@ const venuePinIcon = L.divIcon({
     <circle cx="14" cy="14" r="3.5" fill="#1852B4"/>
   </svg>`,
 })
+
+function makeLabelIcon(label, tone = 'blue') {
+  const isBlue = tone === 'blue'
+  return L.divIcon({
+    className: '',
+    iconSize: [92, 28],
+    iconAnchor: [46, -4],
+    html: `<div style="
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width:72px;
+      height:28px;
+      padding:0 10px;
+      border-radius:999px;
+      background:rgba(255,255,255,0.95);
+      border:1px solid ${isBlue ? 'rgba(24,82,180,0.22)' : 'rgba(90,80,72,0.22)'};
+      box-shadow:0 6px 18px rgba(0,0,0,0.10);
+      color:${isBlue ? '#1852B4' : '#5A5048'};
+      font-family:var(--font-body);
+      font-size:12px;
+      font-weight:700;
+      white-space:nowrap;
+    ">${label}</div>`,
+  })
+}
+
+const startLabelIcon = makeLabelIcon('Start', 'neutral')
+const destinationLabelIcon = makeLabelIcon('Destination', 'blue')
+
+function toRadians(value) {
+  return (value * Math.PI) / 180
+}
+
+function haversineMeters(a, b) {
+  const earthRadiusM = 6371000
+  const dLat = toRadians(b[0] - a[0])
+  const dLng = toRadians(b[1] - a[1])
+  const lat1 = toRadians(a[0])
+  const lat2 = toRadians(b[0])
+  const sinLat = Math.sin(dLat / 2)
+  const sinLng = Math.sin(dLng / 2)
+  const h = sinLat * sinLat + Math.cos(lat1) * Math.cos(lat2) * sinLng * sinLng
+  return 2 * earthRadiusM * Math.asin(Math.sqrt(h))
+}
+
+function getRouteOverlapRatio(routeA, routeB) {
+  if (!routeA?.length || !routeB?.length) return 0
+  const sampleStep = Math.max(1, Math.floor(routeA.length / 40))
+  let samples = 0
+  let overlappingSamples = 0
+
+  for (let i = 0; i < routeA.length; i += sampleStep) {
+    samples += 1
+    const point = routeA[i]
+    const overlaps = routeB.some((candidatePoint) => haversineMeters(point, candidatePoint) <= ROUTE_SIMILARITY_DISTANCE_M)
+    if (overlaps) overlappingSamples += 1
+  }
+
+  return samples === 0 ? 0 : overlappingSamples / samples
+}
+
+function routesAreVisuallySimilar(routeA, routeB) {
+  return (
+    getRouteOverlapRatio(routeA, routeB) >= ROUTE_SIMILARITY_THRESHOLD &&
+    getRouteOverlapRatio(routeB, routeA) >= ROUTE_SIMILARITY_THRESHOLD
+  )
+}
+
+function getOffsetWaypoint(start, end) {
+  const midLat = (start.lat + end.lat) / 2
+  const midLng = (start.lng + end.lng) / 2
+  const dLat = end.lat - start.lat
+  const dLng = end.lng - start.lng
+  const magnitude = Math.hypot(dLat, dLng) || 1
+  const offset = 0.0018
+
+  return {
+    lat: midLat - (dLng / magnitude) * offset,
+    lng: midLng + (dLat / magnitude) * offset,
+  }
+}
 
 export default function VenueDetailPage() {
   const { id } = useParams()
@@ -90,8 +177,7 @@ export default function VenueDetailPage() {
     if (routeMode === 'fastest') {
       fetchFastestRoute(userLocation)
     } else {
-      setRouteCoords([])
-      setRouteSteps([])
+      fetchCoolestRoute(userLocation)
     }
   }, [userLocation, routeMode, venue, isShareView, fetchFastestRoute])
 
@@ -103,6 +189,78 @@ export default function VenueDetailPage() {
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
   }, [])
+
+  async function fetchCoolestRoute(from) {
+    try {
+      setRouteLoading(true)
+      setRouteError('')
+      const cacheKey = getRouteCacheKey(from, venue)
+      const cachedRoute = getCachedRoute(cacheKey)
+
+      if (cachedRoute) {
+        setRouteCoords(cachedRoute.coolestCoords)
+        setRouteSteps(cachedRoute.coolestSteps ?? [])
+        return
+      }
+
+      const url = `https://router.project-osrm.org/route/v1/foot/${from.lng},${from.lat};${venue.lng},${venue.lat}?overview=full&geometries=geojson&alternatives=true&steps=true`
+      const res = await fetch(url)
+      if (!res.ok) throw new Error(`Coolest route request failed: HTTP ${res.status}`)
+      const data = await res.json()
+      if (!data.routes || data.routes.length === 0) throw new Error('No coolest route found.')
+
+      const candidateRoutes = data.routes.slice(0, 2).map((route) => ({
+        coords: route.geometry.coordinates.map(([lng, lat]) => [lat, lng]),
+        distance_m: route.distance,
+        steps: route.legs?.[0]?.steps ?? [],
+      }))
+
+      const routesAreSimilar =
+        candidateRoutes.length < 2 ||
+        routesAreVisuallySimilar(candidateRoutes[0].coords, candidateRoutes[1].coords)
+
+      if (routesAreSimilar) {
+        const waypoint = getOffsetWaypoint(from, venue)
+        const waypointUrl = `https://router.project-osrm.org/route/v1/foot/${from.lng},${from.lat};${waypoint.lng},${waypoint.lat};${venue.lng},${venue.lat}?overview=full&geometries=geojson&steps=true`
+        const waypointRes = await fetch(waypointUrl)
+        if (waypointRes.ok) {
+          const waypointData = await waypointRes.json()
+          const waypointRoute = waypointData.routes?.[0]
+          if (waypointRoute) {
+            candidateRoutes.push({
+              coords: waypointRoute.geometry.coordinates.map(([lng, lat]) => [lat, lng]),
+              distance_m: waypointRoute.distance,
+              steps: waypointRoute.legs?.flatMap((leg) => leg.steps ?? []) ?? [],
+            })
+          }
+        }
+      }
+
+      const scoreRes = await fetch(`${API_BASE}/api/coolest-route`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ routes: candidateRoutes.slice(0, 3), routes_are_similar: routesAreSimilar }),
+      })
+      if (!scoreRes.ok) throw new Error(`Shade score request failed: HTTP ${scoreRes.status}`)
+      const scoreData = await scoreRes.json()
+      const selectedCoords = scoreData.route?.coords ?? candidateRoutes[scoreData.selected_route_index]?.coords
+      const selectedSteps = candidateRoutes[scoreData.selected_route_index]?.steps ?? []
+      if (!selectedCoords || selectedCoords.length === 0) throw new Error('No selected coolest route returned.')
+
+      setRouteCoords(selectedCoords)
+      setRouteSteps(selectedSteps)
+      setCachedRoute(cacheKey, {
+        fastestCoords: candidateRoutes[0].coords,
+        coolestCoords: selectedCoords,
+        coolestSteps: selectedSteps,
+        scoreData,
+      })
+    } catch (err) {
+      setRouteError(err.message)
+    } finally {
+      setRouteLoading(false)
+    }
+  }
 
   function requestLocation() {
     if (mockLocation.enabled) {
@@ -173,8 +331,12 @@ export default function VenueDetailPage() {
           <MapContainer center={[venue.lat, venue.lng]} zoom={15} style={{ height: '100%', width: '100%' }} zoomControl={true}>
             <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" attribution="&copy; OpenStreetMap contributors &copy; CARTO" />
             <Marker position={[venue.lat, venue.lng]} icon={venuePinIcon} />
+            <Marker position={[venue.lat, venue.lng]} icon={destinationLabelIcon} interactive={false} />
             {!isNaN(shareLat) && !isNaN(shareLng) && (
-              <Marker position={[shareLat, shareLng]} icon={userPinIcon} />
+              <>
+                <Marker position={[shareLat, shareLng]} icon={userPinIcon} />
+                <Marker position={[shareLat, shareLng]} icon={startLabelIcon} interactive={false} />
+              </>
             )}
             {routeCoords.length > 0 && (
               <Polyline positions={routeCoords} pathOptions={{ color: '#1852B4', weight: 6, opacity: 0.85 }} />
@@ -376,12 +538,16 @@ export default function VenueDetailPage() {
                 <MapBoundsController routeCoords={routeCoords} venueLat={venue.lat} venueLng={venue.lng} />
                 <Pane name="detail-route" style={{ zIndex: 450 }}>
                   {routeCoords.length > 0 && (
-                    <Polyline positions={routeCoords} pathOptions={{ color: '#1852B4', weight: 6, opacity: 0.85 }} />
+                    <Polyline positions={routeCoords} pathOptions={{ color: routeMode === 'coolest' ? '#16a34a' : '#1852B4', weight: 6, opacity: 0.85 }} />
                   )}
                 </Pane>
                 <Marker position={[venue.lat, venue.lng]} icon={venuePinIcon} />
+                <Marker position={[venue.lat, venue.lng]} icon={destinationLabelIcon} interactive={false} />
                 {userLocation && (
-                  <Marker position={[userLocation.lat, userLocation.lng]} icon={userPinIcon} />
+                  <>
+                    <Marker position={[userLocation.lat, userLocation.lng]} icon={userPinIcon} />
+                    <Marker position={[userLocation.lat, userLocation.lng]} icon={startLabelIcon} interactive={false} />
+                  </>
                 )}
               </MapContainer>
             </div>

@@ -37,10 +37,10 @@ export function TomorrowAlert({ daily }) {
         </div>
       </div>
       <div style={{ flex: 1, borderLeft: '0.5px solid rgba(0,0,0,0.09)', paddingLeft: 18 }}>
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: "var(--font-body)", fontSize: '1rem', fontWeight: 700, padding: '3px 10px', borderRadius: 20, marginBottom: 6, background: tomorrowMax >= 35 ? '#FDF0EB' : '#EAF5EE', color: tomorrowMax >= 35 ? '#C94B1A' : '#2A7D4F' }}>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: "var(--font-body)", fontSize: 'var(--text-label)', fontWeight: 700, padding: '3px 10px', borderRadius: 20, marginBottom: 6, background: tomorrowMax >= 35 ? '#FDF0EB' : '#EAF5EE', color: tomorrowMax >= 35 ? '#C94B1A' : '#2A7D4F' }}>
           {tag}
         </div>
-        <div style={{ fontFamily: "var(--font-body)", fontSize: '1rem', color: '#3A3A3A', lineHeight: 1.5 }}>{msg}</div>
+        <div style={{ fontFamily: "var(--font-body)", fontSize: 'var(--text-body-sm)', color: '#3A3A3A', lineHeight: 'var(--leading-body)' }}>{msg}</div>
       </div>
     </div>
   )
@@ -52,7 +52,7 @@ function CheckItem({ label }) {
   return (
     <div
       onClick={() => setDone(!done)}
-      style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: '0.5px solid rgba(0,0,0,0.06)', fontFamily: "var(--font-body)", fontSize: '1rem', color: done ? 'rgba(0,0,0,0.3)' : '#3A3A3A', textDecoration: done ? 'line-through' : 'none', cursor: 'pointer', userSelect: 'none' }}
+      style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: '0.5px solid rgba(0,0,0,0.06)', fontFamily: "var(--font-body)", fontSize: 'var(--text-body-sm)', color: done ? 'rgba(0,0,0,0.3)' : '#3A3A3A', textDecoration: done ? 'line-through' : 'none', cursor: 'pointer', userSelect: 'none' }}
     >
       <div style={{ width: 18, height: 18, borderRadius: 5, border: done ? 'none' : '1.5px solid rgba(0,0,0,0.2)', background: done ? '#2A7D4F' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.15s' }}>
         {done && (
@@ -90,7 +90,7 @@ export default function HourlyForecastStrip({ hourly, daily, nearestVenue, uvInf
         <div style={{ fontFamily: "var(--font-title)", fontSize: 'clamp(1.5rem,3vw,2.25rem)', letterSpacing: '-1px', color: '#0F0F0F' }}>
           Plan your day
         </div>
-        <div style={{ fontFamily: "var(--font-body)", fontSize: '0.9375rem', fontWeight: 500, color: '#5C5C5C', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+        <div style={{ fontFamily: "var(--font-body)", fontSize: 'var(--text-label)', fontWeight: 500, color: '#5C5C5C' }}>
           {date}
         </div>
       </div>
@@ -108,11 +108,11 @@ export default function HourlyForecastStrip({ hourly, daily, nearestVenue, uvInf
 
           {/* Legend */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 20, marginTop: 10, justifyContent: 'center', flexShrink: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: "var(--font-body)", fontSize: '0.9375rem', color: '#5C5C5C' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: "var(--font-body)", fontSize: 'var(--text-label)', color: '#5C5C5C' }}>
               <div style={{ width: 20, height: 2, borderRadius: 1, background: '#1852B4' }} />
               Temperature
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: "var(--font-body)", fontSize: '0.9375rem', color: '#5C5C5C' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: "var(--font-body)", fontSize: 'var(--text-label)', color: '#5C5C5C' }}>
               <div style={{ width: 20, borderTop: '2px dashed #E85D1A' }} />
               Heat alert threshold (32°C)
             </div>
@@ -130,12 +130,12 @@ export default function HourlyForecastStrip({ hourly, daily, nearestVenue, uvInf
           <div style={{ flex: 1, borderRadius: 14, background: '#fff', border: '0.5px solid rgba(42,125,79,0.15)', borderLeft: '3px solid #2A7D4F', display: 'flex', flexDirection: 'column', padding: '18px 16px', minHeight: 0, overflow: 'hidden' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
               <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#2A7D4F', display: 'inline-block' }} />
-              <span style={{ fontFamily: "var(--font-body)", fontSize: '1rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#2A7D4F' }}>Safe to go out</span>
+              <span style={{ fontFamily: "var(--font-body)", fontSize: 'var(--text-label)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#2A7D4F' }}>Safe to go out</span>
             </div>
             <div style={{ fontFamily: "var(--font-body)", fontSize: 'clamp(1rem,1.6vw,1.25rem)', fontWeight: 700, color: '#2A7D4F', letterSpacing: '-0.5px', marginBottom: 4 }}>
               {windows?.safeTime ?? '—'}
             </div>
-            <div style={{ fontFamily: "var(--font-body)", fontSize: '1rem', color: '#3A3A3A', marginBottom: 12 }}>
+            <div style={{ fontFamily: "var(--font-body)", fontSize: 'var(--text-body-sm)', color: '#3A3A3A', marginBottom: 12 }}>
               Good conditions for a walk or outdoor activities.
             </div>
 
@@ -147,7 +147,7 @@ export default function HourlyForecastStrip({ hourly, daily, nearestVenue, uvInf
                 <div style={{ fontFamily: "var(--font-title)", fontSize: '1.375rem', color: uvColor(uvInfo?.index) }}>
                   {uvInfo != null ? uvInfo.index : '—'}
                 </div>
-                <div style={{ fontFamily: "var(--font-body)", fontSize: '1rem', color: uvColor(uvInfo?.index), fontWeight: 500, marginTop: 2 }}>
+                <div style={{ fontFamily: "var(--font-body)", fontSize: 'var(--text-label)', color: uvColor(uvInfo?.index), fontWeight: 500, marginTop: 2 }}>
                   {uvInfo != null ? uvInfo.label : '—'}
                 </div>
               </div>
@@ -158,7 +158,7 @@ export default function HourlyForecastStrip({ hourly, daily, nearestVenue, uvInf
                 <div style={{ fontFamily: "var(--font-title)", fontSize: '1.375rem', color: '#0F0F0F' }}>
                   {daily?.todayMax != null ? `${Math.round(daily.todayMax)}°C` : '—'}
                 </div>
-                <div style={{ fontFamily: "var(--font-body)", fontSize: '1rem', color: '#5C5C5C', marginTop: 2 }}>
+                <div style={{ fontFamily: "var(--font-body)", fontSize: 'var(--text-label)', color: '#5C5C5C', marginTop: 2 }}>
                   {windows?.peakHour != null ? `at ${fmtH(windows.peakHour)}` : '—'}
                 </div>
               </div>
@@ -169,12 +169,12 @@ export default function HourlyForecastStrip({ hourly, daily, nearestVenue, uvInf
           <div style={{ flex: 1, borderRadius: 14, background: '#fff', border: '0.5px solid rgba(184,114,0,0.15)', borderLeft: '3px solid #B87200', display: 'flex', flexDirection: 'column', padding: '18px 16px 148px', minHeight: 0, position: 'relative', overflow: 'hidden' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
               <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#B87200', display: 'inline-block' }} />
-              <span style={{ fontFamily: "var(--font-body)", fontSize: '1rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#B87200' }}>Stay indoors</span>
+              <span style={{ fontFamily: "var(--font-body)", fontSize: 'var(--text-label)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#B87200' }}>Stay indoors</span>
             </div>
             <div style={{ fontFamily: "var(--font-body)", fontSize: 'clamp(1rem,1.6vw,1.25rem)', fontWeight: 700, color: '#B87200', letterSpacing: '-0.5px', marginBottom: 4 }}>
               {windows?.peakTime ?? 'Peak hours'}
             </div>
-            <div style={{ fontFamily: "var(--font-body)", fontSize: '1rem', color: '#3A3A3A', marginBottom: 8 }}>
+            <div style={{ fontFamily: "var(--font-body)", fontSize: 'var(--text-body-sm)', color: '#3A3A3A', marginBottom: 8 }}>
               Peak heat. Stay cool and drink water regularly.
             </div>
             <div>
@@ -187,18 +187,18 @@ export default function HourlyForecastStrip({ hourly, daily, nearestVenue, uvInf
             <div
               style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 148, padding: '12px 16px 14px', background: '#FDF5E6', borderTop: '0.5px solid rgba(184,114,0,0.15)', overflow: 'hidden' }}
             >
-              <div style={{ fontFamily: "var(--font-body)", fontSize: '0.9375rem', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#5C5C5C', marginBottom: 4 }}>
+              <div style={{ fontFamily: "var(--font-body)", fontSize: 'var(--text-label)', fontWeight: 600, color: '#5C5C5C', marginBottom: 4 }}>
                 Cool space nearby
               </div>
-              <div style={{ fontFamily: "var(--font-body)", fontSize: '0.9375rem', fontWeight: 700, color: '#0F0F0F', marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              <div style={{ fontFamily: "var(--font-body)", fontSize: 'var(--text-body-sm)', fontWeight: 700, color: '#0F0F0F', marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {nearestVenue?.name ?? '—'}
               </div>
-              <div style={{ fontFamily: "var(--font-body)", fontSize: '0.9375rem', color: '#5C5C5C', marginBottom: 10 }}>
+              <div style={{ fontFamily: "var(--font-body)", fontSize: 'var(--text-label)', color: '#5C5C5C', marginBottom: 10 }}>
                 {nearestVenue?.walkMins != null ? `${nearestVenue.walkMins} min walk` : 'Nearby'}
               </div>
               <button
                 onClick={() => navigate('/spaces')}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 20, background: '#B87200', border: 'none', fontFamily: "var(--font-body)", fontSize: '1rem', fontWeight: 600, color: '#fff', cursor: 'pointer', transition: 'opacity 0.18s' }}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 20, background: '#B87200', border: 'none', fontFamily: "var(--font-body)", fontSize: 'var(--text-label)', fontWeight: 600, color: '#fff', cursor: 'pointer', transition: 'opacity 0.18s' }}
                 onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.85' }}
                 onMouseLeave={(e) => { e.currentTarget.style.opacity = '1' }}
               >

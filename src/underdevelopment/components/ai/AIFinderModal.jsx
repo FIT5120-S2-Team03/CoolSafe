@@ -118,7 +118,7 @@ function LoadingSteps() {
             style={{
               display: 'flex', alignItems: 'center', gap: 10,
               padding: '8px 2px',
-              fontSize: 15, fontFamily: SANS,
+              fontSize: 'var(--text-label)', fontFamily: SANS,
               color: isPending ? C.textMuted : C.ink,
               fontWeight: isActive ? 600 : 400,
               opacity: isPending ? 0.4 : 1,
@@ -281,7 +281,7 @@ export default function AIFinderModal({
               </div>
               <div style={{ marginTop: 16, marginBottom: 14 }}>
                 <label style={{
-                  fontSize: 15, fontWeight: 600, color: C.textMuted,
+                  fontSize: 'var(--text-label)', fontWeight: 600, color: C.textMuted,
                   textTransform: 'uppercase', letterSpacing: '0.06em',
                   display: 'block', marginBottom: 6, fontFamily: SANS,
                 }}>
@@ -295,7 +295,7 @@ export default function AIFinderModal({
                   onChange={(e) => onExtraNote(e.target.value)}
                   placeholder="e.g. no stairs, with seating"
                   style={{
-                    width: '100%', padding: '10px 12px', fontSize: 15,
+                    width: '100%', padding: '10px 12px', fontSize: 'var(--text-label)',
                     fontFamily: SANS, border: `1px solid ${C.border}`,
                     borderRadius: 10, background: '#fff', color: C.ink,
                     boxSizing: 'border-box', transition: 'background 0.15s, border-color 0.15s',
@@ -317,12 +317,12 @@ export default function AIFinderModal({
           {view === 'results' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, paddingBottom: 8 }}>
               {error && (
-                <div style={{ padding: 20, textAlign: 'center', fontSize: 15, color: C.textMuted, fontFamily: SANS }}>
+                <div style={{ padding: 20, textAlign: 'center', fontSize: 'var(--text-body-sm)', color: C.textMuted, fontFamily: SANS }}>
                   {error}
                 </div>
               )}
               {!error && events.length === 0 && (
-                <div style={{ padding: 20, textAlign: 'center', fontSize: 15, color: C.textMuted, fontFamily: SANS }}>
+                <div style={{ padding: 20, textAlign: 'center', fontSize: 'var(--text-body-sm)', color: C.textMuted, fontFamily: SANS }}>
                   No results found nearby — try a different preference.
                 </div>
               )}
@@ -341,7 +341,7 @@ export default function AIFinderModal({
                   marginTop: 4, padding: 11,
                   background: 'transparent', border: `1px solid ${C.borderStrong}`,
                   borderRadius: 999, color: C.textSecondary,
-                  fontSize: 15, fontWeight: 500,
+                  fontSize: 'var(--text-label)', fontWeight: 500,
                   display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                   fontFamily: SANS, cursor: 'pointer',
                   transition: 'background 0.16s ease, border-color 0.16s ease, transform 0.12s ease',
@@ -351,7 +351,7 @@ export default function AIFinderModal({
               </button>
               {results?.health_reminder && (
                 <p style={{
-                  fontFamily: SERIF, fontSize: 15.5, fontStyle: 'italic',
+                  fontFamily: SERIF, fontSize: 'var(--text-body-sm)', fontStyle: 'italic',
                   color: C.textMuted, textAlign: 'center', margin: '4px 0 0',
                 }}>
                   {results.health_reminder}
@@ -374,7 +374,7 @@ export default function AIFinderModal({
                 background: selectedIntent ? C.blueDeep : C.bgWarm,
                 color: selectedIntent ? '#fff' : C.textMuted,
                 border: 'none', borderRadius: 999,
-                fontWeight: 500, fontSize: 15,
+                fontWeight: 500, fontSize: 'var(--text-button)',
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 10,
                 cursor: selectedIntent ? 'pointer' : 'not-allowed',
                 boxShadow: selectedIntent ? '0 8px 18px rgba(80,112,200,0.22)' : 'none',
@@ -386,7 +386,7 @@ export default function AIFinderModal({
               {selectedIntent ? 'Find a place' : 'Find places'}
             </button>
             <div style={{
-              fontSize: 15, color: C.textMuted, textAlign: 'center',
+              fontSize: 'var(--text-label)', color: C.textMuted, textAlign: 'center',
               marginTop: 10, fontStyle: 'italic', fontFamily: SERIF,
             }}>
               AI picks — double-check hours before you go.

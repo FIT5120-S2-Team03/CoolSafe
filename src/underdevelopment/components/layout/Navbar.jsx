@@ -87,7 +87,7 @@ export default function Navbar({ locationName, onLocationClick }) {
         paddingRight: 4,
         display: 'inline-flex',
         alignItems: 'center',
-        height: 34,
+        height: 36,
         background: 'rgba(0,0,0,0.04)',
         border: '0.5px solid rgba(0,0,0,0.06)',
         borderRadius: 999,
@@ -97,7 +97,7 @@ export default function Navbar({ locationName, onLocationClick }) {
         {/* Date — static, non-interactive */}
         <span className="cs-navbar-date" style={{
           fontFamily: 'var(--mono)',
-          fontSize: 13,
+          fontSize: 15,
           color: 'var(--color-ink-muted)',
           letterSpacing: '0.05em',
           padding: '0 10px',
@@ -119,7 +119,7 @@ export default function Navbar({ locationName, onLocationClick }) {
                 alignItems: 'center',
                 gap: 5,
                 fontFamily: 'var(--mono)',
-                fontSize: 13,
+                fontSize: 15,
                 color: 'var(--color-blue)',
                 letterSpacing: '0.02em',
                 background: 'transparent',
@@ -133,7 +133,7 @@ export default function Navbar({ locationName, onLocationClick }) {
               onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--color-blue-deep, #1852B4)' }}
               onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--color-blue)' }}
             >
-              <i className="ti ti-map-pin" style={{ fontSize: 14 }} />
+              <i className="ti ti-map-pin" style={{ fontSize: 16 }} />
               <span id="nav-loc-text">{displayLocation}, VIC</span>
             </button>
           </>
@@ -199,7 +199,7 @@ function NavTab({ to, active, children }) {
       to={to}
       style={{
         fontFamily: 'var(--sans)',
-        fontSize: 'var(--text-label)',
+        fontSize: 'var(--text-nav)',
         fontWeight: active ? 600 : 500,
         color: active ? '#fff' : 'var(--color-ink-soft)',
         padding: '8px 16px',

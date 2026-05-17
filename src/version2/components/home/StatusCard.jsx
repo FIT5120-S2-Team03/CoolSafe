@@ -7,7 +7,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { getAqiInfo } from '../../utils/riskLevel'
 import { MED_ADVICE } from '../../utils/scoreCalculator'
-import bgVideo from '../../../assets/8939276-uhd_3840_2160_25fps.mp4'
+import bgVideo from '../../../assets/landing page.mp4'
 
 const RISK_ACCENT = {
   Low:      { rgb: '111,207,151' },

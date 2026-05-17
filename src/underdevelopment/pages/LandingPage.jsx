@@ -14,7 +14,7 @@ import Navbar from '../components/layout/Navbar'
 import { toggleAIFinder } from '../components/ai/aiFinderEvents'
 import StepRow from '../components/landing/StepRow'
 import { SPOTLIGHT_CARDS } from '../data/landingSpotlightCards'
-import bgVideo from '../../assets/8939276-uhd_3840_2160_25fps.mp4'
+import bgVideo from '../../assets/landing page.mp4'
 
 const UV_BY_RISK = {
   Low:      { index: 2 },
@@ -63,7 +63,7 @@ export default function LandingPage() {
   const risk   = current ? getRiskLevel(current.temp) : null
   const uvInfo = risk ? UV_BY_RISK[risk.level] : null
   return (
-    <div style={{ background: 'var(--color-paper)', minHeight: '100vh' }}>
+    <div className="cs-landing-page" style={{ background: 'var(--color-paper)', minHeight: '100vh' }}>
       <Navbar locationName={locationName} />
 
       {/* ══════════════════════════════════════════════════════════════════
@@ -94,7 +94,7 @@ export default function LandingPage() {
             position: 'absolute',
             inset: 0,
             zIndex: 1,
-            background: 'linear-gradient(90deg, rgba(250,248,245,0.88) 0%, rgba(250,248,245,0.78) 36%, rgba(250,248,245,0.18) 56%, rgba(250,248,245,0) 100%), linear-gradient(0deg, rgba(250,248,245,0.16) 0%, rgba(250,248,245,0.04) 22%, rgba(250,248,245,0) 58%)',
+            background: 'linear-gradient(90deg, rgba(250,248,245,0.76) 0%, rgba(250,248,245,0.68) 36%, rgba(250,248,245,0.18) 56%, rgba(250,248,245,0) 100%), linear-gradient(0deg, rgba(250,248,245,0.16) 0%, rgba(250,248,245,0.04) 22%, rgba(250,248,245,0) 58%)',
             pointerEvents: 'none',
           }} />
 
@@ -111,7 +111,7 @@ export default function LandingPage() {
                 objectFit: 'cover',
                 objectPosition: '5% 20%',
                 filter: 'saturate(1.08) brightness(0.99) contrast(1.06)',
-                transform: 'translate(1%, -2%) scale(1.15)',
+                transform: 'translate(0, -2%) scale(1.15)',
                 transformOrigin: '5% 20%',
               }}
               src={bgVideo}
@@ -132,20 +132,20 @@ export default function LandingPage() {
           }}>
             <h1 style={{
               fontFamily: 'var(--serif)',
-              fontSize: 'clamp(3rem, 4.3vw, 4.35rem)',
-              lineHeight: 0.98,
+              fontSize: 'var(--text-page-title)',
+              lineHeight: 'var(--leading-display)',
               color: 'var(--color-ink)',
               marginBottom: 22,
               letterSpacing: 0,
-              fontWeight: 'normal',
+              fontWeight: 700,
             }}>
               Heat safety for older Melburnians.
             </h1>
 
             <p style={{
               fontFamily: 'var(--sans)',
-              fontSize: 'clamp(1rem, 1.15vw, 1.125rem)',
-              lineHeight: 1.62,
+              fontSize: 'var(--text-body)',
+              lineHeight: 'var(--leading-body)',
               color: 'var(--color-ink-muted)',
               marginBottom: 26,
               maxWidth: 500,
@@ -237,18 +237,19 @@ export default function LandingPage() {
           <h2 style={{
             fontFamily: 'var(--serif)',
             fontSize: 'var(--text-section)',
-            lineHeight: 1.05,
-            letterSpacing: '-0.02em',
+            lineHeight: 'var(--leading-title)',
+            letterSpacing: 'var(--tracking-title)',
             color: 'var(--color-ink)',
             textAlign: 'center',
             marginBottom: 16,
+            fontWeight: 700,
           }}>
             Heat doesn’t always feel dangerous.
           </h2>
           <p className="cs-spotlight-subtitle" style={{
             fontFamily: 'var(--sans)',
-            fontSize: 'clamp(0.9375rem, 1.2vw, 1.0625rem)',
-            lineHeight: 1.7,
+            fontSize: 'var(--text-body-sm)',
+            lineHeight: 'var(--leading-body)',
             color: 'var(--color-ink-soft)',
             textAlign: 'center',
             maxWidth: 640,
@@ -302,10 +303,10 @@ export default function LandingPage() {
                         <span style={{ width: 6, height: 6, borderRadius: '50%', background: card.tagColor, display: 'inline-block', flexShrink: 0 }} />
                         <span style={{ color: 'var(--color-ink)' }}>{card.tag}</span>
                       </p>
-                      <h3 style={{ fontFamily: 'var(--serif)', fontSize: 'clamp(1.25rem, 1.6vw, 1.75rem)', lineHeight: 1.12, letterSpacing: '-0.3px', color: 'var(--color-ink)', fontWeight: 'normal' }}>
+                      <h3 style={{ fontFamily: 'var(--serif)', fontSize: 'var(--text-card-title)', lineHeight: 'var(--leading-heading)', letterSpacing: 'var(--tracking-title)', color: 'var(--color-ink)', fontWeight: 'normal' }}>
                         {card.title}
                       </h3>
-                      <p style={{ fontFamily: 'var(--sans)', fontSize: 'clamp(1rem, 0.95vw, 1.125rem)', lineHeight: 1.7, color: 'var(--color-ink-soft)' }}>
+                      <p style={{ fontFamily: 'var(--sans)', fontSize: 'var(--text-body-sm)', lineHeight: 'var(--leading-body)', color: 'var(--color-ink-soft)' }}>
                         {card.body}
                       </p>
                     </div>
@@ -352,11 +353,11 @@ export default function LandingPage() {
       ══════════════════════════════════════════════════════════════════ */}
       <section className="cs-steps-section" style={{ padding: 'clamp(42px,6vh,64px) var(--content-gutter)', background: 'var(--color-paper)' }}>
         <div style={{ maxWidth: 'var(--content-width)', margin: '0 auto' }}>
-          <h2 className="cs-steps-heading" style={{ fontFamily: 'var(--serif)', fontSize: 'var(--text-section)', lineHeight: 1.05, letterSpacing: '-0.02em', color: 'var(--color-ink)', textAlign: 'center', marginBottom: 48 }}>
+          <h2 className="cs-steps-heading" style={{ fontFamily: 'var(--serif)', fontSize: 'var(--text-section)', fontWeight: 700, lineHeight: 'var(--leading-title)', letterSpacing: 'var(--tracking-title)', color: 'var(--color-ink)', textAlign: 'center', marginBottom: 48 }}>
             How CoolSafer helps day to day.
           </h2>
 
-          <div className="cs-steps-list" style={{ display: 'flex', flexDirection: 'column', gap: 62, padding: '10px 0 42px' }}>
+          <div className="cs-steps-list" style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(62px, 6vw, 78px)', padding: '10px 0 42px' }}>
 
             {/* ── Step 1 ── */}
             <StepRow
@@ -420,8 +421,9 @@ export default function LandingPage() {
                   ><i className="ti ti-sparkles" /> Find with AI</button>
                 </div>
               }
+              textShiftX={72}
               rotateCard={-3}
-              textShiftX={32}
+              snippetShiftX={48}
               snippet={
                 <div style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 10 }}>
                   <div style={{ background: 'var(--color-warm)', padding: '10px 14px', borderRadius: '14px 14px 14px 4px', fontFamily: 'var(--sans)', fontSize: 'var(--text-caption)', color: 'var(--color-ink)', lineHeight: 1.5 }}>
@@ -453,7 +455,7 @@ export default function LandingPage() {
                 </Link>
               }
               rotateCard={2.6}
-              snippetShiftX={-64}
+              snippetShiftX={-96}
               snippet={
                 <div style={{ padding: 18, display: 'flex', flexDirection: 'column', gap: 10 }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>

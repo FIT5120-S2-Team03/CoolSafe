@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { SESSION_CACHE_KEYS } from '../constants/storageKeys'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'https://coolsafe.onrender.com'
@@ -41,10 +41,10 @@ function findCachedVenue(id) {
 }
 
 export default function useVenue(id, initialVenue = null) {
-  const getInitialVenue = () => {
+  const getInitialVenue = useCallback(() => {
     if (initialVenue && String(initialVenue.id) === String(id)) return initialVenue
     return readDetailCache(id) ?? findCachedVenue(id)
-  }
+  }, [id, initialVenue])
 
   const [venue, setVenue] = useState(getInitialVenue)
   const [loading, setLoading] = useState(() => !getInitialVenue())
@@ -82,7 +82,7 @@ export default function useVenue(id, initialVenue = null) {
 
     load()
     return () => { cancelled = true }
-  }, [id, initialVenue])
+  }, [id, getInitialVenue])
 
   return { venue, loading, error }
 }

@@ -12,6 +12,7 @@ export default function MiniMapCard({ venues, onOpen }) {
 
   return (
     <div
+      className="cs-mini-map-card"
       onClick={onOpen}
       role="button"
       tabIndex={0}
@@ -71,7 +72,7 @@ export default function MiniMapCard({ venues, onOpen }) {
           </div>
         )
       })}
-      <div style={{ position: 'absolute', right: 16, bottom: 16, zIndex: 2, display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.82)', backdropFilter: 'blur(12px)', borderRadius: 99, padding: '9px 18px', boxShadow: '0 8px 24px rgba(34,30,26,0.12)', fontFamily: "var(--font-body)", fontSize: '0.9375rem', fontWeight: 600, color: INK }}>
+      <div style={{ position: 'absolute', right: 16, bottom: 16, zIndex: 2, display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.82)', backdropFilter: 'blur(12px)', borderRadius: 99, padding: '9px 18px', boxShadow: '0 8px 24px rgba(34,30,26,0.12)', fontFamily: "var(--font-body)", fontSize: 'var(--text-label)', fontWeight: 600, color: INK }}>
         Open spaces →
       </div>
     </div>

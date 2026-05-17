@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { fmtH, todayStr } from './forecastUtils'
 
 function barColor(temp) {
@@ -17,6 +17,20 @@ function tempLabel(temp) {
 
 export function TempChart({ hourly }) {
   const [hoveredIdx, setHoveredIdx] = useState(null)
+  const [isMobileChart, setIsMobileChart] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return window.matchMedia('(max-width: 720px)').matches
+  })
+
+  useEffect(() => {
+    const query = window.matchMedia('(max-width: 720px)')
+    const update = () => setIsMobileChart(query.matches)
+    update()
+    query.addEventListener('change', update)
+    return () => {
+      query.removeEventListener('change', update)
+    }
+  }, [])
 
   if (!hourly) return (
     <div style={{ width: '100%', height: '100%', background: '#E5E1DA', borderRadius: 8 }} />
@@ -34,39 +48,57 @@ export function TempChart({ hourly }) {
   }))
   let startIdx = allSlots.findIndex((s) => s.day === currentDay && s.hour >= currentHour)
   if (startIdx < 0) startIdx = allSlots.findIndex((s) => s.date >= now)
-  const slots = startIdx >= 0 ? allSlots.slice(startIdx, startIdx + 24) : allSlots.slice(0, 24)
+  const rangeHours = isMobileChart ? 8 : 24
+  const slots = startIdx >= 0 ? allSlots.slice(startIdx, startIdx + rangeHours) : allSlots.slice(0, rangeHours)
   if (slots.length < 2) return null
 
-  const W = 560, H = 320
-  const PAD = { top: 12, right: 12, bottom: 38, left: 50 }
+  const W = isMobileChart ? 520 : 780
+  const H = isMobileChart ? 320 : 500
+  const isCompact = isMobileChart
+  const axisLabelHeight = isCompact ? 22 : 24
+  const yLabelTopSafe = isCompact ? 14 : 12
+  const topBreathingRoom = isCompact ? 14 : 12
+  const bottomBreathingRoom = isCompact ? 2 : 4
+  const PAD = { top: 0, right: 8, bottom: axisLabelHeight, left: isCompact ? 34 : 38 }
 
   const temps = slots.map((s) => s.temp)
   const rawMax = Math.max(...temps)
   const peakIdx = temps.indexOf(rawMax)
-  const minT   = 0
-  const maxT   = Math.ceil(rawMax / 8) * 8
+  const minT = 0
+  const maxT = Math.ceil(rawMax / 8) * 8
 
   const cW  = W - PAD.left - PAD.right
-  const cH  = H - PAD.top  - PAD.bottom
-  const getY = (t) => PAD.top + cH * (1 - t / maxT)
-  const baseY = getY(0)
+  const plotTop = topBreathingRoom
+  const plotBottom = H - axisLabelHeight - bottomBreathingRoom
+  const plotH = Math.max(120, plotBottom - plotTop)
+  const getY = (t) => plotTop + plotH * (1 - (t - minT) / (maxT - minT))
+  const baseY = getY(minT)
 
   const slotW   = cW / slots.length
-  const barW    = slotW * 0.68
+  const barW    = slotW * 0.76
+  const axisFontSize = isCompact ? 'var(--text-label)' : 'var(--text-caption)'
+  const tooltipFontSize = isCompact ? 'var(--text-body-sm)' : 'var(--text-label)'
 
   const yLabels = []
-  for (let t = 0; t <= maxT; t += 8) yLabels.push(t)
+  for (let t = minT; t <= maxT; t += 8) yLabels.push(t)
 
-  const xLabelSlots = slots.filter((_, i) => i % 3 === 0 || i === slots.length - 1)
+  const targetLabelGap = isCompact ? 62 : 76
+  const xStep = Math.max(1, Math.ceil(targetLabelGap / slotW))
+  const xLabelSlots = slots.filter((_, i) => i % xStep === 0 || i === slots.length - 1)
 
   return (
-    <svg
-      viewBox={`0 0 ${W} ${H}`}
-      width="100%"
-      height="100%"
-      style={{ display: 'block', overflow: 'visible' }}
-      preserveAspectRatio="xMidYMid meet"
+    <div
+      style={{
+        width: '100%',
+        height: '100%',
+      }}
     >
+      <svg
+        viewBox={`0 0 ${W} ${H}`}
+        width="100%"
+        height="100%"
+        style={{ display: 'block' }}
+      >
       {/* Horizontal grid lines + Y-axis labels */}
       {yLabels.map((t) => {
         const y = getY(t)
@@ -80,12 +112,10 @@ export function TempChart({ hourly }) {
               strokeWidth="1"
             />
             <text
-              x={PAD.left - 6} y={(y + 4).toFixed(1)}
+              x={PAD.left - 6} y={Math.max(y + 4, yLabelTopSafe).toFixed(1)}
               textAnchor="end"
               fill="#6E6358"
-              fontSize="16"
-              fontFamily="var(--font-body)"
-              fontWeight="500"
+              style={{ fontSize: axisFontSize, fontFamily: 'var(--font-body)', fontWeight: 500 }}
             >
               {t}°
             </text>
@@ -124,9 +154,9 @@ export function TempChart({ hourly }) {
           <rect
             key={`hit-${i}`}
             x={slotX.toFixed(1)}
-            y={PAD.top}
+            y={plotTop}
             width={slotW.toFixed(1)}
-            height={cH}
+            height={plotH}
             fill="transparent"
             style={{ cursor: 'pointer' }}
             onMouseEnter={() => setHoveredIdx(i)}
@@ -144,20 +174,22 @@ export function TempChart({ hourly }) {
         const h    = parseInt(s.t.slice(11, 13))
         const temp = Math.round(s.temp)
         const label = tempLabel(s.temp)
-        const TW = 132, TH = 80, TR = 9
+        const TW = isCompact ? 146 : 132
+        const TH = isCompact ? 88 : 80
+        const TR = 9
         let tx = barX + barW / 2 - TW / 2
         const ty = barTop < PAD.top + TH + 14 ? barTop + 8 : barTop - TH - 8
         tx = Math.max(PAD.left, Math.min(W - PAD.right - TW, tx))
         return (
           <g pointerEvents="none">
             <rect x={tx} y={ty} width={TW} height={TH} rx={TR} ry={TR} fill="rgba(17,24,39,0.96)" />
-            <text x={tx + TW / 2} y={ty + 24} textAnchor="middle" fill="white" fontSize="16" fontFamily="var(--font-body)" fontWeight="700">
+            <text x={tx + TW / 2} y={ty + (isCompact ? 27 : 24)} textAnchor="middle" fill="white" style={{ fontSize: tooltipFontSize, fontFamily: 'var(--font-body)', fontWeight: 700 }}>
               {fmtH(h)}
             </text>
-            <text x={tx + TW / 2} y={ty + 46} textAnchor="middle" fill="rgba(255,255,255,0.9)" fontSize="16" fontFamily="var(--font-body)" fontWeight="500">
+            <text x={tx + TW / 2} y={ty + (isCompact ? 52 : 46)} textAnchor="middle" fill="rgba(255,255,255,0.9)" style={{ fontSize: tooltipFontSize, fontFamily: 'var(--font-body)', fontWeight: 500 }}>
               {temp}°C
             </text>
-            <text x={tx + TW / 2} y={ty + 66} textAnchor="middle" fill="rgba(255,255,255,0.72)" fontSize="15" fontFamily="var(--font-body)">
+            <text x={tx + TW / 2} y={ty + (isCompact ? 75 : 66)} textAnchor="middle" fill="rgba(255,255,255,0.72)" style={{ fontSize: axisFontSize, fontFamily: 'var(--font-body)' }}>
               {label}
             </text>
           </g>
@@ -172,16 +204,16 @@ export function TempChart({ hourly }) {
         return (
           <text
             key={s.t}
-            x={x.toFixed(1)} y={H - 5}
+            x={x.toFixed(1)} y={(baseY + axisLabelHeight * 0.64).toFixed(1)}
             textAnchor="middle"
-            fill="#5C5C5C" fontSize="16"
-            fontFamily="var(--font-body)"
-            fontWeight="500"
+            fill="#5C5C5C"
+            style={{ fontSize: axisFontSize, fontFamily: 'var(--font-body)', fontWeight: 500 }}
           >
             {fmtH(h)}
           </text>
         )
       })}
-    </svg>
+      </svg>
+    </div>
   )
 }

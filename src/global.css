@@ -1,31 +1,58 @@
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 
 :root {
-  /* Typography */
-  --font-apple: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
-  --font-title: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
-  --font-body: var(--font-apple);
-  --font-label: var(--font-apple);
-  --font-button: var(--font-apple);
-  --font-mono: "SF Mono", ui-monospace, Menlo, Monaco, Consolas, monospace;
+  /* Typography
+     CoolSafer uses one readable system sans for UI/content and one mono face
+     only for compact data labels. The logo may keep its brand serif separately. */
+  --font-system: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+  --font-ui: var(--font-system);
+  --font-display: var(--font-system);
+  --font-data: "SF Mono", ui-monospace, Menlo, Monaco, Consolas, monospace;
+
+  --font-title: var(--font-display);
+  --font-body: var(--font-ui);
+  --font-label: var(--font-ui);
+  --font-button: var(--font-ui);
+  --font-mono: var(--font-data);
   --serif: var(--font-title);
   --sans:  var(--font-body);
   --mono:  var(--font-mono);
 
-  --text-caption-sm: 13px;
-  --text-caption:  16px;
-  --text-label:    18px;
-  --text-button:   16px;
-  --text-body-sm:  18px;
-  --text-body:     18px;
-  --text-body-lg:  20px;
-  --text-title-xs: 24px;
-  --text-title-sm: 28px;
-  --text-title-md: 32px;
+  --leading-display: 0.98;
+  --leading-title: 1.08;
+  --leading-heading: 1.16;
+  --leading-body: 1.55;
+  --leading-compact: 1.35;
+
+  --tracking-display: -0.02em;
+  --tracking-title: -0.01em;
+  --tracking-label: 0.02em;
+  --tracking-data: 0.05em;
+
+  --text-slogan: clamp(3.25rem, 6vw, 5rem);
+  --text-page-title: clamp(3rem, 5.4vw, 4.5rem);
+  --text-section: clamp(2.25rem, 3.5vw, 3rem);
+  --text-card-title-lg: 32px;
+  --text-card-title: 28px;
+  --text-card-title-sm: 24px;
+  --text-body-lg: 20px;
+  --text-body: 18px;
+  --text-body-sm: 17px;
+  --text-label: 16px;
+  --text-nav: 18px;
+  --text-button: 17px;
+  --text-caption: 15px;
+  --text-caption-sm: 14px;
+  --text-data-lg: 24px;
+  --text-data: 18px;
+  --text-score: clamp(3.75rem, 6vw, 4.5rem);
+
+  /* Backwards-compatible type aliases */
+  --text-title-xs: var(--text-card-title-sm);
+  --text-title-sm: var(--text-card-title);
+  --text-title-md: var(--text-card-title-lg);
   --text-title-lg: 36px;
-  --text-section:  clamp(2.5rem, 4vw, 3rem);
   --text-display-sm: 40px;
-  --text-score:    72px;
 
   /* Core surfaces */
   --color-paper:       #FAF8F5;
@@ -227,6 +254,65 @@ select {
   font-weight: 700;
 }
 
+.cs-type-slogan {
+  font-family: var(--font-display);
+  font-size: var(--text-slogan);
+  line-height: var(--leading-display);
+  letter-spacing: var(--tracking-display);
+  font-weight: 400;
+}
+
+.cs-type-page-title {
+  font-family: var(--font-display);
+  font-size: var(--text-page-title);
+  line-height: var(--leading-display);
+  letter-spacing: var(--tracking-display);
+  font-weight: 400;
+}
+
+.cs-type-section-title {
+  font-family: var(--font-display);
+  font-size: var(--text-section);
+  line-height: var(--leading-title);
+  letter-spacing: var(--tracking-title);
+  font-weight: 400;
+}
+
+.cs-type-card-title {
+  font-family: var(--font-display);
+  font-size: var(--text-card-title);
+  line-height: var(--leading-heading);
+  letter-spacing: var(--tracking-title);
+  font-weight: 400;
+}
+
+.cs-type-body {
+  font-family: var(--font-body);
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
+}
+
+.cs-type-body-sm {
+  font-family: var(--font-body);
+  font-size: var(--text-body-sm);
+  line-height: var(--leading-body);
+}
+
+.cs-type-label {
+  font-family: var(--font-label);
+  font-size: var(--text-label);
+  line-height: var(--leading-compact);
+  letter-spacing: var(--tracking-label);
+  font-weight: 700;
+}
+
+.cs-type-data {
+  font-family: var(--font-data);
+  font-size: var(--text-data);
+  line-height: var(--leading-compact);
+  letter-spacing: var(--tracking-data);
+}
+
 /* Bottom nav: desktop hidden by default, enabled via mobile media query */
 .cs-bottom-nav { display: none; }
 
@@ -234,16 +320,14 @@ select {
 .cs-step-row {
   display: grid;
   grid-template-columns: 1fr 0.8fr;
-  grid-template-rows: auto auto;
-  grid-template-areas: "text snippet" "acts snippet";
+  grid-template-areas: "copy snippet";
   column-gap: 46px;
-  row-gap: 12px;
   position: relative;
   align-items: start;
 }
 .cs-step-row--rev {
   grid-template-columns: 0.8fr 1fr;
-  grid-template-areas: "snippet text" "snippet acts";
+  grid-template-areas: "snippet copy";
 }
 .cs-step-num {
   position: absolute;
@@ -256,7 +340,6 @@ select {
   user-select: none;
 }
 .cs-step-text {
-  grid-area: text;
   position: relative;
   z-index: 1;
   padding-left: 108px;
@@ -264,18 +347,28 @@ select {
   flex-direction: column;
   gap: 12px;
 }
+.cs-step-copy {
+  grid-area: copy;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  position: relative;
+  z-index: 1;
+}
 .cs-step-row--rev .cs-step-text { padding-left: 0; }
 .cs-step-snippet {
   grid-area: snippet;
   display: flex;
   justify-content: center;
-  align-items: flex-start;
+  align-items: center;
   position: relative;
   z-index: 1;
-  padding-top: 8px;
+  min-height: 100%;
+}
+.cs-step-snippet-card {
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
 }
 .cs-step-actions {
-  grid-area: acts;
   position: relative;
   z-index: 1;
   padding-left: 108px;
@@ -286,6 +379,13 @@ select {
 }
 .cs-step-row--rev .cs-step-actions { padding-left: 0; }
 
+@media (min-width: 721px) {
+  .cs-step-row:hover .cs-step-snippet-card {
+    transform: rotate(0deg) !important;
+    box-shadow: 0 28px 56px rgba(0,0,0,0.08), 0 0 0 0.5px rgba(0,0,0,0.06) !important;
+  }
+}
+
 @media (max-width: 720px) {
   :root {
     --content-gutter: clamp(14px, 4vw, 18px);
@@ -293,20 +393,33 @@ select {
     --nav-height: 52px;
     --nav-clearance: 68px;
     --bottom-nav-height: 56px;
-    --text-caption-sm: 12px;
-    --text-caption: 14px;
-    --text-label: 15px;
-    --text-button: 15px;
-    --text-body-sm: 15px;
-    --text-body: 16px;
+    --text-slogan: clamp(3rem, 14vw, 4rem);
+    --text-page-title: clamp(2.75rem, 12vw, 3.6rem);
+    --text-section: clamp(2rem, 10vw, 2.6rem);
+    --text-card-title-lg: 28px;
+    --text-card-title: 24px;
+    --text-card-title-sm: 22px;
     --text-body-lg: 18px;
-    --text-title-xs: 22px;
-    --text-title-sm: 24px;
-    --text-title-md: 28px;
-    --text-title-lg: 32px;
-    --text-section: clamp(2rem, 11vw, 2.6rem);
-    --text-display-sm: 34px;
+    --text-body: 17px;
+    --text-body-sm: 16px;
+    --text-label: 15px;
+    --text-nav: 15px;
+    --text-button: 16px;
+    --text-caption: 14px;
+    --text-caption-sm: 13px;
+    --text-data-lg: 22px;
+    --text-data: 16px;
     --text-score: 58px;
+    --text-title-xs: var(--text-card-title-sm);
+    --text-title-sm: var(--text-card-title);
+    --text-title-md: var(--text-card-title-lg);
+    --text-title-lg: 32px;
+    --text-display-sm: 34px;
+    --mobile-section-y: 20px;
+    --mobile-section-y-tight: 14px;
+    --mobile-card-gap: 12px;
+    --mobile-bottom-clearance: calc(var(--bottom-nav-height) + var(--mobile-safe-bottom) + 12px);
+    --mobile-page-bottom: var(--mobile-bottom-clearance);
   }
 
   html {
@@ -315,7 +428,7 @@ select {
 
   body {
     min-width: 320px;
-    padding-bottom: calc(var(--bottom-nav-height) + var(--mobile-safe-bottom));
+    padding-bottom: 0;
   }
 
   .cs-navbar {
@@ -414,45 +527,290 @@ select {
   }
 
   .cs-today-hero-inner {
-    padding-top: calc(var(--nav-clearance) + 28px) !important;
-    gap: 28px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    padding: calc(var(--nav-clearance) + 14px) var(--content-gutter) 4px !important;
+    gap: 12px !important;
+  }
+
+  .cs-today-hero-copy {
+    display: contents !important;
+  }
+
+  .cs-today-hero-title {
+    order: 1;
+    margin-bottom: 4px !important;
+    text-align: center !important;
+  }
+
+  .cs-today-hero-desc {
+    order: 2;
+    margin-bottom: 0 !important;
+    max-width: 100% !important;
+    text-align: center !important;
+    justify-self: stretch !important;
+    align-self: stretch !important;
+    width: 100% !important;
   }
 
   .cs-today-hero-media {
+    order: 3;
     display: grid !important;
-    grid-template-columns: 1fr 1fr !important;
-    gap: 10px !important;
+    grid-template-columns: minmax(0, 1.85fr) minmax(0, 0.9fr) !important;
+    gap: 8px !important;
+  }
+
+  .cs-today-hero-med-button {
+    order: 4;
+    width: 100% !important;
+    justify-content: center !important;
+    margin-top: -2px !important;
   }
 
   .cs-today-hero-media > img {
     grid-column: 1 / -1;
+    aspect-ratio: 1.08 / 1 !important;
+    border-radius: 16px !important;
+    object-fit: cover !important;
   }
 
   .cs-today-hero-media .weather-callout {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    grid-template-areas:
+      "value badge"
+      "label label" !important;
+    align-items: start !important;
     position: static !important;
     min-width: 0 !important;
-    padding: 10px 12px !important;
+    min-height: 72px !important;
+    padding: 11px 12px 10px !important;
+    border-radius: 12px !important;
+    box-shadow: 0 5px 18px rgba(34,30,26,0.08) !important;
+    gap: 8px !important;
+  }
+
+  .cs-today-hero-media .weather-callout > div {
+    display: contents !important;
+  }
+
+  .cs-today-hero-media .weather-callout > div > span:first-child {
+    grid-area: value !important;
+    font-size: clamp(1.55rem, 7vw, 2rem) !important;
+  }
+
+  .cs-today-hero-media .weather-callout > div > span:nth-child(2) {
+    grid-area: label !important;
+    text-align: left !important;
+    line-height: 1.12 !important;
+    max-width: none !important;
+    margin-top: 2px !important;
+  }
+
+  .cs-today-hero-media .weather-callout > span {
+    grid-area: badge !important;
+    margin-top: 2px !important;
+    align-self: start !important;
+    justify-self: end !important;
+    white-space: nowrap !important;
+  }
+
+  .cs-today-action-grid {
+    gap: 12px !important;
+  }
+
+  .cs-today-risk-section {
+    padding-top: 6px !important;
+    padding-bottom: var(--mobile-section-y-tight) !important;
+  }
+
+  .cs-today-hero-shell,
+  .cs-today-risk-shell {
+    border-bottom: none !important;
+  }
+
+  .cs-today-risk-card {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+    align-items: start !important;
+    padding: 20px !important;
+    background: #171512 !important;
+    border: 1px solid rgba(255,255,255,0.08) !important;
+    border-radius: 18px !important;
+    box-shadow: 0 14px 34px rgba(15,12,9,0.18) !important;
+    color: #F7F0E6 !important;
+  }
+
+  .cs-today-risk-card > div:first-child > div:first-child,
+  .cs-today-risk-card > div:first-child > div:nth-child(2) > span:nth-child(2),
+  .cs-today-risk-card > div:first-child button,
+  .cs-today-risk-card > div:nth-child(3) > div:first-child,
+  .cs-today-risk-card > div:last-child > div:last-child {
+    color: rgba(247,240,230,0.72) !important;
+  }
+
+  .cs-today-risk-card > div:first-child button {
+    border-color: rgba(247,240,230,0.28) !important;
+  }
+
+  .cs-today-risk-card > div:last-child > div:first-child > div {
+    background: #F7F0E6 !important;
+    border-color: #171512 !important;
+  }
+
+  .cs-today-risk-card > div:nth-child(2) {
+    display: none !important;
+  }
+
+  .cs-today-risk-card > div:first-child {
+    position: relative !important;
+    width: 100% !important;
+  }
+
+  .cs-today-risk-card > div:first-child > span {
+    position: absolute !important;
+    top: 30px !important;
+    right: 0 !important;
+    margin-top: 0 !important;
+  }
+
+  .cs-today-risk-card > div:last-child {
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+
+  .cs-today-actions-section {
+    padding-top: var(--mobile-section-y-tight) !important;
+    padding-bottom: var(--mobile-section-y) !important;
+  }
+
+  .cs-today-actions-section > h2 {
+    margin-bottom: 8px !important;
+    text-align: center !important;
+  }
+
+  .cs-today-actions-section > p {
+    margin-bottom: 16px !important;
+    text-align: center !important;
+  }
+
+  .cs-today-action-grid > * {
+    min-height: auto !important;
+    padding: 14px !important;
+    border-radius: 16px !important;
+    gap: 10px !important;
+  }
+
+  .cs-thing-card-body {
+    display: grid !important;
+    grid-template-columns: auto minmax(0, 1fr) !important;
+    column-gap: 12px !important;
+    row-gap: 8px !important;
+    align-items: center !important;
+  }
+
+  .cs-thing-title {
+    font-size: var(--text-body) !important;
+    line-height: 1.25 !important;
+  }
+
+  .cs-thing-icon {
+    grid-column: 1 !important;
+    width: 42px !important;
+    height: 42px !important;
+    margin-bottom: 0 !important;
+  }
+
+  .cs-thing-title {
+    grid-column: 2 !important;
+    margin-bottom: 0 !important;
+  }
+
+  .cs-thing-card-body > p,
+  .cs-thing-card-body > div:not(.cs-thing-icon) {
+    grid-column: 1 / -1 !important;
+  }
+
+  .cs-thing-card-body > p {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    line-height: 1.36 !important;
+  }
+
+  .cs-today-routine-section,
+  .cs-today-cool-spaces-section {
+    padding-top: var(--mobile-section-y-tight) !important;
+    padding-bottom: var(--mobile-section-y) !important;
+  }
+
+  .cs-today-routine-section > h2,
+  .cs-today-cool-spaces-section > h2 {
+    margin-bottom: 8px !important;
+    text-align: center !important;
+  }
+
+  .cs-today-routine-section > p,
+  .cs-today-cool-spaces-section > div:first-of-type {
+    margin-bottom: 16px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    text-align: center !important;
   }
 
   .cs-today-routine-card {
+    display: flex !important;
+    flex-direction: column !important;
     grid-template-columns: 1fr !important;
     height: auto !important;
-    border-radius: 22px !important;
+    gap: 14px !important;
+    background: transparent !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    overflow: visible !important;
   }
 
   .cs-today-chart-panel {
-    min-height: 420px;
-    padding: 22px 18px 18px !important;
+    min-height: 0;
+    padding: 12px 14px 10px !important;
+    background: #fff !important;
+    border: 1px solid var(--color-rule) !important;
+    border-radius: 16px !important;
+  }
+
+  .cs-today-chart-plot {
+    flex: 0 0 260px !important;
+    min-height: 260px !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+
+  .cs-today-chart-plot > div {
+    height: 100% !important;
   }
 
   .cs-today-routine-panel {
+    background: #fff !important;
+    border: 1px solid var(--color-rule) !important;
+    border-radius: 16px !important;
     border-left: none !important;
     border-top: 1px solid var(--color-rule) !important;
+    overflow: hidden !important;
   }
 
   .cs-today-period-tabs {
-    overflow-x: auto;
-    padding: 12px 14px !important;
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 5px !important;
+    overflow-x: visible;
+    padding: 5px !important;
+    margin: 14px 14px 14px !important;
+    border: 0 !important;
+    border-radius: 14px !important;
+    background: var(--color-ink) !important;
     scrollbar-width: none;
   }
 
@@ -461,14 +819,34 @@ select {
   }
 
   .cs-today-period-tabs > button {
-    flex: 0 0 auto !important;
+    min-width: 0 !important;
+    flex: 1 1 0 !important;
+    justify-content: center !important;
+    padding: 10px 8px !important;
+    border-radius: 10px !important;
+    font-size: var(--text-label) !important;
+    line-height: 1.1 !important;
+    border-color: transparent !important;
+    background: transparent !important;
+    color: rgba(255,255,255,0.74) !important;
+  }
+
+  .cs-today-period-tabs > button[data-active="true"] {
+    background: #fff !important;
+    color: var(--color-ink) !important;
+    border-color: #fff !important;
   }
 
   .cs-today-period-visual {
     height: 160px !important;
+    margin: 0 14px !important;
+    border-radius: 14px !important;
+    border: 1px solid var(--color-rule) !important;
+    overflow: hidden !important;
   }
 
   .cs-today-period-advice {
+    padding: 14px !important;
     overflow: visible !important;
   }
 
@@ -477,58 +855,319 @@ select {
     min-width: 0;
   }
 
+  .cs-today-spaces-grid {
+    gap: 10px !important;
+  }
+
+  .cs-today-space-tabs {
+    margin: -6px 0 14px !important;
+    gap: 7px !important;
+    overflow-x: auto;
+    flex-wrap: nowrap !important;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+  }
+
+  .cs-today-space-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .cs-today-space-tabs > button {
+    flex: 0 0 auto;
+  }
+
+  .cs-today-spaces-list {
+    background: #fff !important;
+    border: 1px solid var(--color-rule) !important;
+    border-radius: 18px !important;
+    overflow: hidden !important;
+  }
+
+  .cs-today-spaces-list > div {
+    padding-left: 56px !important;
+    padding-right: 16px !important;
+  }
+
+  .cs-today-spaces-list > div > div:first-child {
+    left: 16px !important;
+  }
+
+  .cs-today-spaces-grid > div:last-child {
+    margin-top: 0 !important;
+  }
+
+  .cs-mini-map-card {
+    height: 180px !important;
+    border-radius: 16px !important;
+  }
+
+  .cs-mini-map-card > div:last-child {
+    right: 12px !important;
+    bottom: 12px !important;
+    padding: 8px 14px !important;
+    font-size: var(--text-label) !important;
+  }
+
+  .cs-medication-grid {
+    grid-template-columns: 1fr !important;
+    gap: 6px !important;
+  }
+
+  .cs-medication-option {
+    min-width: 0 !important;
+    padding: 8px 12px !important;
+    gap: 10px !important;
+    border-radius: 10px !important;
+  }
+
+  .cs-medication-option > span:first-child {
+    font-size: 18px !important;
+  }
+
+  .cs-medication-option > span:last-child {
+    min-width: 0 !important;
+    overflow-wrap: anywhere !important;
+    line-height: 1.2 !important;
+  }
+
+  .cs-medication-modal-overlay {
+    align-items: flex-start !important;
+    padding: calc(var(--nav-clearance) + 8px) var(--content-gutter) calc(var(--bottom-nav-height) + 12px) !important;
+  }
+
+  .cs-medication-modal-panel {
+    max-height: calc(100dvh - var(--nav-clearance) - var(--bottom-nav-height) - 24px) !important;
+    padding: 14px 20px 18px !important;
+    border-radius: 18px !important;
+  }
+
+  .cs-medication-modal-panel > div:first-child {
+    margin-bottom: 12px !important;
+  }
+
+  .cs-medication-modal-panel > div:nth-child(2) {
+    margin-bottom: 6px !important;
+  }
+
+  .cs-medication-modal-panel > p {
+    margin-bottom: 12px !important;
+    line-height: 1.42 !important;
+  }
+
+  .cs-medication-modal-panel > div:last-child {
+    margin-top: 12px !important;
+    gap: 10px !important;
+  }
+
+  .cs-medication-modal-panel > div:last-child button:last-child {
+    padding: 13px 14px !important;
+  }
+
+  .cs-today-toast {
+    left: 16px !important;
+    right: 88px !important;
+    bottom: calc(var(--bottom-nav-height) + var(--mobile-safe-bottom) + 20px) !important;
+    transform: none !important;
+    z-index: 1700 !important;
+    white-space: normal !important;
+    text-align: center !important;
+    padding: 11px 14px !important;
+    line-height: 1.25 !important;
+  }
+
   .cs-health-main {
-    padding-top: calc(var(--nav-clearance) + 28px) !important;
+    padding: calc(var(--nav-clearance) + 14px) var(--content-gutter) var(--mobile-page-bottom) !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+  }
+
+  .cs-health-main > div:first-child {
+    margin-bottom: 16px !important;
+  }
+
+  .cs-health-main > div:first-child h1 {
+    margin-bottom: 10px !important;
+  }
+
+  .cs-health-main > div:nth-child(2) {
+    gap: 14px !important;
   }
 
   .cs-symptom-group {
-    padding: 18px 14px !important;
+    padding: 14px 12px !important;
     border-radius: 20px !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .cs-symptom-group > div:first-child {
+    margin-bottom: 12px !important;
   }
 
   .cs-symptom-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
   }
 
+  /* Symptom cards: icon-left row layout on mobile */
   .cs-sym-btn {
-    padding: 16px 10px !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    text-align: left !important;
+    padding: 9px 12px !important;
+    gap: 12px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+  }
+
+  .cs-sym-icon {
+    flex-shrink: 0;
+  }
+
+  .cs-sym-content {
+    text-align: left;
+    flex: 1;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  /* Do now / Avoid: stack vertically on mobile */
+  .cs-safety-action-grid {
+    grid-template-columns: 1fr !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .cs-health-symptom-groups,
+  .cs-health-content-grid,
+  .cs-health-content-grid > *,
+  .cs-health-symptom-groups > * {
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .cs-health-symptom-groups,
+  .cs-health-content-grid {
+    gap: 14px !important;
+  }
+
+  .cs-health-content-grid > div:first-child {
+    gap: 14px !important;
+  }
+
+  .cs-safety-response-panel {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+    padding: 16px 14px !important;
+    position: relative !important;
+  }
+
+  .cs-safety-response-panel > svg {
+    width: 58px !important;
+    height: 58px !important;
+    position: absolute !important;
+    top: 12px !important;
+    right: 12px !important;
+    pointer-events: none !important;
+  }
+
+  .cs-safety-response-list {
+    min-width: 0 !important;
+    max-width: 100% !important;
+    padding: 14px 14px !important;
+  }
+
+  .cs-safety-response-list li,
+  .cs-safety-response-list span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .cs-safety-response-actions {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    width: 100% !important;
+  }
+
+  .cs-safety-response-actions > a,
+  .cs-safety-response-actions > button {
+    width: 100% !important;
+    flex: none !important;
+    white-space: normal !important;
+    min-width: 0 !important;
   }
 
   .cs-safety-quick-links {
     position: static !important;
+    gap: 10px !important;
+  }
+
+  .cs-safety-quick-links .cs-res-link {
+    padding: 12px 14px !important;
+    border-radius: 16px !important;
+    gap: 10px !important;
+  }
+
+  .cs-venue-detail-main {
+    min-height: auto !important;
+    padding: calc(var(--nav-clearance) + 14px) var(--content-gutter) var(--mobile-page-bottom) !important;
+  }
+
+  .cs-spaces-page {
+    height: calc(100dvh - var(--bottom-nav-height) - var(--mobile-safe-bottom)) !important;
+  }
+
+  .cs-venue-detail-main nav {
+    margin-bottom: 14px !important;
+  }
+
+  .cs-venue-detail-main h1 {
+    margin-bottom: 16px !important;
+  }
+
+  .cs-venue-detail-main .venue-detail-action {
+    margin-bottom: 0 !important;
   }
 
   .cs-mobile-filter-trigger {
     position: fixed;
-    left: var(--content-gutter);
-    bottom: calc(18px + var(--mobile-safe-bottom));
+    left: 10px;
+    top: calc(var(--nav-clearance) + 84px);
     z-index: 1300;
-    min-height: 52px;
+    width: 44px;
+    height: 44px;
     display: inline-flex;
     align-items: center;
-    gap: 9px;
-    padding: 0 18px;
-    border: 1px solid var(--color-rule);
-    border-radius: var(--radius-pill);
-    background: rgba(255,255,255,0.96);
+    justify-content: center;
+    padding: 0;
+    border: 2px solid rgba(0,0,0,0.2);
+    border-radius: 4px;
+    background: #fff;
     color: var(--color-ink);
-    font-family: var(--font-body);
-    font-size: var(--text-button);
-    font-weight: 700;
-    box-shadow: 0 10px 28px rgba(34,30,26,0.14);
+    font-size: 22px;
+    box-shadow: none;
     cursor: pointer;
   }
 
   .cs-mobile-filter-trigger span {
-    min-width: 22px;
-    height: 22px;
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    min-width: 16px;
+    height: 16px;
     border-radius: 50%;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     background: var(--color-ink);
     color: #fff;
-    font-size: 12px;
+    font-size: 10px;
+    font-weight: 700;
   }
 
   .cs-mobile-filter-overlay {
@@ -597,35 +1236,35 @@ select {
     overflow: visible !important;
   }
 
-  /* ── Landing hero — two separate cards ── */
+  /* ── Landing hero — media and copy inside one card ── */
   .cs-hero-section {
     min-height: auto !important;
-    padding: calc(var(--nav-clearance) + 12px) var(--content-gutter) 28px !important;
+    padding: calc(var(--nav-clearance) + 10px) var(--content-gutter) var(--mobile-section-y) !important;
     align-items: stretch !important;
   }
   .cs-hero-card {
     display: flex !important;
     flex-direction: column !important;
     min-height: auto !important;
-    background: transparent !important;
-    box-shadow: none !important;
-    border: none !important;
-    border-radius: 0 !important;
-    overflow: visible !important;
-    gap: 10px !important;
+    background: linear-gradient(135deg, #FFFCF6 0%, #F4EBDD 100%) !important;
+    box-shadow: 0 12px 30px rgba(34,30,26,0.08) !important;
+    border: 1px solid rgba(229,220,200,0.78) !important;
+    border-radius: 22px !important;
+    overflow: hidden !important;
+    gap: 0 !important;
   }
   .cs-hero-overlay { display: none !important; }
   .cs-hero-text {
-    order: 1;
+    order: 2;
     width: 100% !important;
     position: relative !important;
-    padding: 20px 14px 16px !important;
+    padding: 22px 20px 20px !important;
     min-height: auto !important;
     justify-content: flex-start !important;
-    background: linear-gradient(135deg, #FFFCF6 0%, #F4EBDD 100%) !important;
-    border-radius: 22px !important;
-    border: 1px solid rgba(229,220,200,0.78) !important;
-    box-shadow: 0 8px 24px rgba(34,30,26,0.06) !important;
+    background: transparent !important;
+    border-radius: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
   }
   .cs-hero-text h1 {
     font-size: clamp(2.2rem, 9vw, 2.8rem) !important;
@@ -633,22 +1272,47 @@ select {
     margin-bottom: 12px !important;
   }
   .cs-hero-video-bg {
-    order: 2;
+    order: 1;
     position: relative !important;
     top: auto !important; right: auto !important; bottom: auto !important; left: auto !important;
     width: 100% !important;
-    height: 230px !important;
-    border-radius: 22px !important;
+    height: auto !important;
+    aspect-ratio: 16 / 9 !important;
+    max-height: 220px !important;
+    border-radius: 0 !important;
     flex-shrink: 0;
     overflow: hidden !important;
-    box-shadow: 0 8px 24px rgba(34,30,26,0.08) !important;
+    box-shadow: none !important;
+  }
+  .cs-hero-video-bg video {
+    object-position: center center !important;
+    transform: none !important;
   }
 
   /* ── Spotlight — image fills top, text below ── */
   .cs-spotlight-section {
-    padding: 48px var(--content-gutter) 36px !important;
+    padding: var(--mobile-section-y) var(--content-gutter) var(--mobile-section-y-tight) !important;
   }
-  .cs-spotlight-arrow { display: none !important; }
+  .cs-spotlight-arrow {
+    display: flex !important;
+    top: 220px !important;
+    width: 42px !important;
+    height: 42px !important;
+    background: rgba(255,255,255,0.94) !important;
+    border: 1px solid rgba(34,30,26,0.12) !important;
+    color: var(--color-ink) !important;
+    box-shadow: 0 8px 22px rgba(34,30,26,0.16) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+  }
+  .cs-spotlight-arrow[aria-label="Previous"] {
+    left: -10px !important;
+    transform: translateY(-50%) !important;
+  }
+  .cs-spotlight-arrow[aria-label="Next"] {
+    right: -10px !important;
+    transform: translateY(-50%) !important;
+  }
   .cs-spotlight-card {
     display: flex !important;
     flex-direction: column !important;
@@ -674,6 +1338,15 @@ select {
     padding: 20px 22px 26px !important;
   }
 
+  .cs-spotlight-section h2,
+  .cs-steps-heading,
+  .cs-today-hero-title,
+  .cs-today-actions-section > h2,
+  .cs-today-routine-section > h2,
+  .cs-today-cool-spaces-section > h2 {
+    font-weight: 700 !important;
+  }
+
   /* ── Step rows — text → snippet → actions (vertical) ── */
   .cs-step-row,
   .cs-step-row--rev {
@@ -682,6 +1355,9 @@ select {
     gap: 14px !important;
     align-items: stretch !important;
     padding-top: 52px !important;
+  }
+  .cs-step-copy {
+    display: contents !important;
   }
   .cs-step-num {
     display: block !important;
@@ -740,10 +1416,10 @@ select {
     justify-content: center !important;
   }
 
-  /* ── Step title + desc alignment (offset from step numbers) ── */
+  /* ── Step title + desc alignment: keep mobile reading flow predictable ── */
   .cs-steps-list > .cs-step-row:nth-child(odd) .cs-step-text h3,
   .cs-steps-list > .cs-step-row:nth-child(odd) .cs-step-text p {
-    text-align: right !important;
+    text-align: left !important;
     font-weight: 700 !important;
   }
   .cs-steps-list > .cs-step-row:nth-child(odd) .cs-step-text p {
@@ -763,7 +1439,7 @@ select {
     width: 100% !important;
     max-width: 100% !important;
     grid-template-columns: 1.4fr 1.4fr 0.75fr 0.65fr !important;
-    margin-bottom: 16px !important;
+    margin-bottom: 14px !important;
     background: #fff !important;
   }
   .cs-hero-conditions > span {
@@ -773,8 +1449,8 @@ select {
     margin-bottom: 2px !important;
   }
   .cs-hero-conditions > div {
-    text-align: center !important;
-    padding: 8px 4px !important;
+    text-align: left !important;
+    padding: 8px 8px !important;
     border-left: none !important;
     position: relative !important;
   }
@@ -806,7 +1482,7 @@ select {
 
   /* ── Section subtitle → content spacing ── */
   .cs-spotlight-subtitle {
-    margin-bottom: 24px !important;
+    margin-bottom: 16px !important;
   }
   .cs-steps-heading {
     margin-bottom: 4px !important;
@@ -814,13 +1490,17 @@ select {
 
   /* ── Steps gap ── */
   .cs-steps-list {
-    gap: 14px !important;
+    gap: 22px !important;
     padding-bottom: 0 !important;
   }
-
   /* ── Remove bottom blank space ── */
   .cs-steps-section {
-    padding-bottom: 28px !important;
+    padding-top: var(--mobile-section-y) !important;
+    padding-bottom: var(--mobile-page-bottom) !important;
+  }
+
+  .cs-today-page > section:last-of-type > div {
+    padding-bottom: var(--mobile-page-bottom) !important;
   }
 
   /* ── AI FAB — circular, icon-only, above bottom nav ── */
@@ -868,13 +1548,6 @@ select {
     padding: 13px 18px 13px 14px !important;
   }
 
-  .cs-today-hero-media {
-    grid-template-columns: 1fr !important;
-  }
-
-  .cs-symptom-grid {
-    grid-template-columns: 1fr !important;
-  }
 }
 
 .cs-mobile-filter-trigger,
@@ -882,13 +1555,99 @@ select {
   display: none;
 }
 
+/* Desktop: My Location pill button — bottom-left of map */
+.cs-map-location-button {
+  position: absolute;
+  bottom: 32px;
+  left: 32px;
+  z-index: 1000;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px 20px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.18);
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 16px;
+  color: #1e293b;
+}
+
 @media (max-width: 720px) {
   .cs-mobile-filter-trigger {
     display: inline-flex;
+    width: 44px;
+    height: 44px;
+    font-size: 22px;
   }
 
   .cs-mobile-filter-overlay {
     display: flex;
+  }
+
+  /* Spacer hidden — map fills full screen on mobile */
+  .cs-spaces-nav-spacer {
+    display: none;
+  }
+
+  /* Push Leaflet top-left controls below the navbar */
+  .leaflet-top.leaflet-left {
+    top: var(--nav-clearance) !important;
+    left: 10px !important;
+  }
+
+  /* Leaflet zoom controls: bigger touch targets */
+  .leaflet-control-zoom {
+    width: 44px !important;
+    margin-left: 0 !important;
+    margin-top: 0 !important;
+    border: none !important;
+  }
+
+  .leaflet-control-zoom-in,
+  .leaflet-control-zoom-out {
+    width: 44px !important;
+    height: 44px !important;
+    line-height: 44px !important;
+    font-size: 20px !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Filter: below zoom controls (nav + 10margin + 48+ + 1border + 48- + 8gap = nav+115) */
+  .cs-mobile-filter-trigger {
+    left: 10px !important;
+    top: calc(var(--nav-clearance) + 96px) !important;
+  }
+
+  /* My Location: icon-only square, aligned below filter */
+  .cs-map-location-button {
+    position: fixed !important;
+    bottom: auto !important;
+    left: 10px !important;
+    top: calc(var(--nav-clearance) + 148px) !important;
+    width: 44px !important;
+    height: 44px !important;
+    border-radius: 4px !important;
+    border: 2px solid rgba(0,0,0,0.2) !important;
+    padding: 0 !important;
+    gap: 0 !important;
+    box-shadow: none !important;
+    justify-content: center;
+    font-size: 22px !important;
+    z-index: 1300 !important;
+  }
+
+  .cs-map-location-pin {
+    width: 22px !important;
+    height: 28px !important;
+    display: block !important;
+  }
+
+  .cs-map-location-label {
+    display: none;
   }
 }
 

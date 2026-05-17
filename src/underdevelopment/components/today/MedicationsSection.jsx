@@ -34,12 +34,13 @@ export default function MedicationsSection({ selectedMedications, onMedicationsC
   }
 
   return (
-    <div id="medications-section" className="grid grid-cols-2 gap-2">
+    <div id="medications-section" className="cs-medication-grid grid grid-cols-2 gap-2">
       {ALL_MEDS.map((med) => {
         const selected = selectedMedications.includes(med)
         return (
           <button
             key={med}
+            className="cs-medication-option"
             onClick={() => handleToggle(med)}
             style={{
               display: 'flex',
@@ -75,7 +76,7 @@ export default function MedicationsSection({ selectedMedications, onMedicationsC
             <span
               style={{
                 fontFamily: "var(--font-body)",
-                fontSize: '0.9375rem',
+                fontSize: 'var(--text-label)',
                 fontWeight: 500,
                 color: selected ? '#1852B4' : '#0F0F0F',
                 lineHeight: 1.35,

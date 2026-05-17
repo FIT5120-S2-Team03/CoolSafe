@@ -16,7 +16,7 @@ function QuickLink({ icon, subtitle, title, to }) {
       <span className="material-symbols-outlined" style={{ fontSize: 24, color: MUTED, flexShrink: 0 }}>{icon}</span>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 'var(--text-body)', color: INK, whiteSpace: 'nowrap' }}>{title}</div>
-        <div style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-caption)', color: MUTED }}>{subtitle}</div>
+        <div style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-body-sm)', color: MUTED }}>{subtitle}</div>
       </div>
       <span className="material-symbols-outlined" style={{ fontSize: 16, color: MUTED, flexShrink: 0 }}>arrow_forward</span>
     </Link>

@@ -5,9 +5,9 @@ import SectionContainer from '../layout/SectionContainer'
 const headingStyle = {
   fontFamily: 'var(--serif)',
   fontSize: 'var(--text-section)',
-  fontWeight: 'normal',
-  letterSpacing: '-0.02em',
-  lineHeight: 1.05,
+  fontWeight: 700,
+  letterSpacing: 'var(--tracking-title)',
+  lineHeight: 'var(--leading-title)',
   color: '#0F0F0F',
   marginBottom: 10,
 }
@@ -21,11 +21,11 @@ export default function TodayActionCards({
   const currentHour = new Date().getHours()
 
   return (
-    <SectionContainer outerStyle={{ borderBottom: `1px solid ${RULE}` }}>
+    <SectionContainer innerClassName="cs-today-actions-section">
         <h2 style={headingStyle}>
           Your {score} today, in three steps.
         </h2>
-        <p style={{ fontFamily: "var(--font-body)", fontSize: '1rem', color: MUTED, lineHeight: 1.55, marginBottom: 36, maxWidth: 520 }}>
+        <p style={{ fontFamily: "var(--font-body)", fontSize: 'var(--text-body-sm)', color: MUTED, lineHeight: 'var(--leading-body)', marginBottom: 36, maxWidth: 520 }}>
           Tap a card to see more. Your details stay private.
         </p>
 

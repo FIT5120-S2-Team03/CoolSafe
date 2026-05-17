@@ -67,7 +67,7 @@ export function heatCopy(band) {
       slogan: { before: 'Take it', accent: 'easy today.' },
       desc: "The day is warming up. Your plan will adjust if medicines add heat sensitivity.",
       cardTitle: 'A comfortable morning, warmer later.',
-      windowLabel: 'am good for errands',
+      windowLabel: 'AM good for errands',
       cardDesc: (m) => `By midday it should feel around ${m != null ? Math.round(m) : '--'}°. The earlier window may be easier for light errands or time outside.`,
       baseVerdict: 'Mostly safe',
       routine: { morning: 'Use the easier morning window.', midday: 'Pace yourself through the warmer hours.', evening: 'Let the day ease down.' },
@@ -76,7 +76,7 @@ export function heatCopy(band) {
       slogan: { before: 'Take it', accent: 'easy today.' },
       desc: "Heat is expected to build today. Medicines can change what extra care you need.",
       cardTitle: 'Use the cooler morning window.',
-      windowLabel: 'am best for outdoors',
+      windowLabel: 'AM best for outdoors',
       cardDesc: (m) => `By midday it should feel around ${m != null ? Math.round(m) : '--'}°. Plan walks, errands, or laundry on the line earlier if you can.`,
       baseVerdict: 'Be careful',
       routine: { morning: 'Use the cooler window. Keep it easy.', midday: 'Stay steady while heat builds.', evening: 'Things ease. So can you.' },
@@ -85,7 +85,7 @@ export function heatCopy(band) {
       slogan: { before: 'Stay', accent: 'indoors today.' },
       desc: "High heat can become risky quickly. Medicines can change what extra care you need.",
       cardTitle: 'Morning is your safest window.',
-      windowLabel: 'am safest for essentials',
+      windowLabel: 'AM safest for essentials',
       cardDesc: (m) => `By midday it should feel around ${m != null ? Math.round(m) : '--'}°. Keep outdoor tasks early, short, and only if they are necessary.`,
       baseVerdict: 'Stay indoors',
       routine: { morning: 'Use the safest window for essentials.', midday: 'Stay cool and keep plans simple.', evening: 'Recover gently and prepare for tomorrow.' },
@@ -178,7 +178,7 @@ export function outingRecommendation(hourly) {
     const endH = currentHour < 18 ? 18 : 20
     return {
       windowTime: currentHour < 6 ? formatWindow(6, 18) : `Now–${formatHour(endH)}`,
-      windowLabel: 'good for going out',
+      windowLabel: 'Good for going out',
       intro: 'Feels-like temperatures stay below 24° through the useful part of the day.',
     }
   }
@@ -193,13 +193,13 @@ export function outingRecommendation(hourly) {
       const startsNow = currentHour >= w.startH && currentHour < w.endH
       return {
         windowTime: startsNow ? `Now–${formatHour(w.endH)}` : formatWindow(w.startH, w.endH),
-        windowLabel: 'good for going out',
+        windowLabel: 'Good for going out',
         windowAvgTemp: Math.round(w.avg),
       }
     }
     return {
       windowTime: `Tomorrow ${formatWindow(w.startH, w.endH)}`,
-      windowLabel: 'best window tomorrow',
+      windowLabel: 'Best window tomorrow',
       windowAvgTemp: Math.round(w.avg),
     }
   }

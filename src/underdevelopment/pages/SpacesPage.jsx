@@ -13,10 +13,10 @@ export default function SpacesPage() {
   const openVenueId = state?.openVenueId ?? null
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden" style={{ backgroundColor: 'var(--color-paper)' }}>
+    <div className="cs-spaces-page flex flex-col h-screen overflow-hidden" style={{ backgroundColor: 'var(--color-paper)' }}>
       <Navbar />
-      {/* Spacer for fixed navbar */}
-      <div className="shrink-0" style={{ height: 'var(--nav-clearance)' }} />
+      {/* Spacer for fixed navbar — hidden on mobile so map fills full screen */}
+      <div className="shrink-0 cs-spaces-nav-spacer" style={{ height: 'var(--nav-clearance)' }} />
       {/* Main content */}
       <div className="flex flex-1 overflow-hidden">
         <MapSidebar
@@ -37,9 +37,8 @@ export default function SpacesPage() {
         aria-label="Open space filters"
       >
         <i className="ti ti-adjustments-horizontal" aria-hidden="true" />
-        Filters
-        {(selectedCategories.length > 0 || showHVI) && (
-          <span aria-hidden="true">{selectedCategories.length + (showHVI ? 1 : 0)}</span>
+        {selectedCategories.length > 0 && (
+          <span aria-hidden="true">{selectedCategories.length}</span>
         )}
       </button>
 

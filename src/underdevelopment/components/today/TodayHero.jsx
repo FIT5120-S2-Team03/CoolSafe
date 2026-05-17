@@ -2,6 +2,7 @@ import { WeatherCallout } from './TodayCards'
 import { aqiBadgeColor, SCORE_COLOR } from '../../utils/todayHeat'
 import { FAINT, INK, MUTED, RULE } from '../../styles/colors'
 import SectionContainer from '../layout/SectionContainer'
+import todayHeroImage from '../../../assets/today.png'
 
 export default function TodayHero({
   current,
@@ -18,6 +19,7 @@ export default function TodayHero({
 }) {
   return (
     <SectionContainer
+      outerClassName="cs-today-hero-shell"
       innerClassName="cs-today-hero-inner"
       outerStyle={{ borderBottom: `1px solid ${RULE}` }}
       padding="clamp(100px,12vh,132px) var(--content-gutter) clamp(48px,6vw,80px)"
@@ -28,32 +30,36 @@ export default function TodayHero({
         alignItems: 'center',
       }}
     >
-        <div>
-          <h1 style={{
+        <div className="cs-today-hero-copy">
+          <h1 className="cs-today-hero-title" style={{
             fontFamily: "var(--font-title)",
-            fontSize: 'clamp(3rem,6vw,5rem)',
-            fontWeight: 'normal',
+            fontSize: 'var(--text-slogan)',
+            fontWeight: 700,
             color: INK,
-            letterSpacing: '-0.03em',
-            lineHeight: 0.98,
+            letterSpacing: 'var(--tracking-display)',
+            lineHeight: 'var(--leading-display)',
             marginBottom: 24,
           }}>
             {heroSlogan.before}{' '}
             <em style={{ fontStyle: 'italic', color: INK }}>{heroSlogan.accent}</em>
           </h1>
 
-          <p style={{
+          <p className="cs-today-hero-desc" style={{
             fontFamily: "var(--font-body)",
-            fontSize: '1.125rem',
+            fontSize: 'var(--text-body)',
             color: MUTED,
-            lineHeight: 1.55,
+            lineHeight: 'var(--leading-body)',
             maxWidth: 520,
+            width: '100%',
+            textAlign: 'left',
+            alignSelf: 'stretch',
             marginBottom: 28,
           }}>
             {current ? heroDesc : 'Loading today\'s conditions for your area…'}
           </p>
 
           <button
+            className="cs-today-hero-med-button"
             onClick={onEditMedications}
             style={{
               display: 'inline-flex',
@@ -67,7 +73,7 @@ export default function TodayHero({
               color: selectedMedications.length > 0 ? '#221E1A' : '#fff',
               fontFamily: 'var(--sans)',
               fontWeight: 700,
-              fontSize: 'var(--text-label)',
+              fontSize: 'var(--text-button)',
               cursor: 'pointer',
               boxShadow: selectedMedications.length > 0 ? 'var(--shadow-soft)' : '0 10px 24px -18px rgba(138,63,40,0.9)',
               transition: 'transform 0.18s, box-shadow 0.18s, background 0.18s',
@@ -84,7 +90,7 @@ export default function TodayHero({
 
         <div className="cs-today-hero-media" style={{ position: 'relative' }}>
           <img
-            src="/risk-hero-indoor.png"
+            src={todayHeroImage}
             alt="Older Melburnian staying cool indoors during hot weather"
             style={{ width: '100%', borderRadius: 20, display: 'block', objectFit: 'cover' }}
           />

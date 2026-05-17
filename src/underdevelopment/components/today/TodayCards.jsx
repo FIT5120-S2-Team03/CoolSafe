@@ -38,14 +38,14 @@ export function WeatherCallout({ value, label, badge, badgeColor, style: extraSt
         {loading ? (
           <span style={{ display: 'inline-block', width: 52, height: 20, borderRadius: 6, background: SHIMMER, backgroundSize: '200% 100%', animation: 'cs-shimmer 1.6s ease-in-out infinite' }} />
         ) : (
-          <span style={{ fontFamily: "var(--font-title)", fontSize: '1.375rem', color: INK, letterSpacing: '-0.5px', lineHeight: 1 }}>{value}</span>
+          <span style={{ fontFamily: "var(--font-title)", fontSize: 'var(--text-data-lg)', color: INK, letterSpacing: 'var(--tracking-title)', lineHeight: 1 }}>{value}</span>
         )}
-        <span style={{ fontFamily: "var(--font-body)", fontSize: '0.9375rem', color: MUTED, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700 }}>{label}</span>
+        <span style={{ fontFamily: "var(--font-body)", fontSize: 'var(--text-caption)', color: MUTED, textTransform: 'uppercase', letterSpacing: 'var(--tracking-data)', fontWeight: 700 }}>{label}</span>
       </div>
       {loading ? (
         <span style={{ display: 'inline-block', width: 68, height: 18, borderRadius: 99, background: SHIMMER, backgroundSize: '200% 100%', animation: 'cs-shimmer 1.6s ease-in-out infinite', animationDelay: '0.2s' }} />
       ) : (
-        <span style={{ display: 'inline-block', padding: '3px 10px', borderRadius: 99, background: `${badgeColor}18`, fontFamily: "var(--font-body)", fontSize: '1rem', fontWeight: 600, color: badgeColor, alignSelf: 'flex-start' }}>
+        <span style={{ display: 'inline-block', padding: '3px 10px', borderRadius: 99, background: `${badgeColor}18`, fontFamily: "var(--font-body)", fontSize: 'var(--text-label)', fontWeight: 600, color: badgeColor, alignSelf: 'flex-start' }}>
           {badge}
         </span>
       )}
@@ -56,21 +56,22 @@ export function WeatherCallout({ value, label, badge, badgeColor, style: extraSt
 export function ThingCard({ icon, iconBg, title, desc, extra, extraBeforeDesc = false, cta, ctaIcon = 'arrow_forward', onClick, windowIntro, windowTime, windowLabel }) {
   return (
     <div
+      className="cs-thing-card"
       onClick={onClick}
       style={{ background: '#fff', border: `1px solid ${RULE}`, borderRadius: 24, padding: 34, minHeight: 400, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 24, cursor: 'pointer', transition: 'border-color 0.18s' }}
       onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#8A3F28' }}
       onMouseLeave={(e) => { e.currentTarget.style.borderColor = RULE }}
     >
-      <div>
-        <div style={{ width: 48, height: 48, borderRadius: '50%', background: iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 24 }}>
+      <div className="cs-thing-card-body">
+        <div className="cs-thing-icon" style={{ width: 48, height: 48, borderRadius: '50%', background: iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 24 }}>
           <span className="material-symbols-outlined" style={{ fontSize: 22, color: INK }}>{icon}</span>
         </div>
-        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 'var(--text-title-sm)', color: INK, lineHeight: 1.16, marginBottom: windowTime || (extraBeforeDesc && extra) ? 0 : 18, fontWeight: 'normal', letterSpacing: '-0.01em' }}>
+        <h3 className="cs-thing-title" style={{ fontFamily: 'var(--serif)', fontSize: 'var(--text-card-title)', color: INK, lineHeight: 'var(--leading-heading)', marginBottom: windowTime || (extraBeforeDesc && extra) ? 0 : 18, fontWeight: 'normal', letterSpacing: 'var(--tracking-title)' }}>
           {title}
         </h3>
         {extraBeforeDesc && extra && <div style={{ marginTop: 16, marginBottom: 16 }}>{extra}</div>}
         {(windowIntro || windowTime) && (
-          <p style={{ fontFamily: "var(--font-body)", fontSize: '1rem', color: MUTED, lineHeight: 1.45, margin: '14px 0 12px' }}>
+          <p style={{ fontFamily: "var(--font-body)", fontSize: 'var(--text-body-sm)', color: MUTED, lineHeight: 'var(--leading-compact)', margin: '14px 0 12px' }}>
             {windowTime && <strong style={{ color: INK, fontWeight: 700 }}>{windowTime}</strong>}
             {windowTime && windowLabel ? ' ' : ''}
             {windowLabel && <span>{windowLabel}</span>}
@@ -78,12 +79,12 @@ export function ThingCard({ icon, iconBg, title, desc, extra, extraBeforeDesc = 
             {windowIntro}
           </p>
         )}
-        <p style={{ fontFamily: "var(--font-body)", fontSize: '1rem', color: MUTED, lineHeight: 1.45, margin: windowIntro || windowTime ? '0' : 0 }}>
+        <p style={{ fontFamily: "var(--font-body)", fontSize: 'var(--text-body-sm)', color: MUTED, lineHeight: 'var(--leading-compact)', margin: windowIntro || windowTime ? '0' : 0 }}>
           {desc}
         </p>
         {!extraBeforeDesc && extra && <div style={{ marginTop: 12 }}>{extra}</div>}
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontFamily: "var(--font-body)", fontSize: '1rem', fontWeight: 600, color: INK }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontFamily: "var(--font-body)", fontSize: 'var(--text-label)', fontWeight: 600, color: INK }}>
         {cta}
         <span className="material-symbols-outlined" style={{ fontSize: 20 }}>{ctaIcon}</span>
       </div>
@@ -109,7 +110,7 @@ export function MedAdviceChips({ medications, activeMed, onSelect, onClear }) {
             background: activeMed === med ? '#B85A3C' : '#FFFCF6',
             border: activeMed === med ? '1px solid #B85A3C' : `1px solid ${RULE}`,
             fontFamily: "var(--font-body)",
-            fontSize: '1rem',
+            fontSize: 'var(--text-label)',
             fontWeight: 500,
             color: activeMed === med ? '#fff' : MUTED,
             lineHeight: 1.4,
@@ -142,7 +143,7 @@ export function MedAdviceChips({ medications, activeMed, onSelect, onClear }) {
           background: 'transparent',
           color: '#8A3F28',
           fontFamily: 'var(--sans)',
-          fontSize: '1rem',
+          fontSize: 'var(--text-label)',
           fontWeight: 500,
           cursor: 'pointer',
           padding: '3px 4px',

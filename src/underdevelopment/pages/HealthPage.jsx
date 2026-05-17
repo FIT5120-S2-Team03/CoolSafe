@@ -5,7 +5,6 @@ import MedicationPanel from '../components/safety/MedicationPanel'
 import SafetyQuickLinks from '../components/safety/SafetyQuickLinks'
 import SafetyResponsePanel from '../components/safety/SafetyResponsePanel'
 import SafetyShareModal from '../components/safety/SafetyShareModal'
-import SelectedSymptomChips from '../components/safety/SelectedSymptomChips'
 import SymptomGroup from '../components/safety/SymptomGroup'
 import { EARLY, RESPONSE, SYMPTOMS, URGENT } from '../data/safetyContent'
 import { buildSafetyShareText } from '../utils/safetyShare'
@@ -86,8 +85,6 @@ export default function HealthPage() {
         .cs-share-btn:hover { background: rgba(255,255,255,0.95) !important; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(34,30,26,0.14) !important; }
         .cs-call-link { transition: filter 0.18s ease, transform 0.18s ease; }
         .cs-call-link:hover { filter: brightness(0.88); transform: translateY(-1px); }
-        .cs-chip-btn { transition: opacity 0.15s ease; }
-        .cs-chip-btn:hover { opacity: 0.75; }
         .cs-med-expand { overflow: hidden; transition: max-height 0.32s ease, opacity 0.28s ease; }
         .cs-med-tab { transition: background 0.18s ease, color 0.18s ease; }
         .cs-med-tab:hover { opacity: 0.85; }
@@ -104,10 +101,10 @@ export default function HealthPage() {
 
       <main className="cs-health-main" style={{ maxWidth: 'var(--content-width)', margin: '0 auto', padding: 'clamp(100px,12vh,130px) var(--content-gutter) clamp(64px,8vw,100px)' }}>
         <div style={{ marginBottom: 32 }}>
-          <h1 style={{ fontFamily: 'var(--font-title)', fontSize: 'clamp(3rem,6vw,5rem)', fontWeight: 'normal', letterSpacing: '-0.03em', lineHeight: 0.98, color: INK, marginBottom: 14 }}>
-            How is your body<br />feeling?
+          <h1 style={{ fontFamily: 'var(--font-title)', fontSize: 'var(--text-page-title)', fontWeight: 700, letterSpacing: 'var(--tracking-display)', lineHeight: 'var(--leading-display)', color: INK, marginBottom: 14 }}>
+            How is your body feeling?
           </h1>
-          <p style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-body)', color: MUTED, lineHeight: 1.55, margin: 0 }}>
+          <p style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-body)', color: MUTED, lineHeight: 'var(--leading-body)', margin: 0 }}>
             Select any symptoms you're feeling right now. Medication notes appear below if you've added any.
           </p>
         </div>
@@ -115,15 +112,13 @@ export default function HealthPage() {
         <div style={{ display: 'grid', gap: 18 }}>
           <div className="cs-health-symptom-groups" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
             <SymptomGroup
-              title="Early signs" badge="Cool down now"
-              badgeStyle={{ background: '#FDF3D8', color: EARLY_ACTIVE, border: '1px solid rgba(138,90,18,0.28)' }}
+              title="Early signs"
               groupStyle={{ background: '#FEFAF0', border: '1px solid rgba(212,154,58,0.22)' }}
               symptoms={EARLY} selectedSymptoms={selectedSymptoms} onToggle={toggleSymptom}
               activeColor={EARLY_ACTIVE} selectedBg={EARLY_SEL_BG}
             />
             <SymptomGroup
-              title="Urgent signs" badge="Call 000"
-              badgeStyle={{ background: '#FFF0EE', color: '#C94B1A', border: '1px solid rgba(201,75,26,0.24)' }}
+              title="Urgent signs"
               groupStyle={{ background: '#FFF8F6', border: '1px solid rgba(201,75,26,0.18)' }}
               symptoms={URGENT} selectedSymptoms={selectedSymptoms} onToggle={toggleSymptom}
               activeColor="#C94B1A" selectedBg="#FFF0EE"
@@ -132,13 +127,6 @@ export default function HealthPage() {
 
           <div className="cs-health-content-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 280px', gap: 32, alignItems: 'start' }}>
             <div style={{ display: 'grid', gap: 18 }}>
-              <SelectedSymptomChips
-                selectedSymptoms={selectedSymptoms}
-                symptoms={SYMPTOMS}
-                onToggle={toggleSymptom}
-                onClear={() => setSelectedSymptoms([])}
-              />
-
               <SafetyResponsePanel
                 maxSeverity={maxSeverity}
                 response={response}

@@ -300,7 +300,7 @@ export default function CoolSpacesMap({ selectedCategories, flyTo, showHVI, open
             left: pinPos.x,
             top: pinPos.y,
             transform: 'translate(-50%, calc(-100% - 40px))',
-            zIndex: 1000,
+            zIndex: 1600,
             pointerEvents: 'auto',
           }}
         >
@@ -401,17 +401,14 @@ export default function CoolSpacesMap({ selectedCategories, flyTo, showHVI, open
       <button
         onClick={handleMyLocation}
         className="cs-map-location-button"
-        style={{ position: 'absolute', bottom: 32, left: 32, zIndex: 1000, display: 'flex', alignItems: 'center', gap: 8, backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: 12, padding: '12px 20px', boxShadow: '0 10px 40px rgba(0,0,0,0.18)', cursor: 'pointer', fontFamily: "var(--font-body)", fontWeight: 700, fontSize: 16, color: '#1e293b' }}
+        aria-label="Go to my location"
       >
-        <svg width="18" height="23" viewBox="0 0 28 36" aria-hidden="true">
-          <path
-            d="M14 0C6.7 0 1 5.7 1 12.8c0 9.5 13 23.2 13 23.2s13-13.7 13-23.2C27 5.7 21.3 0 14 0Z"
-            fill="#003fa4"
-          />
-          <circle cx="14" cy="13" r="6.2" fill="white" />
-          <circle cx="14" cy="13" r="3.4" fill="#003fa4" />
+        <svg className="cs-map-location-pin" width="22" height="28" viewBox="0 0 28 36" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+          <path d="M14 0C6.268 0 0 6.268 0 14c0 9.9 14 22 14 22S28 23.9 28 14C28 6.268 21.732 0 14 0z" fill="#003fa4"/>
+          <circle cx="14" cy="14" r="6" fill="white"/>
+          <circle cx="14" cy="14" r="3.5" fill="#003fa4"/>
         </svg>
-        My Location
+        <span className="cs-map-location-label">My Location</span>
       </button>
     </div>
   )

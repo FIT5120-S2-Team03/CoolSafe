@@ -26,7 +26,7 @@ export default function LocationModal({ open, onClose, requestGps, fetchByPostco
         <h2 style={{ fontFamily: 'var(--serif)', fontSize: '1.625rem', color: INK, textAlign: 'center', marginBottom: 10, letterSpacing: '-0.5px', lineHeight: 1.2, fontWeight: 'normal' }}>
           Where are you?
         </h2>
-        <p style={{ fontFamily: 'var(--sans)', fontSize: '0.9375rem', color: '#6B6B6B', textAlign: 'center', lineHeight: 1.55, marginBottom: 24 }}>
+        <p style={{ fontFamily: 'var(--sans)', fontSize: 'var(--text-body-sm)', color: '#6B6B6B', textAlign: 'center', lineHeight: 'var(--leading-body)', marginBottom: 24 }}>
           We need your location to show nearby cool spaces and personalise your heat risk.
         </p>
 
@@ -35,14 +35,14 @@ export default function LocationModal({ open, onClose, requestGps, fetchByPostco
             onClose()
             requestGps()
           }}
-          style={{ width: '100%', background: '#1852B4', color: '#fff', border: 'none', borderRadius: 12, padding: 15, fontFamily: 'var(--sans)', fontSize: '1rem', fontWeight: 600, cursor: 'pointer', marginBottom: 16 }}
+          style={{ width: '100%', background: '#1852B4', color: '#fff', border: 'none', borderRadius: 12, padding: 15, fontFamily: 'var(--sans)', fontSize: 'var(--text-button)', fontWeight: 600, cursor: 'pointer', marginBottom: 16 }}
         >
           Use my current location
         </button>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
           <div style={{ flex: 1, height: 1, background: RULE }} />
-          <span style={{ fontFamily: 'var(--sans)', fontSize: '1rem', color: '#9C9A96' }}>or</span>
+          <span style={{ fontFamily: 'var(--sans)', fontSize: 'var(--text-label)', color: '#9C9A96' }}>or</span>
           <div style={{ flex: 1, height: 1, background: RULE }} />
         </div>
 
@@ -60,11 +60,11 @@ export default function LocationModal({ open, onClose, requestGps, fetchByPostco
             value={postcode}
             onChange={(e) => setPostcode(e.target.value)}
             placeholder="Enter postcode (e.g. 3000)"
-            style={{ flex: 1, border: `1.5px solid ${RULE}`, borderRadius: 10, padding: '12px 16px', fontFamily: 'var(--sans)', fontSize: '0.9375rem', color: INK, outline: 'none', background: '#FAFAF9', minWidth: 0 }}
+            style={{ flex: 1, border: `1.5px solid ${RULE}`, borderRadius: 10, padding: '12px 16px', fontFamily: 'var(--sans)', fontSize: 'var(--text-label)', color: INK, outline: 'none', background: '#FAFAF9', minWidth: 0 }}
           />
           <button
             type="submit"
-            style={{ background: INK, color: '#fff', border: 'none', borderRadius: 10, padding: '12px 20px', fontFamily: 'var(--sans)', fontSize: '0.9375rem', fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}
+            style={{ background: INK, color: '#fff', border: 'none', borderRadius: 10, padding: '12px 20px', fontFamily: 'var(--sans)', fontSize: 'var(--text-button)', fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}
           >
             Go
           </button>

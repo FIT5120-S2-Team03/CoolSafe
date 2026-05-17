@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import L from 'leaflet'
 import { MapContainer, TileLayer, Marker, Polyline, Pane } from 'react-leaflet'
@@ -54,6 +54,25 @@ export default function VenueDetailPage() {
   const [shareModalOpen, setShareModalOpen] = useState(false)
   const directionsRef = useRef(null)
 
+  const fetchFastestRoute = useCallback(async (from) => {
+    if (!venue) return
+    try {
+      setRouteLoading(true)
+      setRouteError('')
+      const url = `https://router.project-osrm.org/route/v1/foot/${from.lng},${from.lat};${venue.lng},${venue.lat}?overview=full&geometries=geojson&steps=true`
+      const res = await fetch(url)
+      if (!res.ok) throw new Error(`Route request failed: HTTP ${res.status}`)
+      const data = await res.json()
+      if (!data.routes || data.routes.length === 0) throw new Error('No route found.')
+      setRouteCoords(data.routes[0].geometry.coordinates.map(([lng, lat]) => [lat, lng]))
+      setRouteSteps(data.routes[0].legs?.[0]?.steps ?? [])
+    } catch (err) {
+      setRouteError(err.message)
+    } finally {
+      setRouteLoading(false)
+    }
+  }, [venue])
+
   useEffect(() => {
     if (mockLocation.enabled) {
       setUserLocation({ lat: mockLocation.lat, lng: mockLocation.lng })
@@ -74,34 +93,16 @@ export default function VenueDetailPage() {
       setRouteCoords([])
       setRouteSteps([])
     }
-  }, [userLocation, routeMode, venue, isShareView])
+  }, [userLocation, routeMode, venue, isShareView, fetchFastestRoute])
 
   useEffect(() => {
     if (!isShareView || !venue || isNaN(shareLat) || isNaN(shareLng)) return
     fetchFastestRoute({ lat: shareLat, lng: shareLng })
-  }, [isShareView, venue])
+  }, [isShareView, venue, shareLat, shareLng, fetchFastestRoute])
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
   }, [])
-
-  async function fetchFastestRoute(from) {
-    try {
-      setRouteLoading(true)
-      setRouteError('')
-      const url = `https://router.project-osrm.org/route/v1/foot/${from.lng},${from.lat};${venue.lng},${venue.lat}?overview=full&geometries=geojson&steps=true`
-      const res = await fetch(url)
-      if (!res.ok) throw new Error(`Route request failed: HTTP ${res.status}`)
-      const data = await res.json()
-      if (!data.routes || data.routes.length === 0) throw new Error('No route found.')
-      setRouteCoords(data.routes[0].geometry.coordinates.map(([lng, lat]) => [lat, lng]))
-      setRouteSteps(data.routes[0].legs?.[0]?.steps ?? [])
-    } catch (err) {
-      setRouteError(err.message)
-    } finally {
-      setRouteLoading(false)
-    }
-  }
 
   function requestLocation() {
     if (mockLocation.enabled) {
@@ -160,12 +161,12 @@ export default function VenueDetailPage() {
     return (
       <div style={{ height: '100dvh', display: 'flex', flexDirection: 'column', background: 'var(--color-surface)' }}>
         <div style={{ padding: '14px 16px', background: 'var(--color-surface)', borderBottom: '1px solid var(--color-rule)', flexShrink: 0 }}>
-          <h2 style={{ margin: 0, fontFamily: 'var(--font-body)', fontWeight: 800, fontSize: 'var(--text-caption)', color: 'var(--color-ink)' }}>{venue.name}</h2>
-          <p style={{ margin: '3px 0 0', fontFamily: 'var(--font-body)', color: 'var(--color-ink-muted)', fontSize: 'var(--text-caption)' }}>
+          <h2 style={{ margin: 0, fontFamily: 'var(--font-body)', fontWeight: 800, fontSize: 'var(--text-label)', color: 'var(--color-ink)' }}>{venue.name}</h2>
+          <p style={{ margin: '3px 0 0', fontFamily: 'var(--font-body)', color: 'var(--color-ink-muted)', fontSize: 'var(--text-body-sm)' }}>
             {[venue.suburb, shareWalkMins ? `~${shareWalkMins} min walk` : null].filter(Boolean).join(' · ')}
           </p>
           {routeLoading && (
-            <p style={{ margin: '3px 0 0', fontFamily: 'var(--font-body)', color: 'var(--color-ink-disabled)', fontSize: 'var(--text-caption)' }}>Loading route…</p>
+            <p style={{ margin: '3px 0 0', fontFamily: 'var(--font-body)', color: 'var(--color-ink-disabled)', fontSize: 'var(--text-body-sm)' }}>Loading route…</p>
           )}
         </div>
         <div style={{ flex: 1, minHeight: 0 }}>
@@ -226,7 +227,7 @@ export default function VenueDetailPage() {
       `}</style>
 
       <main
-        className="flex-1"
+        className="flex-1 cs-venue-detail-main"
         style={{
           padding: '112px 24px 72px',
           minHeight: '100vh',
@@ -236,12 +237,12 @@ export default function VenueDetailPage() {
         <div style={{ width: 'min(100%, 760px)', margin: '0 auto' }}>
 
           {/* Breadcrumb */}
-          <nav className="flex items-center gap-1 mb-6" style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-caption)', color: 'var(--color-ink-muted)' }}>
-            <button onClick={() => navigate('/')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-ink-muted)', fontFamily: 'var(--font-body)', fontSize: 'var(--text-caption)', padding: 0 }}>
+          <nav className="flex items-center gap-1 mb-6" style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-label)', color: 'var(--color-ink-muted)' }}>
+            <button onClick={() => navigate('/')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-ink-muted)', fontFamily: 'var(--font-body)', fontSize: 'var(--text-label)', padding: 0 }}>
               Home
             </button>
             <span style={{ color: 'var(--color-rule)' }}>›</span>
-            <button onClick={() => navigate('/spaces')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-ink-muted)', fontFamily: 'var(--font-body)', fontSize: 'var(--text-caption)', padding: 0 }}>
+            <button onClick={() => navigate('/spaces')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-ink-muted)', fontFamily: 'var(--font-body)', fontSize: 'var(--text-label)', padding: 0 }}>
               Spaces
             </button>
             <span style={{ color: 'var(--color-rule)' }}>›</span>
@@ -263,19 +264,19 @@ export default function VenueDetailPage() {
                   <circle cx="12" cy="12" r="10" />
                   <polyline points="12 6 12 12 16 14" />
                 </svg>
-                <span style={{ fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 'var(--text-caption)', color: 'var(--color-ink)' }}>Opening Hours</span>
+                <span style={{ fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 'var(--text-label)', color: 'var(--color-ink)' }}>Opening Hours</span>
               </div>
 
               {!hoursDisplay ? (
-                <p style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-caption)', color: 'var(--color-ink-disabled)' }}>Hours unavailable</p>
+                <p style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-body-sm)', color: 'var(--color-ink-disabled)' }}>Hours unavailable</p>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   {/* Today row — highlighted */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 10px', borderRadius: 8, background: 'var(--color-spotlight-green)', border: '1px solid rgba(42,125,79,0.2)' }}>
-                    <span style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-caption)', fontWeight: 700, color: 'var(--color-green)' }}>
+                    <span style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-label)', fontWeight: 700, color: 'var(--color-green)' }}>
                       Today ({hoursDisplay.todayName.slice(0, 3)})
                     </span>
-                    <span style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-caption)', fontWeight: 700, color: 'var(--color-green)' }}>
+                    <span style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-label)', fontWeight: 700, color: 'var(--color-green)' }}>
                       {hoursDisplay.todayHours ? `${fmt(hoursDisplay.todayHours.open)} – ${fmt(hoursDisplay.todayHours.close)}` : 'Closed'}
                     </span>
                   </div>
@@ -283,8 +284,8 @@ export default function VenueDetailPage() {
                   {/* Rest of the week */}
                   {hoursDisplay.upcoming.map(({ day, hours }) => (
                     <div key={day} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 10px' }}>
-                      <span style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-caption)', color: 'var(--color-ink-muted)' }}>{day}</span>
-                      <span style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-caption)', color: 'var(--color-ink-muted)' }}>
+                      <span style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-body-sm)', color: 'var(--color-ink-muted)' }}>{day}</span>
+                      <span style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-body-sm)', color: 'var(--color-ink-muted)' }}>
                         {hours ? `${fmt(hours.open)} – ${fmt(hours.close)}` : 'Closed'}
                       </span>
                     </div>
@@ -300,10 +301,10 @@ export default function VenueDetailPage() {
                   <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
                   <circle cx="12" cy="10" r="3" />
                 </svg>
-                <span style={{ fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 'var(--text-caption)', color: 'var(--color-ink)' }}>Location</span>
+                <span style={{ fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 'var(--text-label)', color: 'var(--color-ink)' }}>Location</span>
               </div>
 
-              <p style={{ fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 'var(--text-caption)', color: 'var(--color-ink)', margin: 0 }}>
+              <p style={{ fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 'var(--text-body-sm)', color: 'var(--color-ink)', margin: 0 }}>
                 {[venue.address, venue.suburb].filter(Boolean).join(', ')}
               </p>
 
@@ -313,19 +314,19 @@ export default function VenueDetailPage() {
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-ink-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <circle cx="12" cy="4" r="2" /><path d="M9 20l1-6-2-3 3-3" /><path d="M15 20l-1-6 2-3-3-3" /><path d="M8 13h8" />
                   </svg>
-                  <span style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-caption)', color: 'var(--color-ink-muted)' }}>{walkMins} min walk from your location</span>
+                  <span style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-body-sm)', color: 'var(--color-ink-muted)' }}>{walkMins} min walk from your location</span>
                 </div>
               ) : locationDenied ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <button onClick={requestLocation} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'var(--font-body)', fontSize: 'var(--text-caption)', color: 'var(--color-blue)', textDecoration: 'underline', textAlign: 'left' }}>
+                  <button onClick={requestLocation} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'var(--font-body)', fontSize: 'var(--text-label)', color: 'var(--color-blue)', textDecoration: 'underline', textAlign: 'left' }}>
                     Enable location to see walking time
                   </button>
                   {showDeniedAlert && (
-                    <p style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-caption)', color: 'var(--color-orange)', margin: 0 }}>Location access is required to show walking distance.</p>
+                    <p style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-body-sm)', color: 'var(--color-orange)', margin: 0 }}>Location access is required to show walking distance.</p>
                   )}
                 </div>
               ) : (
-                <button onClick={requestLocation} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'var(--font-body)', fontSize: 'var(--text-caption)', color: 'var(--color-blue)', textDecoration: 'underline', textAlign: 'left' }}>
+                <button onClick={requestLocation} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'var(--font-body)', fontSize: 'var(--text-label)', color: 'var(--color-blue)', textDecoration: 'underline', textAlign: 'left' }}>
                   Enable location to see walking time
                 </button>
               )}
@@ -334,7 +335,7 @@ export default function VenueDetailPage() {
               {venue.phone && (
                 <button onClick={() => { window.location.href = `tel:${venue.phone}` }}
                   className="venue-detail-link"
-                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', background: 'var(--color-blue-soft)', border: '1px solid var(--color-blue-chip)', borderRadius: 8, padding: '13px 16px', fontFamily: 'var(--font-body)', fontWeight: 600, fontSize: 'var(--text-caption)', color: 'var(--color-blue-navy)', cursor: 'pointer', minHeight: 48 }}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', background: 'var(--color-blue-soft)', border: '1px solid var(--color-blue-chip)', borderRadius: 8, padding: '13px 16px', fontFamily: 'var(--font-body)', fontWeight: 600, fontSize: 'var(--text-label)', color: 'var(--color-blue-navy)', cursor: 'pointer', minHeight: 48 }}
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.41 2 2 0 0 1 3.58 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.54a16 16 0 0 0 5.55 5.55l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21 16.92z" />
@@ -348,7 +349,7 @@ export default function VenueDetailPage() {
           {/* Get Directions section */}
           <div ref={directionsRef} style={{ background: 'var(--color-surface)', border: '1px solid var(--color-rule)', borderRadius: 12, padding: 20, marginBottom: 24 }}>
             <h2 style={{ fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 'var(--text-title-xs)', color: 'var(--color-ink)', margin: '0 0 4px' }}>Get Directions</h2>
-            <p style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-caption)', color: 'var(--color-ink-muted)', margin: '0 0 16px' }}>Choose your preferred walking path based on shade.</p>
+            <p style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-body-sm)', color: 'var(--color-ink-muted)', margin: '0 0 16px', lineHeight: 'var(--leading-body)' }}>Choose your preferred walking path based on shade.</p>
 
             {/* Route toggle */}
             <div style={{ display: 'flex', background: 'var(--color-warm)', borderRadius: 50, padding: 4, marginBottom: 16 }}>
@@ -357,7 +358,7 @@ export default function VenueDetailPage() {
                 { key: 'coolest', label: 'Coolest Route' },
               ].map(({ key, label }) => (
                 <button key={key} className="venue-route-tab" onClick={() => setRouteMode(key)}
-                  style={{ flex: 1, padding: '10px 16px', borderRadius: 50, border: 'none', cursor: 'pointer', background: routeMode === key ? 'var(--color-surface)' : 'transparent', color: routeMode === key ? 'var(--color-blue)' : 'var(--color-ink-muted)', fontWeight: routeMode === key ? 700 : 400, boxShadow: routeMode === key ? '0 1px 4px rgba(0,0,0,0.1)' : 'none', fontFamily: 'var(--font-body)', fontSize: 'var(--text-caption)', minHeight: 48, transition: 'all 0.15s ease' }}
+                  style={{ flex: 1, padding: '10px 16px', borderRadius: 50, border: 'none', cursor: 'pointer', background: routeMode === key ? 'var(--color-surface)' : 'transparent', color: routeMode === key ? 'var(--color-blue)' : 'var(--color-ink-muted)', fontWeight: routeMode === key ? 700 : 500, boxShadow: routeMode === key ? '0 1px 4px rgba(0,0,0,0.1)' : 'none', fontFamily: 'var(--font-body)', fontSize: 'var(--text-label)', minHeight: 48, transition: 'all 0.15s ease' }}
                 >
                   {label}
                 </button>
@@ -365,7 +366,7 @@ export default function VenueDetailPage() {
             </div>
 
             {routeError && (
-              <p style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-caption)', color: 'var(--color-orange)', marginBottom: 12 }}>{routeError}</p>
+              <p style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-body-sm)', color: 'var(--color-orange)', marginBottom: 12 }}>{routeError}</p>
             )}
 
             {/* Inline map */}
@@ -388,7 +389,7 @@ export default function VenueDetailPage() {
             {/* Step-by-step directions */}
             {routeSteps.length > 0 && (
               <div style={{ marginTop: 20, borderTop: '1px solid var(--color-rule)', paddingTop: 16 }}>
-                <p style={{ fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 'var(--text-caption)', color: 'var(--color-ink-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 10 }}>
+              <p style={{ fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 'var(--text-label)', color: 'var(--color-ink-muted)', marginBottom: 10 }}>
                   Step-by-step
                 </p>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -402,11 +403,11 @@ export default function VenueDetailPage() {
                           <i className={`ti ${maneuverIcon(step.maneuver)}`} style={{ fontSize: 16, color: isArrive ? 'var(--color-blue)' : 'var(--color-ink-muted)' }} />
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <p style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-caption)', fontWeight: 500, color: 'var(--color-ink)', margin: 0 }}>
+                          <p style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-body-sm)', fontWeight: 500, color: 'var(--color-ink)', margin: 0 }}>
                             {maneuverLabel(step)}
                           </p>
                           {dist && (
-                            <p style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-caption)', color: 'var(--color-ink-muted)', margin: '2px 0 0' }}>
+                            <p style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-label)', color: 'var(--color-ink-muted)', margin: '2px 0 0' }}>
                               {dist}
                             </p>
                           )}
@@ -429,7 +430,7 @@ export default function VenueDetailPage() {
             </svg>
             Share This Route with Family
           </button>
-          <p style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-caption)', color: 'var(--color-ink-muted)', textAlign: 'center', margin: '0 0 20px' }}>
+          <p style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-body-sm)', color: 'var(--color-ink-muted)', textAlign: 'center', margin: '0 0 20px' }}>
             Let your family know where you're going
           </p>
 

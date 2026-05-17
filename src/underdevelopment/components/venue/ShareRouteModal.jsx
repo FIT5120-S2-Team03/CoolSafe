@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { QRCodeCanvas } from 'qrcode.react'
 import ModalFrame from '../layout/ModalFrame'
+import { INK, MUTED, RULE } from '../../styles/colors'
 
 const FONT_HEADING = "var(--font-title)"
 const FONT_BODY = "var(--font-body)"
@@ -87,26 +88,33 @@ export default function ShareRouteModal({ isOpen, onClose, venueId, venueName, r
         maxWidth: 480,
         maxHeight: '90vh',
         overflowY: 'auto',
-        background: '#fff',
-        borderRadius: 20,
-        boxShadow: '0 20px 60px rgba(0,0,0,0.25)',
+        background: 'var(--color-paper)',
+        borderRadius: 24,
+        boxShadow: '0 24px 60px rgba(15,12,9,0.22)',
+      }}
+      overlayStyle={{
+        zIndex: 1100,
+        background: 'rgba(15,12,9,0.40)',
+        backdropFilter: 'blur(4px)',
+        WebkitBackdropFilter: 'blur(4px)',
       }}
     >
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '20px 20px 0' }}>
           <div>
-            <h2 style={{ fontFamily: FONT_HEADING, fontWeight: 800, fontSize: 'var(--text-title-xs)', color: '#0f172a', margin: 0 }}>
+            <h2 style={{ fontFamily: FONT_HEADING, fontWeight: 'normal', fontSize: 'var(--text-title-xs)', color: INK, margin: 0, letterSpacing: 'var(--tracking-title)', lineHeight: 1.1 }}>
               Share This Route
             </h2>
-            <p style={{ fontFamily: FONT_BODY, fontSize: 'var(--text-caption)', color: '#64748b', margin: '4px 0 0' }}>
+            <p style={{ fontFamily: FONT_BODY, fontSize: 'var(--text-body-sm)', color: MUTED, margin: '8px 0 0', lineHeight: 'var(--leading-body)' }}>
               {venueName} · {routeLabel}
             </p>
           </div>
           <button
             onClick={onClose}
             style={{
-              background: 'none', border: 'none', cursor: 'pointer',
-              color: '#94a3b8', padding: 4, lineHeight: 1, flexShrink: 0,
+              background: 'rgba(0,0,0,0.06)', border: 'none', cursor: 'pointer', borderRadius: '50%',
+              width: 30, height: 30, color: MUTED, padding: 0, lineHeight: 1, flexShrink: 0,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}
             aria-label="Close"
           >
@@ -123,7 +131,7 @@ export default function ShareRouteModal({ isOpen, onClose, venueId, venueName, r
           <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
             <div style={{
               flexShrink: 0,
-              border: '1px solid #e2e8f0',
+              border: `1px solid ${RULE}`,
               borderRadius: 12,
               padding: 8,
               background: '#fff',
@@ -133,24 +141,24 @@ export default function ShareRouteModal({ isOpen, onClose, venueId, venueName, r
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
-              <p style={{ fontFamily: FONT_HEADING, fontWeight: 700, fontSize: 'var(--text-body)', color: '#0f172a', margin: 0 }}>
+              <p style={{ fontFamily: FONT_HEADING, fontWeight: 700, fontSize: 'var(--text-body)', color: INK, margin: 0 }}>
                 Scan to open
               </p>
-              <p style={{ fontFamily: FONT_BODY, fontSize: 'var(--text-caption)', color: '#64748b', margin: 0, lineHeight: 1.55 }}>
+              <p style={{ fontFamily: FONT_BODY, fontSize: 'var(--text-body-sm)', color: MUTED, margin: 0, lineHeight: 'var(--leading-body)' }}>
                 Show this code to a family member nearby — it opens this exact page on their phone.
               </p>
               <button
                 onClick={handleSaveImage}
                 style={{
                   alignSelf: 'flex-start',
-                  background: '#f1f5f9',
-                  border: '1px solid #e2e8f0',
+                  background: '#fff',
+                  border: `1px solid ${RULE}`,
                   borderRadius: 8,
                   padding: '8px 14px',
                   fontFamily: FONT_BODY,
                   fontSize: 'var(--text-button)',
                   fontWeight: 600,
-                  color: '#475569',
+                  color: INK,
                   cursor: 'pointer',
                 }}
               >
@@ -161,14 +169,14 @@ export default function ShareRouteModal({ isOpen, onClose, venueId, venueName, r
 
           {/* Divider */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{ flex: 1, height: 1, background: '#e2e8f0' }} />
+            <div style={{ flex: 1, height: 1, background: RULE }} />
             <span style={{
               fontFamily: FONT_BODY, fontSize: 'var(--text-caption)', fontWeight: 600,
-              color: '#94a3b8', letterSpacing: '0.08em', whiteSpace: 'nowrap',
+              color: '#B8A898', letterSpacing: '0.08em', whiteSpace: 'nowrap',
             }}>
               OR SEND A LINK
             </span>
-            <div style={{ flex: 1, height: 1, background: '#e2e8f0' }} />
+            <div style={{ flex: 1, height: 1, background: RULE }} />
           </div>
 
           {/* App sharing buttons */}
@@ -193,8 +201,8 @@ export default function ShareRouteModal({ isOpen, onClose, venueId, venueName, r
           {/* Copy link */}
           <div style={{
             display: 'flex', alignItems: 'center', gap: 8,
-            background: '#f8fafc', border: '1px solid #e2e8f0',
-            borderRadius: 10, padding: '10px 12px',
+            background: '#fff', border: `1px solid ${RULE}`,
+            borderRadius: 12, padding: '10px 12px',
           }}>
             <input
               readOnly
@@ -202,7 +210,7 @@ export default function ShareRouteModal({ isOpen, onClose, venueId, venueName, r
               style={{
                 flex: 1, minWidth: 0,
                 border: 'none', background: 'transparent', outline: 'none',
-                fontFamily: FONT_BODY, fontSize: 'var(--text-caption)', color: '#475569',
+                fontFamily: FONT_BODY, fontSize: 'var(--text-label)', color: MUTED,
                 overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
               }}
             />
@@ -210,7 +218,7 @@ export default function ShareRouteModal({ isOpen, onClose, venueId, venueName, r
               onClick={handleCopy}
               style={{
                 flexShrink: 0,
-                background: copied ? '#16a34a' : '#003fa4',
+                background: copied ? 'var(--color-green)' : INK,
                 color: '#fff', border: 'none', borderRadius: 8,
                 padding: '7px 16px',
                 fontFamily: FONT_BODY, fontSize: 'var(--text-button)', fontWeight: 700,

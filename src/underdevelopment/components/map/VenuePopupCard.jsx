@@ -84,7 +84,7 @@ export default function VenuePopup({ venue, userLocation, onFastestRoute, routeL
         </svg>
       </button>
 
-      <p style={{ fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 'var(--text-caption)', color: 'var(--color-ink)', margin: '0 32px 8px 0' }}>
+      <p style={{ fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 'var(--text-body-sm)', color: 'var(--color-ink)', margin: '0 32px 8px 0' }}>
         {venue.name}
       </p>
 
@@ -95,7 +95,7 @@ export default function VenuePopup({ venue, userLocation, onFastestRoute, routeL
         borderRadius: 'var(--radius-pill)',
         padding: '4px 10px',
         fontFamily: 'var(--font-body)',
-        fontSize: 'var(--text-caption)',
+        fontSize: 'var(--text-label)',
         fontWeight: 700,
         marginBottom: 10,
       }}>
@@ -103,12 +103,12 @@ export default function VenuePopup({ venue, userLocation, onFastestRoute, routeL
       </span>
 
       {venue.address && (
-        <p style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-caption)', color: 'var(--color-ink-muted)', margin: '0 0 12px' }}>
+        <p style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-body-sm)', color: 'var(--color-ink-muted)', margin: '0 0 12px' }}>
           {venue.address}
         </p>
       )}
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', fontFamily: 'var(--font-body)', fontSize: 'var(--text-caption)', marginBottom: 16 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', fontFamily: 'var(--font-body)', fontSize: 'var(--text-label)', marginBottom: 16 }}>
         {openStatus.status === 'unavailable' ? (
           <span style={{ color: 'var(--color-ink-disabled)' }}>Hours unavailable</span>
         ) : (
@@ -144,7 +144,7 @@ export default function VenuePopup({ venue, userLocation, onFastestRoute, routeL
             border: selectedRoute === 'fastest' ? 'none' : '1px solid var(--color-rule)',
             borderRadius: 10, padding: '10px 0',
             color: selectedRoute === 'fastest' ? '#fff' : 'var(--color-ink)',
-            fontFamily: 'var(--font-body)', fontWeight: 600, fontSize: 'var(--text-caption)',
+            fontFamily: 'var(--font-body)', fontWeight: 600, fontSize: 'var(--text-label)',
             cursor: routeLoading ? 'not-allowed' : 'pointer', minHeight: 44,
           }}
         >
@@ -160,7 +160,7 @@ export default function VenuePopup({ venue, userLocation, onFastestRoute, routeL
             border: selectedRoute === 'coolest' ? 'none' : '1px solid var(--color-rule)',
             borderRadius: 10, padding: '10px 0',
             color: selectedRoute === 'coolest' ? '#fff' : 'var(--color-ink)',
-            fontFamily: 'var(--font-body)', fontWeight: 600, fontSize: 'var(--text-caption)',
+            fontFamily: 'var(--font-body)', fontWeight: 600, fontSize: 'var(--text-label)',
             cursor: 'pointer', minHeight: 44,
           }}
         >
@@ -171,7 +171,7 @@ export default function VenuePopup({ venue, userLocation, onFastestRoute, routeL
       <button
         onClick={() => navigate(`/venue/${venue.id}`, { state: { venue } })}
         className="cs-map-primary-action"
-        style={{ width: '100%', backgroundColor: 'var(--color-blue)', color: '#fff', border: 'none', borderRadius: 12, padding: '14px 0', fontSize: 'var(--text-caption)', fontWeight: 700, fontFamily: 'var(--font-body)', cursor: 'pointer', minHeight: 44 }}
+        style={{ width: '100%', backgroundColor: 'var(--color-blue)', color: '#fff', border: 'none', borderRadius: 12, padding: '14px 0', fontSize: 'var(--text-button)', fontWeight: 700, fontFamily: 'var(--font-body)', cursor: 'pointer', minHeight: 44 }}
       >
         View Full Details →
       </button>

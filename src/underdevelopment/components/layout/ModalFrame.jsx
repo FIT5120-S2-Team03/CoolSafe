@@ -2,18 +2,21 @@ export default function ModalFrame({
   children,
   closeOnBackdrop = true,
   onClose,
+  overlayClassName,
   overlayStyle,
+  panelClassName,
   panelStyle,
 }) {
   return (
     <div
+      className={overlayClassName}
       onClick={() => {
         if (closeOnBackdrop) onClose?.()
       }}
       style={{
         position: 'fixed',
         inset: 0,
-        zIndex: 1000,
+        zIndex: 1600,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -22,7 +25,7 @@ export default function ModalFrame({
         ...overlayStyle,
       }}
     >
-      <div onClick={(e) => e.stopPropagation()} style={panelStyle}>
+      <div className={panelClassName} onClick={(e) => e.stopPropagation()} style={panelStyle}>
         {children}
       </div>
     </div>

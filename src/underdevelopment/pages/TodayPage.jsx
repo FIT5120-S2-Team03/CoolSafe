@@ -100,17 +100,22 @@ export default function TodayPage() {
   const breakdown  = scoreData?.breakdown ?? null
   const scoreColor = scoreColour(score)
   const canDismissLocationModal = Boolean(locationName || localStorage.getItem(STORAGE_KEYS.coords))
-  const nearestVenues = useNearestVenues(venues, lat, lng)
+  const nearestVenues = useNearestVenues(venues, lat, lng, Infinity)
 
   const band = heatBand(daily?.todayMax)
   const copy = heatCopy(band)
   const hasMedications = selectedMedications.length > 0
-  const heroSlogan = score >= 75
+  const hasHotPeakLater = (daily?.todayMax ?? 0) >= 35 && (current?.apparentTemp ?? current?.temp ?? 99) < 28
+  const heroSlogan = hasHotPeakLater
+    ? { before: 'Heat peaks', accent: 'later today.' }
+    : score >= 75
     ? { before: 'Stay',        accent: 'indoors today.' }
     : score >= 30
     ? { before: 'Take it',     accent: 'easy today.' }
     : { before: "You're in the", accent: 'clear today.' }
-  const heroDesc = hasMedications
+  const heroDesc = hasHotPeakLater
+    ? 'It feels mild now, but high heat is expected later. Use the cooler window below for errands or time outside.'
+    : hasMedications
     ? 'Your personalised plan is ready below.'
     : 'Add your medications below for a more accurate heat plan.'
   const verdict = scoreVerdict(score, hasMedications, band)
@@ -128,7 +133,7 @@ export default function TodayPage() {
 
   // ── render ──────────────────────────────────────────────────────────────────
   return (
-    <div style={{ background: PAPER, minHeight: '100vh' }}>
+    <div className="cs-today-page" style={{ background: PAPER, minHeight: '100vh' }}>
       <style>{`
         @keyframes cs-pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
         @keyframes cs-shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
@@ -187,11 +192,11 @@ export default function TodayPage() {
           Left panel: SVG temperature chart + tomorrow outlook bar
           Right panel: Morning / Midday / Evening tabs with contextual advice
       ══════════════════════════════════════════════════════════════════════ */}
-      <SectionContainer id="sec-chart" outerStyle={{ borderBottom: `1px solid ${RULE}` }}>
+      <SectionContainer id="sec-chart" innerClassName="cs-today-routine-section">
           <h2 style={headingStyle}>
             Your day, looked after.
           </h2>
-          <p style={{ fontFamily: "var(--font-body)", fontSize: '1rem', color: MUTED, lineHeight: 1.55, marginBottom: 36 }}>
+          <p style={{ fontFamily: "var(--font-body)", fontSize: 'var(--text-body)', color: MUTED, lineHeight: 'var(--leading-body)', marginBottom: 36 }}>
             Tap a time of day to see your plan.
           </p>
 
@@ -208,24 +213,24 @@ export default function TodayPage() {
           }}>
 
             {/* Left — chart */}
-            <div className="cs-today-chart-panel" style={{ display: 'flex', flexDirection: 'column', padding: '30px 32px 24px', boxSizing: 'border-box' }}>
-              <div style={{ fontFamily: "var(--font-body)", fontSize: '1rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: FAINT, marginBottom: 12, flexShrink: 0 }}>
+            <div className="cs-today-chart-panel" style={{ display: 'flex', flexDirection: 'column', padding: '12px 20px 36px', boxSizing: 'border-box' }}>
+              <div style={{ fontFamily: "var(--font-body)", fontSize: 'var(--text-caption)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: FAINT, marginBottom: 4, flexShrink: 0 }}>
                 Hourly Temperature · {locationName ?? 'Melbourne'}
               </div>
 
-              <div style={{ flex: 1, minHeight: 300, position: 'relative', display: 'flex', alignItems: 'stretch' }}>
+              <div className="cs-today-chart-plot" style={{ flex: '1 1 auto', minHeight: 360, position: 'relative', display: 'flex', alignItems: 'stretch' }}>
                 <TempChart hourly={hourly} />
               </div>
 
               {/* Tomorrow outlook row */}
-              <div style={{ marginTop: 'auto', paddingTop: 20, borderTop: `1px solid ${RULE}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 18, flexShrink: 0 }}>
+              <div style={{ paddingTop: 16, borderTop: `1px solid ${RULE}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 18, flexShrink: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#B85A3C', animation: 'cs-pulse 2s ease-in-out infinite' }} />
-                  <span style={{ fontFamily: "var(--font-body)", fontSize: '1rem', fontWeight: 500, color: INK }}>
+                  <div style={{ width: 8, minWidth: 8, height: 8, flex: '0 0 8px', borderRadius: '50%', background: '#B85A3C', animation: 'cs-pulse 2s ease-in-out infinite' }} />
+                  <span style={{ fontFamily: "var(--font-body)", fontSize: 'var(--text-body)', fontWeight: 500, color: INK }}>
                     Tomorrow's Outlook: {tomorrowOutlook(daily?.tomorrowMax)}
                   </span>
                 </div>
-                <span style={{ fontFamily: "var(--font-title)", fontSize: '1.65rem', color: daily?.tomorrowMax != null ? scoreColour(Math.min(100, daily.tomorrowMax * 2)) : '#B85A3C', whiteSpace: 'nowrap' }}>
+                <span style={{ fontFamily: "var(--font-title)", fontSize: 'var(--text-card-title-lg)', color: daily?.tomorrowMax != null ? scoreColour(Math.min(100, daily.tomorrowMax * 2)) : '#B85A3C', whiteSpace: 'nowrap' }}>
                   {daily?.tomorrowMax != null ? `Max ${Math.round(daily.tomorrowMax)}°C` : '—'}
                 </span>
               </div>
@@ -238,16 +243,17 @@ export default function TodayPage() {
               <div className="cs-today-period-tabs" style={{ display: 'flex', gap: 8, padding: '16px 20px', borderBottom: `1px solid ${RULE}`, flexShrink: 0 }}>
                 {['morning', 'midday', 'evening'].map((p) => {
                   const periodMeta = {
-                    morning: { label: 'Morning', time: '6–11am' },
-                    midday:  { label: 'Midday',  time: '11am–4pm' },
-                    evening: { label: 'Evening', time: '4–9pm' },
+                    morning: { label: 'Morning' },
+                    midday:  { label: 'Midday' },
+                    evening: { label: 'Evening' },
                   }
-                  const { label, time } = periodMeta[p]
+                  const { label } = periodMeta[p]
                   const isActive = activePeriod === p
                   const activeColor = p === 'morning' ? '#6B7A3A' : p === 'midday' ? '#B85A3C' : '#5B7A8C'
                   return (
                   <button
                     key={p}
+                    data-active={isActive ? 'true' : 'false'}
                     onClick={() => setActivePeriod(p)}
                     onMouseEnter={(e) => {
                       if (!isActive) {
@@ -277,7 +283,6 @@ export default function TodayPage() {
                     }}
                   >
                     {label}
-                    <span style={{ opacity: isActive ? 0.75 : 0.6, fontWeight: 400 }}> · {time}</span>
                   </button>
                 )})}
               </div>
@@ -364,7 +369,7 @@ export default function TodayPage() {
       ══════════════════════════════════════════════════════════════════════ */}
       {/* Toast */}
       {toastMsg && (
-        <div style={{
+        <div className="cs-today-toast" style={{
           position: 'fixed',
           bottom: 100,
           left: '50%',
@@ -402,7 +407,7 @@ export default function TodayPage() {
 const headingStyle = {
   fontFamily: 'var(--serif)',
   fontSize: 'var(--text-section)',
-  fontWeight: 'normal',
+  fontWeight: 700,
   letterSpacing: '-0.02em',
   lineHeight: 1.05,
   color: INK,

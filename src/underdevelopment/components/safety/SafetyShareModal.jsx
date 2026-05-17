@@ -63,7 +63,7 @@ export default function SafetyShareModal({ isOpen, onClose, shareText, maxSeveri
       panelStyle={{
         width: '100%',
         maxWidth: 480,
-        background: '#FAF8F5',
+        background: 'var(--color-paper)',
         borderRadius: 24,
         boxShadow: '0 24px 60px rgba(15,12,9,0.22)',
         overflow: 'hidden',
@@ -75,7 +75,7 @@ export default function SafetyShareModal({ isOpen, onClose, shareText, maxSeveri
             <h2 style={{ fontFamily: FONT_SERIF, fontSize: 'var(--text-title-xs)', fontWeight: 'normal', letterSpacing: '-0.02em', color: INK, margin: 0, lineHeight: 1.1 }}>
               Alert a family member or carer.
             </h2>
-            <p style={{ fontFamily: FONT_BODY, fontSize: 'var(--text-caption)', color: MUTED, margin: '8px 0 0', lineHeight: 1.5 }}>
+            <p style={{ fontFamily: FONT_BODY, fontSize: 'var(--text-body-sm)', color: MUTED, margin: '8px 0 0', lineHeight: 'var(--leading-body)' }}>
               This sends your current symptoms{' '}
               {maxSeverity ? 'and medication details ' : ''}
               so they know what's happening and can help.
@@ -104,7 +104,7 @@ export default function SafetyShareModal({ isOpen, onClose, shareText, maxSeveri
           <div style={{
             background: '#fff', border: `1px solid ${RULE}`,
             borderRadius: 14, padding: '12px 14px',
-            fontFamily: FONT_BODY, fontSize: 'var(--text-caption)', color: MUTED,
+            fontFamily: FONT_BODY, fontSize: 'var(--text-body-sm)', color: MUTED,
             lineHeight: 1.6, whiteSpace: 'pre-wrap',
             maxHeight: 120, overflowY: 'auto',
           }}>
@@ -145,7 +145,7 @@ export default function SafetyShareModal({ isOpen, onClose, shareText, maxSeveri
             background: '#fff', border: `1px solid ${RULE}`,
             borderRadius: 12, padding: '10px 12px',
           }}>
-            <span style={{ flex: 1, minWidth: 0, fontFamily: FONT_BODY, fontSize: 'var(--text-caption)', color: MUTED, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <span style={{ flex: 1, minWidth: 0, fontFamily: FONT_BODY, fontSize: 'var(--text-label)', color: MUTED, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               Copy message text
             </span>
             <button
@@ -166,7 +166,7 @@ export default function SafetyShareModal({ isOpen, onClose, shareText, maxSeveri
           </div>
 
           {isEmergency && (
-            <p style={{ fontFamily: FONT_BODY, fontSize: 'var(--text-caption)', color: '#C94B1A', textAlign: 'center', margin: 0, fontWeight: 600 }}>
+            <p style={{ fontFamily: FONT_BODY, fontSize: 'var(--text-body-sm)', color: '#C94B1A', textAlign: 'center', margin: 0, fontWeight: 600 }}>
               If it's an emergency — call 000 first.
             </p>
           )}

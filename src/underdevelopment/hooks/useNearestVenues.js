@@ -5,7 +5,7 @@ import { getDistanceKm, isFountainVenue } from '../utils/venueDisplay'
 export function useNearestVenues(venues, lat, lng, limit = 3) {
   return useMemo(() => {
     if (!venues?.length || lat == null || lng == null) return []
-    return venues
+    const sorted = venues
       .filter((v) => !isFountainVenue(v))
       .map((v) => {
         const distKm = getDistanceKm(lat, lng, v.lat, v.lng)
@@ -13,6 +13,6 @@ export function useNearestVenues(venues, lat, lng, limit = 3) {
       })
       .filter((v) => v.distKm != null)
       .sort((a, b) => a.distKm - b.distKm)
-      .slice(0, limit)
+    return Number.isFinite(limit) ? sorted.slice(0, limit) : sorted
   }, [venues, lat, lng, limit])
 }

@@ -1,13 +1,7 @@
-import { useState } from 'react'
-
-export default function StepRow({ num, numColor, numRight, reverse, title, desc, actions, rotateCard, snippet, textShiftX = 0, snippetShiftX = 0 }) {
-  const [hovered, setHovered] = useState(false)
-
+export default function StepRow({ num, numColor, numRight, reverse, title, desc, actions, snippet, textShiftX = 0, snippetShiftX = 0, rotateCard = 0 }) {
   return (
     <div
       className={`cs-step-row${reverse ? ' cs-step-row--rev' : ''}`}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
     >
       {/* Decorative oversized background number */}
       <div className="cs-step-num" style={{
@@ -17,17 +11,27 @@ export default function StepRow({ num, numColor, numRight, reverse, title, desc,
         {num}
       </div>
 
-      {/* Text body — title + desc only */}
-      <div
-        className="cs-step-text"
-        style={textShiftX ? { transform: `translateX(${textShiftX}px)` } : {}}
-      >
-        <h3 style={{ fontFamily: 'var(--serif)', fontSize: 'clamp(1.65rem, 2.2vw, 2rem)', letterSpacing: '-0.5px', color: 'var(--color-ink)', lineHeight: 1.1, fontWeight: 'normal' }}>
-          {title}
-        </h3>
-        <p style={{ fontFamily: 'var(--sans)', fontSize: 'var(--text-body)', lineHeight: 1.5, color: 'var(--color-ink-soft)', maxWidth: 480 }}>
-          {desc}
-        </p>
+      <div className="cs-step-copy">
+        {/* Text body — title + desc only */}
+        <div
+          className="cs-step-text"
+          style={textShiftX ? { transform: `translateX(${textShiftX}px)` } : {}}
+        >
+          <h3 style={{ fontFamily: 'var(--serif)', fontSize: 'var(--text-card-title-lg)', letterSpacing: 'var(--tracking-title)', color: 'var(--color-ink)', lineHeight: 'var(--leading-heading)', fontWeight: 'normal' }}>
+            {title}
+          </h3>
+          <p style={{ fontFamily: 'var(--sans)', fontSize: 'var(--text-body)', lineHeight: 'var(--leading-body)', color: 'var(--color-ink-soft)', maxWidth: 480 }}>
+            {desc}
+          </p>
+        </div>
+
+        {/* Actions — kept with copy on desktop, reordered after snippet on mobile */}
+        <div
+          className="cs-step-actions"
+          style={textShiftX ? { transform: `translateX(${textShiftX}px)` } : {}}
+        >
+          {actions}
+        </div>
       </div>
 
       {/* Tilted UI snippet card */}
@@ -40,26 +44,16 @@ export default function StepRow({ num, numColor, numRight, reverse, title, desc,
           style={{
             background: 'var(--color-surface)',
             borderRadius: 20,
-            boxShadow: hovered
-              ? '0 32px 64px rgba(0,0,0,0.08), 0 0 0 0.5px rgba(0,0,0,0.05)'
-              : '0 24px 48px rgba(0,0,0,0.06), 0 0 0 0.5px rgba(0,0,0,0.05)',
-            transform: hovered ? 'rotate(0deg) translateY(-8px)' : `rotate(${rotateCard}deg)`,
-            transition: 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.4s ease',
+            boxShadow: '0 24px 48px rgba(0,0,0,0.06), 0 0 0 0.5px rgba(0,0,0,0.05)',
             width: '100%',
             maxWidth: 340,
+            transform: rotateCard ? `rotate(${rotateCard}deg)` : undefined,
           }}
         >
           {snippet}
         </div>
       </div>
 
-      {/* Actions — sibling so mobile can place them after the snippet */}
-      <div
-        className="cs-step-actions"
-        style={textShiftX ? { transform: `translateX(${textShiftX}px)` } : {}}
-      >
-        {actions}
-      </div>
     </div>
   )
 }

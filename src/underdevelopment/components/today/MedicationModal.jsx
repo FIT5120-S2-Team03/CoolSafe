@@ -17,6 +17,8 @@ export default function MedicationModal({
   return (
     <ModalFrame
       onClose={onClose}
+      overlayClassName="cs-medication-modal-overlay"
+      panelClassName="cs-medication-modal-panel"
       overlayStyle={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', padding: 24 }}
       panelStyle={{ background: PAPER, borderRadius: 20, padding: '20px 28px 28px', maxWidth: 540, width: '100%', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 24px 64px rgba(0,0,0,0.25)', animation: 'popIn .25s cubic-bezier(.34,1.56,.64,1)' }}
     >
@@ -34,7 +36,7 @@ export default function MedicationModal({
           >×</button>
         </div>
 
-        <p style={{ fontFamily: "var(--font-body)", fontSize: '0.9375rem', color: '#6B6B6B', marginBottom: 20, lineHeight: 1.5 }}>
+        <p style={{ fontFamily: "var(--font-body)", fontSize: 'var(--text-body-sm)', color: '#6B6B6B', marginBottom: 20, lineHeight: 'var(--leading-body)' }}>
           Select any medications you take regularly. We don't save this data — it's strictly used to calculate your heat risk today.
         </p>
 
@@ -46,7 +48,7 @@ export default function MedicationModal({
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 18 }}>
           <button
             onClick={() => onMedicationsChange([])}
-            style={{ background: 'transparent', border: 'none', fontFamily: "var(--font-body)", fontSize: '1rem', fontWeight: 500, color: '#8A3F28', cursor: 'pointer', padding: '0 2px', display: 'inline-flex', textDecoration: 'underline', textUnderlineOffset: 3, transition: 'color 0.18s ease', whiteSpace: 'nowrap' }}
+            style={{ background: 'transparent', border: 'none', fontFamily: "var(--font-body)", fontSize: 'var(--text-label)', fontWeight: 500, color: '#8A3F28', cursor: 'pointer', padding: '0 2px', display: 'inline-flex', textDecoration: 'underline', textUnderlineOffset: 3, transition: 'color 0.18s ease', whiteSpace: 'nowrap' }}
             onMouseEnter={(e) => { e.currentTarget.style.color = INK }}
             onMouseLeave={(e) => { e.currentTarget.style.color = '#8A3F28' }}
           >
@@ -55,7 +57,7 @@ export default function MedicationModal({
 
           <button
             onClick={handleSave}
-            style={{ flex: 1, background: INK, color: '#fff', border: 'none', borderRadius: 12, padding: 16, fontFamily: "var(--font-body)", fontSize: '1rem', fontWeight: 700, cursor: 'pointer', letterSpacing: '-0.2px', boxShadow: '0 4px 16px rgba(15,15,15,0.20)', transition: 'transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease' }}
+            style={{ flex: 1, background: INK, color: '#fff', border: 'none', borderRadius: 12, padding: 16, fontFamily: "var(--font-body)", fontSize: 'var(--text-button)', fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 16px rgba(15,15,15,0.20)', transition: 'transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease' }}
             onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(15,15,15,0.26)' }}
             onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(15,15,15,0.20)' }}
           >

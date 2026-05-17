@@ -36,7 +36,7 @@ export default function MedicationPanel({ selectedMedications }) {
                   flex: 1, padding: '6px 10px', borderRadius: 9, cursor: 'pointer', border: 'none',
                   background: active ? INK : '#fff',
                   color: active ? '#fff' : MUTED,
-                  fontFamily: 'var(--font-body)', fontSize: 'var(--text-caption)',
+                  fontFamily: 'var(--font-body)', fontSize: 'var(--text-label)',
                   fontWeight: active ? 700 : 500,
                   letterSpacing: '0.02em',
                 }}
@@ -68,7 +68,7 @@ export default function MedicationPanel({ selectedMedications }) {
         })}
       </div>
 
-      <p style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-caption)', color: MUTED, lineHeight: 1.45, margin: '12px 0 0', paddingTop: 12, borderTop: `1px solid ${RULE}`, display: 'flex', alignItems: 'flex-start', gap: 6 }}>
+      <p style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-body-sm)', color: MUTED, lineHeight: 'var(--leading-compact)', margin: '12px 0 0', paddingTop: 12, borderTop: `1px solid ${RULE}`, display: 'flex', alignItems: 'flex-start', gap: 6 }}>
         <span className="material-symbols-outlined" style={{ fontSize: 16, marginTop: 1, flexShrink: 0, color: MUTED }}>info</span>
         These notes are general. Keep taking prescribed medicine unless a clinician tells you otherwise.
       </p>

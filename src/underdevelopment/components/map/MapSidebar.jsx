@@ -71,11 +71,10 @@ export default function MapSidebar({ mobile = false, selectedCategories, onCateg
       <div>
         <p style={{
           fontFamily: 'var(--font-body)',
-          fontWeight: 800,
-          fontSize: 'var(--text-caption)',
+          fontWeight: 700,
+          fontSize: 'var(--text-label)',
           color: 'var(--color-ink-muted)',
-          textTransform: 'uppercase',
-          letterSpacing: '0.1em',
+          letterSpacing: 0,
           marginBottom: 12,
         }}>
           Category

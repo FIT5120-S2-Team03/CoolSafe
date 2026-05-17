@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { haversineKm, getWalkingMinutes } from '../utils/haversine'
+import { haversineKm, getWalkingMinutes } from '../utils/routing/haversine'
 import {
   EVENT_SUBTYPES,
   INDOOR_SUBTYPES,
@@ -7,7 +7,7 @@ import {
   INTENT_LABELS,
   PAID_SUBTYPES,
   QUIET_SUBTYPES,
-} from '../data/aiRecommendationConfig'
+} from '../components/ai/aiRecommendationConfig'
 
 const MELBOURNE_LAT = -37.8136
 const MELBOURNE_LNG = 144.9631

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { INK, RULE } from '../../styles/colors'
+import { BLUE, INK, RULE } from '../../styles/colors'
 import ModalFrame from '../layout/ModalFrame'
 
 export default function LocationModal({ open, onClose, requestGps, fetchByPostcode, canDismiss = false }) {
@@ -16,7 +16,7 @@ export default function LocationModal({ open, onClose, requestGps, fetchByPostco
     >
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
           <div style={{ width: 52, height: 52, borderRadius: '50%', background: '#EEF3FF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1852B4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={BLUE} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 21c-4-4-7-7.5-7-11a7 7 0 0 1 14 0c0 3.5-3 7-7 11z" />
               <circle cx="12" cy="10" r="2.5" />
             </svg>
@@ -35,7 +35,7 @@ export default function LocationModal({ open, onClose, requestGps, fetchByPostco
             onClose()
             requestGps()
           }}
-          style={{ width: '100%', background: '#1852B4', color: '#fff', border: 'none', borderRadius: 12, padding: 15, fontFamily: 'var(--sans)', fontSize: 'var(--text-button)', fontWeight: 600, cursor: 'pointer', marginBottom: 16 }}
+          style={{ width: '100%', background: BLUE, color: '#fff', border: 'none', borderRadius: 12, padding: 15, fontFamily: 'var(--sans)', fontSize: 'var(--text-button)', fontWeight: 600, cursor: 'pointer', marginBottom: 16 }}
         >
           Use my current location
         </button>

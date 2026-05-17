@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import mockLocation from '../data/mockLocation.json'
+import mockLocation from '../mocks/mockLocation.json'
 import { STORAGE_KEYS } from '../constants/storageKeys'
 
 const COORDS_KEY = STORAGE_KEYS.coords

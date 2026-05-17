@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { getWalkingMinutes } from '../utils/haversine'
+import { getWalkingMinutes } from '../utils/routing/haversine'
 import { getDistanceKm, isFountainVenue } from '../utils/venueDisplay'
 
 export function useNearestVenues(venues, lat, lng, limit = 3) {

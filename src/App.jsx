@@ -12,11 +12,11 @@ function Prefetch() {
   return null
 }
 
-import LandingPage from './underdevelopment/pages/LandingPage'
-import TodayPage from './underdevelopment/pages/TodayPage'
-import SpacesPage from './underdevelopment/pages/SpacesPage'
-import HealthPage from './underdevelopment/pages/HealthPage'
-import VenueDetailPage from './underdevelopment/pages/VenueDetailPage'
+import LandingPage from './underdevelopment/pages/landing/LandingPage'
+import TodayPage from './underdevelopment/pages/today/TodayPage'
+import SpacesPage from './underdevelopment/pages/spaces/SpacesPage'
+import HealthPage from './underdevelopment/pages/safety/HealthPage'
+import VenueDetailPage from './underdevelopment/pages/venue/VenueDetailPage'
 import AIFinderButton from './underdevelopment/components/ai/AIFinderButton'
 
 import HomePageV1 from './version1/pages/HomePage'

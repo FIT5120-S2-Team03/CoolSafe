@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import mockWeather from '../data/mockWeather.json'
+import mockWeather from '../mocks/mockWeather.json'
 import { SESSION_CACHE_KEYS } from '../constants/storageKeys'
 
 const CACHE_KEY = SESSION_CACHE_KEYS.airQuality

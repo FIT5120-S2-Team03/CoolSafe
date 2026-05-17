@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
-import mockWeather from '../data/mockWeather.json'
-import mockLocation from '../data/mockLocation.json'
+import mockWeather from '../mocks/mockWeather.json'
+import mockLocation from '../mocks/mockLocation.json'
 import { useUserLocation } from './useUserLocation'
 import { SESSION_CACHE_KEYS } from '../constants/storageKeys'
+import { MELBOURNE_COORDS } from '../constants/locations'
 
 const CACHE_KEY = SESSION_CACHE_KEYS.weather
 const CACHE_TTL_MS = 30 * 60 * 1000 // 30 minutes
@@ -150,7 +151,7 @@ export function useWeatherData() {
 
   const fallbackMockCoords = mockLocation.enabled
     ? { lat: mockLocation.lat, lng: mockLocation.lng }
-    : { lat: -37.8136, lng: 144.9631 }
+    : MELBOURNE_COORDS
 
   return {
     current,

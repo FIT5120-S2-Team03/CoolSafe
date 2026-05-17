@@ -9,6 +9,7 @@
 import { useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { STORAGE_KEYS } from '../../constants/storageKeys'
+import { BLUE } from '../../styles/colors'
 import { openGlobalLocationModal } from '../location/locationModalEvents'
 
 export default function Navbar({ locationName, onLocationClick }) {
@@ -130,7 +131,7 @@ export default function Navbar({ locationName, onLocationClick }) {
                 transition: 'color 0.15s',
                 whiteSpace: 'nowrap',
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--color-blue-deep, #1852B4)' }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = `var(--color-blue-deep, ${BLUE})` }}
               onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--color-blue)' }}
             >
               <i className="ti ti-map-pin" style={{ fontSize: 16 }} />

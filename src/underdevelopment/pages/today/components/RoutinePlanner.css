@@ -1,0 +1,216 @@
+.cs-routine-heading {
+  font-family: var(--font-title);
+  font-size: var(--text-section);
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1.05;
+  color: var(--color-ink);
+  margin-bottom: 10px;
+}
+
+.cs-routine-subtitle {
+  font-family: var(--font-body);
+  font-size: var(--text-body);
+  color: var(--color-ink-muted);
+  line-height: var(--leading-body);
+  margin-bottom: 36px;
+}
+
+.cs-routine-card {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  height: 680px;
+  background: #fff;
+  border: 1px solid var(--color-rule);
+  border-radius: 32px;
+  overflow: hidden;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.02);
+}
+
+.cs-routine-chart-panel {
+  display: flex;
+  flex-direction: column;
+  padding: 12px 20px 36px;
+  box-sizing: border-box;
+}
+
+.cs-routine-kicker {
+  font-family: var(--font-body);
+  font-size: var(--text-caption);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--color-ink-faint);
+  margin-bottom: 4px;
+  flex-shrink: 0;
+}
+
+.cs-routine-chart-plot {
+  flex: 1 1 auto;
+  min-height: 360px;
+  position: relative;
+  display: flex;
+  align-items: stretch;
+}
+
+.cs-routine-outlook {
+  padding-top: 16px;
+  border-top: 1px solid var(--color-rule);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
+  flex-shrink: 0;
+}
+
+.cs-routine-outlook-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-body);
+  font-size: var(--text-body);
+  font-weight: 500;
+  color: var(--color-ink);
+}
+
+.cs-routine-pulse {
+  width: 8px;
+  min-width: 8px;
+  height: 8px;
+  flex: 0 0 8px;
+  border-radius: 50%;
+  background: #B85A3C;
+  animation: cs-pulse 2s ease-in-out infinite;
+}
+
+.cs-routine-outlook-temp {
+  font-family: var(--font-title);
+  font-size: var(--text-card-title-lg);
+  white-space: nowrap;
+}
+
+.cs-routine-panel {
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--color-rule);
+}
+
+.cs-routine-tabs {
+  display: flex;
+  gap: 8px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--color-rule);
+  flex-shrink: 0;
+}
+
+.cs-routine-tab {
+  flex: 1 1 0;
+  padding: 8px 10px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-rule);
+  background: transparent;
+  color: var(--color-ink-muted);
+  font-family: var(--font-body);
+  font-size: var(--text-caption);
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.cs-routine-tab:hover {
+  border-color: var(--color-terracotta-deep);
+  background: var(--color-paper-soft);
+}
+
+.cs-routine-tab[data-active="true"] {
+  color: #fff;
+}
+
+.cs-routine-period-visual {
+  height: 210px;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--color-rule);
+  position: relative;
+  overflow: hidden;
+  transition: background 0.4s;
+}
+
+.cs-routine-period-badge {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  background: rgba(34,30,26,0.85);
+  color: var(--color-paper);
+  border-radius: var(--radius-pill);
+  padding: 5px 14px;
+  font-family: var(--font-title);
+  font-size: 1rem;
+  box-shadow: 0 2px 10px rgba(34,30,26,0.14);
+}
+
+.cs-routine-period-advice {
+  flex: 1;
+  padding: 20px;
+  overflow: auto;
+}
+
+.cs-routine-advice-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cs-routine-period-title {
+  font-family: var(--serif);
+  font-size: 1.55rem;
+  line-height: 1.1;
+  font-weight: normal;
+  color: var(--color-ink);
+  margin-bottom: 4px;
+}
+
+.cs-routine-advice-box {
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+}
+
+.cs-routine-advice-box--do {
+  background: rgba(74,103,65,0.06);
+  border: 1px solid rgba(74,103,65,0.15);
+}
+
+.cs-routine-advice-box--avoid {
+  background: rgba(201,75,26,0.04);
+  border: 1px solid rgba(201,75,26,0.12);
+}
+
+.cs-routine-advice-label {
+  display: inline-block;
+  font-family: var(--sans);
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+
+.cs-routine-advice-item {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.cs-routine-advice-bullet {
+  line-height: 1.4;
+  flex-shrink: 0;
+}
+
+.cs-routine-advice-copy {
+  font-family: var(--sans);
+  font-size: 1rem;
+  color: var(--color-ink-muted);
+  line-height: 1.4;
+}

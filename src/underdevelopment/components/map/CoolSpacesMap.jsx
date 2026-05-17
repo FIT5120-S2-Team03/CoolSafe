@@ -34,7 +34,7 @@ import {
   setRoutePrefetch,
 } from '../../utils/routeCache'
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'https://coolsafe.onrender.com'
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'https://coolsafe-api.onrender.com'
 const ROUTE_SIMILARITY_DISTANCE_M = 15
 const ROUTE_SIMILARITY_THRESHOLD = 0.8
 const WALKING_SPEED_KMH = 4.5
@@ -53,7 +53,6 @@ const locationPinIcon = L.divIcon({
 
 const MELBOURNE = [-37.8136, 144.9631]
 
-// Tracks the screen position of the selected venue pin and updates on map move/zoom.
 function PinTracker({ venue, onPosition }) {
   const map = useMap()
 
@@ -192,7 +191,6 @@ export default function CoolSpacesMap({ selectedCategories, flyTo, showHVI, open
       ? venues
       : allVenues.filter((v) => selectedCategories.includes(v.category))
 
-  // Auto-open venue card when arriving from another page.
   useEffect(() => {
     if (!openVenueId || filtered.length === 0 || !mapReady) return
     const target = filtered.find(v => String(v.id) === String(openVenueId))
@@ -501,7 +499,6 @@ export default function CoolSpacesMap({ selectedCategories, flyTo, showHVI, open
         }
       `}</style>
 
-      {/* Venue card — positioned above the pin, follows map movement via pinPos */}
       {selectedVenue && pinPos && (
         <div
           style={{
@@ -527,14 +524,12 @@ export default function CoolSpacesMap({ selectedCategories, flyTo, showHVI, open
         </div>
       )}
 
-      {/* Non-blocking error notice */}
       {error && (
         <div style={{ position: 'absolute', top: 12, left: '50%', transform: 'translateX(-50%)', zIndex: 1000, backgroundColor: '#fff7ed', border: '1px solid #fed7aa', borderRadius: 8, padding: '6px 14px', fontFamily: "var(--font-body)", fontSize: 15, color: '#9a3412', pointerEvents: 'none' }}>
           Some venue data could not be loaded
         </div>
       )}
 
-      {/* Route error notice */}
       {routeError && (
         <div style={{ position: 'absolute', top: 52, left: '50%', transform: 'translateX(-50%)', zIndex: 1000, backgroundColor: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '6px 14px', fontFamily: "var(--font-body)", fontSize: 15, color: '#991b1b', pointerEvents: 'none' }}>
           {routeError}
@@ -647,7 +642,6 @@ export default function CoolSpacesMap({ selectedCategories, flyTo, showHVI, open
           attribution="&copy; OpenStreetMap contributors &copy; CARTO"
         />
 
-        {/* Tracks pin screen position so the card overlay follows map movement */}
         <PinTracker venue={selectedVenue} onPosition={setPinPos} />
 
         <Pane name="route" style={{ zIndex: 450 }}>
@@ -701,7 +695,6 @@ export default function CoolSpacesMap({ selectedCategories, flyTo, showHVI, open
         )}
       </MapContainer>
 
-      {/* Loading spinner */}
       {isLoading && (
         <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.6)', zIndex: 1000 }}>
           <div style={{ width: 40, height: 40, border: '4px solid #e2e8f0', borderTopColor: '#003fa4', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
@@ -709,18 +702,47 @@ export default function CoolSpacesMap({ selectedCategories, flyTo, showHVI, open
         </div>
       )}
 
-      {/* My Location button */}
       <button
         onClick={handleMyLocation}
         className="cs-map-location-button"
         aria-label="Go to my location"
+        title="Go to my location"
+        style={{
+          position: 'absolute',
+          right: 28,
+          bottom: 28,
+          zIndex: 1000,
+          width: 56,
+          height: 56,
+          borderRadius: '50%',
+          border: '1px solid rgba(226, 232, 240, 0.95)',
+          background: '#ffffff',
+          boxShadow: '0 12px 32px rgba(15, 23, 42, 0.18)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'pointer',
+          color: '#003fa4',
+          padding: 0,
+        }}
       >
-        <svg className="cs-map-location-pin" width="22" height="28" viewBox="0 0 28 36" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
-          <path d="M14 0C6.268 0 0 6.268 0 14c0 9.9 14 22 14 22S28 23.9 28 14C28 6.268 21.732 0 14 0z" fill="#003fa4"/>
-          <circle cx="14" cy="14" r="6" fill="white"/>
-          <circle cx="14" cy="14" r="3.5" fill="#003fa4"/>
+        <svg
+          width="26"
+          height="26"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <circle cx="12" cy="12" r="4" />
+          <line x1="12" y1="2" x2="12" y2="5" />
+          <line x1="12" y1="19" x2="12" y2="22" />
+          <line x1="2" y1="12" x2="5" y2="12" />
+          <line x1="19" y1="12" x2="22" y2="12" />
         </svg>
-        <span className="cs-map-location-label">My Location</span>
       </button>
     </div>
   )

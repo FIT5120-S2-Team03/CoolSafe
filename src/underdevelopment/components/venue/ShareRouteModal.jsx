@@ -49,8 +49,8 @@ export default function ShareRouteModal({ isOpen, onClose, venueId, venueName, r
 
   const base = import.meta.env.VITE_SITE_URL || window.location.origin
   const shareUrl = userLocation
-    ? `${base}/venue/${venueId}?share=true&from_lat=${userLocation.lat}&from_lng=${userLocation.lng}`
-    : `${base}/venue/${venueId}?share=true`
+    ? `${base}/venue/${venueId}?share=true&from_lat=${userLocation.lat}&from_lng=${userLocation.lng}&route_type=${routeType}`
+    : `${base}/venue/${venueId}?share=true&route_type=${routeType}`
   const routeLabel = routeType === 'fastest' ? 'Fastest Route' : 'Coolest Route'
 
   function handleSaveImage() {

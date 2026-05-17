@@ -127,13 +127,14 @@ export default function VenueDetailPage() {
   const isShareView = searchParams.get('share') === 'true'
   const shareLat = parseFloat(searchParams.get('from_lat'))
   const shareLng = parseFloat(searchParams.get('from_lng'))
+  const shareRouteType = searchParams.get('route_type') ?? 'fastest'
 
   const { venue, loading, error } = useVenue(id, location.state?.venue)
 
   const [userLocation, setUserLocation] = useState(null)
   const [locationDenied, setLocationDenied] = useState(false)
   const [showDeniedAlert, setShowDeniedAlert] = useState(false)
-  const [routeMode, setRouteMode] = useState('fastest')
+  const [routeMode, setRouteMode] = useState(isShareView ? shareRouteType : 'fastest')
   const [routeCoords, setRouteCoords] = useState([])
   const [routeSteps, setRouteSteps] = useState([])
   const [routeLoading, setRouteLoading] = useState(false)
@@ -160,37 +161,8 @@ export default function VenueDetailPage() {
     }
   }, [venue])
 
-  useEffect(() => {
-    if (mockLocation.enabled) {
-      setUserLocation({ lat: mockLocation.lat, lng: mockLocation.lng })
-      return
-    }
-    if (!navigator.geolocation) return
-    navigator.geolocation.getCurrentPosition(
-      (pos) => setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-      () => setLocationDenied(true)
-    )
-  }, [isShareView])
-
-  useEffect(() => {
-    if (isShareView || !userLocation || !venue) return
-    if (routeMode === 'fastest') {
-      fetchFastestRoute(userLocation)
-    } else {
-      fetchCoolestRoute(userLocation)
-    }
-  }, [userLocation, routeMode, venue, isShareView, fetchFastestRoute])
-
-  useEffect(() => {
-    if (!isShareView || !venue || isNaN(shareLat) || isNaN(shareLng)) return
-    fetchFastestRoute({ lat: shareLat, lng: shareLng })
-  }, [isShareView, venue, shareLat, shareLng, fetchFastestRoute])
-
-  useEffect(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
-  }, [])
-
-  async function fetchCoolestRoute(from) {
+  const fetchCoolestRoute = useCallback(async (from) => {
+    if (!venue) return
     try {
       setRouteLoading(true)
       setRouteError('')
@@ -260,7 +232,41 @@ export default function VenueDetailPage() {
     } finally {
       setRouteLoading(false)
     }
-  }
+  }, [venue])
+
+  useEffect(() => {
+    if (mockLocation.enabled) {
+      setUserLocation({ lat: mockLocation.lat, lng: mockLocation.lng })
+      return
+    }
+    if (!navigator.geolocation) return
+    navigator.geolocation.getCurrentPosition(
+      (pos) => setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => setLocationDenied(true)
+    )
+  }, [isShareView])
+
+  useEffect(() => {
+    if (isShareView || !userLocation || !venue) return
+    if (routeMode === 'fastest') {
+      fetchFastestRoute(userLocation)
+    } else {
+      fetchCoolestRoute(userLocation)
+    }
+  }, [userLocation, routeMode, venue, isShareView, fetchFastestRoute, fetchCoolestRoute])
+
+  useEffect(() => {
+    if (!isShareView || !venue || isNaN(shareLat) || isNaN(shareLng)) return
+    if (shareRouteType === 'coolest') {
+      fetchCoolestRoute({ lat: shareLat, lng: shareLng })
+    } else {
+      fetchFastestRoute({ lat: shareLat, lng: shareLng })
+    }
+  }, [isShareView, venue, shareLat, shareLng, shareRouteType, fetchFastestRoute])
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+  }, [])
 
   function requestLocation() {
     if (mockLocation.enabled) {

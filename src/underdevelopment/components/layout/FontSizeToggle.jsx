@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { STORAGE_KEYS } from '../../constants/storageKeys'
 
 const SIZES = {
   sm: { root: '14px', label: 'Small' },
@@ -7,11 +8,11 @@ const SIZES = {
 }
 
 export default function FontSizeToggle() {
-  const [active, setActive] = useState(() => localStorage.getItem('cs_fontsize') || 'md')
+  const [active, setActive] = useState(() => localStorage.getItem(STORAGE_KEYS.fontSize) || 'md')
 
   useEffect(() => {
     document.documentElement.style.fontSize = SIZES[active].root
-    localStorage.setItem('cs_fontsize', active)
+    localStorage.setItem(STORAGE_KEYS.fontSize, active)
   }, [active])
 
   return (
@@ -32,7 +33,7 @@ export default function FontSizeToggle() {
           key={key}
           onClick={() => setActive(key)}
           style={{
-            fontFamily: "'DM Sans', sans-serif",
+            fontFamily: "var(--font-body)",
             fontWeight: 600,
             fontSize,
             width: '36px', height: '36px',

@@ -1,22 +1,14 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useWeatherData } from '../../hooks/useWeatherData'
 import useCoolSpaces from '../../hooks/useCoolSpaces'
 import { useAIRecommend } from '../../hooks/useAIRecommend'
 import AIFinderModal from './AIFinderModal'
+import { TOGGLE_AI_FINDER_EVENT } from './aiFinderEvents'
+import { SparkleIcon, CloseIcon } from './AIFinderIcons'
 
-const SparkleIcon = ({ size = 16, color = 'currentColor' }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <path d="M12 3 L13.6 9.4 L20 11 L13.6 12.6 L12 19 L10.4 12.6 L4 11 L10.4 9.4 Z" fill={color} />
-    <path d="M19 4 L19.6 6 L21.5 6.5 L19.6 7 L19 9 L18.4 7 L16.5 6.5 L18.4 6 Z" fill={color} opacity="0.7" />
-  </svg>
-)
-
-const CloseIcon = ({ size = 22 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
-    <line x1="6" y1="6" x2="18" y2="18" />
-    <line x1="18" y1="6" x2="6" y2="18" />
-  </svg>
-)
+const AI_COLOR = 'var(--color-ai)'
+const AI_COLOR_DEEP = 'var(--color-ai-deep)'
+const AI_SHADOW = 'rgba(80,112,200,0.24)'
 
 export default function AIFinderButton() {
   const [open, setOpen] = useState(false)
@@ -30,6 +22,14 @@ export default function AIFinderButton() {
   const { lat, lng, hourly, locationName } = useWeatherData()
   const { venues }                         = useCoolSpaces()
   const { recommend, results, error }      = useAIRecommend()
+
+  useEffect(() => {
+    function onToggleAIFinder() {
+      setOpen((value) => !value)
+    }
+    window.addEventListener(TOGGLE_AI_FINDER_EVENT, onToggleAIFinder)
+    return () => window.removeEventListener(TOGGLE_AI_FINDER_EVENT, onToggleAIFinder)
+  }, [])
 
   async function handleFind() {
     setView('loading')
@@ -73,41 +73,35 @@ export default function AIFinderButton() {
       {!open && (
         <button
           type="button"
+          className="cs-ai-finder-trigger"
           onClick={() => setOpen(true)}
-          aria-label="Help me find a place"
+          aria-label="AI place finder"
           style={{
             position: 'fixed',
             bottom: 28,
-            right: 28,
-            zIndex: 1100,
+            right: 18,
+            zIndex: 1400,
             display: 'inline-flex',
             alignItems: 'center',
             gap: 12,
             padding: '14px 22px 14px 16px',
-            background: '#14110d',
+            background: AI_COLOR,
             color: '#fff',
             border: 'none',
             borderRadius: 999,
-            fontSize: 15,
-            fontWeight: 500,
-            fontFamily: "'DM Sans', sans-serif",
-            boxShadow: '0 10px 28px rgba(20,17,13,0.22), 0 2px 6px rgba(20,17,13,0.10)',
+            fontSize: 16,
+            fontWeight: 700,
+            fontFamily: "var(--font-body)",
+            boxShadow: `0 10px 28px ${AI_SHADOW}, 0 2px 6px rgba(30,70,90,0.10)`,
             transition: 'transform 0.15s',
             cursor: 'pointer',
             whiteSpace: 'nowrap',
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)' }}
-          onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)' }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = AI_COLOR_DEEP; e.currentTarget.style.transform = 'translateY(-2px)' }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = AI_COLOR; e.currentTarget.style.transform = 'translateY(0)' }}
         >
-          <span style={{
-            width: 28, height: 28, borderRadius: '50%',
-            background: '#a44a3f',
-            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-            flexShrink: 0,
-          }}>
-            <SparkleIcon size={16} color="#fff" />
-          </span>
-          Help me find a place
+          <SparkleIcon size={22} color="#fff" />
+          <span className="cs-ai-finder-label">AI place finder</span>
         </button>
       )}
 
@@ -115,21 +109,24 @@ export default function AIFinderButton() {
       {open && (
         <button
           type="button"
+          className="cs-ai-finder-trigger"
           onClick={() => setOpen(false)}
           aria-label="Close"
           style={{
             position: 'fixed',
             bottom: 28,
-            right: 28,
-            zIndex: 1100,
+            right: 18,
+            zIndex: 1400,
             width: 56, height: 56, borderRadius: '50%',
-            background: '#14110d',
+            background: AI_COLOR,
             color: '#fff',
             border: 'none',
-            boxShadow: '0 10px 28px rgba(20,17,13,0.32)',
+            boxShadow: `0 10px 28px ${AI_SHADOW}`,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             cursor: 'pointer',
           }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = AI_COLOR_DEEP }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = AI_COLOR }}
         >
           <CloseIcon size={22} />
         </button>

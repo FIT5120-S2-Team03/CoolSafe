@@ -1,6 +1,10 @@
 /**
  * CoolSpacesMap — interactive Leaflet map showing cool spaces across Melbourne.
- * Renders venue pins, user location, fastest route, and coolest route with shade coverage.
+ * Renders venue pins (CircleMarker) colour-coded by category, plus a user
+ * location marker that animates the map to the user's position.
+ *
+ * Props:
+ *   selectedCategories {string[]} — empty = show all; otherwise filter to these categories
  */
 
 import { useRef, useState, useEffect } from 'react'
@@ -15,15 +19,25 @@ import {
   Polyline,
   useMap,
 } from 'react-leaflet'
-import { useNavigate } from 'react-router-dom'
 import useCoolSpaces from '../../hooks/useCoolSpaces'
 import useFountains from '../../hooks/useFountains'
 import useHVI from '../../hooks/useHVI'
-import { CATEGORY_COLORS } from '../../utils/categoryMapping'
-import { getWalkingMinutes } from '../../utils/haversine'
+import { CATEGORY_MARKER_COLORS } from '../../utils/categoryMapping'
 import mockLocation from '../../data/mockLocation.json'
+import VenuePopup from './VenuePopupCard'
+import {
+  clearRoutePrefetch,
+  getCachedRoute,
+  getRouteCacheKey,
+  getRoutePrefetch,
+  setCachedRoute,
+  setRoutePrefetch,
+} from '../../utils/routeCache'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'https://coolsafe.onrender.com'
+const ROUTE_SIMILARITY_DISTANCE_M = 15
+const ROUTE_SIMILARITY_THRESHOLD = 0.8
+const WALKING_SPEED_KMH = 4.5
 
 const locationPinIcon = L.divIcon({
   className: '',
@@ -39,238 +53,7 @@ const locationPinIcon = L.divIcon({
 
 const MELBOURNE = [-37.8136, 144.9631]
 
-function getOpenStatus(openingHours) {
-  if (!openingHours || Object.keys(openingHours).length === 0) {
-    return { status: 'unavailable' }
-  }
-
-  const today = new Date().toLocaleDateString('en-AU', { weekday: 'long' })
-  const hours = openingHours[today]
-
-  if (!hours) {
-    return { status: 'closed' }
-  }
-
-  const now = new Date()
-  const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(
-    now.getMinutes()
-  ).padStart(2, '0')}`
-
-  const isOpen = currentTime >= hours.open && currentTime < hours.close
-
-  return isOpen
-    ? { status: 'open', closeTime: hours.close }
-    : { status: 'closed' }
-}
-
-function VenuePopup({
-  venue,
-  userLocation,
-  onFastestRoute,
-  onCoolestRoute,
-  routeLoading,
-  onClose,
-}) {
-  const navigate = useNavigate()
-  const openStatus = getOpenStatus(venue.opening_hours)
-  const [selectedRoute, setSelectedRoute] = useState('fastest')
-
-  useEffect(() => {
-    onFastestRoute(venue)
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
-  const walkMins =
-    userLocation != null
-      ? getWalkingMinutes(userLocation.lat, userLocation.lng, venue.lat, venue.lng)
-      : null
-
-  return (
-    <div
-      style={{
-        backgroundColor: '#fff',
-        borderRadius: 16,
-        boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
-        padding: 20,
-        width: 300,
-        fontFamily: "'Lexend', sans-serif",
-        position: 'relative',
-      }}
-    >
-      <button
-        onClick={onClose}
-        aria-label="Close"
-        style={{
-          position: 'absolute',
-          top: 12,
-          right: 12,
-          background: 'none',
-          border: 'none',
-          cursor: 'pointer',
-          padding: 4,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: '#94a3b8',
-          minWidth: 44,
-          minHeight: 44,
-        }}
-      >
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <line x1="2" y1="2" x2="14" y2="14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-          <line x1="14" y1="2" x2="2" y2="14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-        </svg>
-      </button>
-
-      <p
-        style={{
-          fontFamily: "'Public Sans', sans-serif",
-          fontWeight: 700,
-          fontSize: 16,
-          color: '#1e293b',
-          margin: '0 32px 8px 0',
-        }}
-      >
-        {venue.name}
-      </p>
-
-      <span
-        style={{
-          display: 'inline-block',
-          backgroundColor: CATEGORY_COLORS[venue.category] ?? '#64748b',
-          color: '#fff',
-          borderRadius: 6,
-          padding: '2px 8px',
-          fontSize: 11,
-          fontWeight: 700,
-          marginBottom: 10,
-        }}
-      >
-        {venue.category}
-      </span>
-
-      {venue.address && (
-        <p style={{ fontSize: 12, color: '#64748b', margin: '0 0 12px' }}>
-          {venue.address}
-        </p>
-      )}
-
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', fontSize: 13, marginBottom: 16 }}>
-        {openStatus.status === 'unavailable' ? (
-          <span style={{ color: '#94a3b8' }}>Hours unavailable</span>
-        ) : (
-          <>
-            <span
-              style={{
-                width: 8,
-                height: 8,
-                borderRadius: '50%',
-                backgroundColor: openStatus.status === 'open' ? '#16a34a' : '#ef4444',
-                flexShrink: 0,
-              }}
-            />
-            <span
-              style={{
-                color: openStatus.status === 'open' ? '#16a34a' : '#ef4444',
-                fontWeight: 600,
-              }}
-            >
-              {openStatus.status === 'open' ? 'Open Now' : 'Closed'}
-            </span>
-            {openStatus.status === 'open' && (
-              <>
-                <span style={{ color: '#cbd5e1' }}>•</span>
-                <span style={{ color: '#64748b' }}>Closes {openStatus.closeTime}</span>
-              </>
-            )}
-          </>
-        )}
-
-        {walkMins != null && (
-          <>
-            <span style={{ color: '#cbd5e1' }}>•</span>
-            <span style={{ color: '#64748b' }}>{walkMins} min walk</span>
-          </>
-        )}
-      </div>
-
-      <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-        <button
-          onClick={() => {
-            setSelectedRoute('fastest')
-            onFastestRoute(venue)
-          }}
-          disabled={routeLoading}
-          style={{
-            flex: 1,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 6,
-            backgroundColor: selectedRoute === 'fastest' ? '#16a34a' : routeLoading ? '#f1f5f9' : '#fff',
-            border: selectedRoute === 'fastest' ? 'none' : '1px solid #e2e8f0',
-            borderRadius: 10,
-            padding: '10px 0',
-            color: selectedRoute === 'fastest' ? '#fff' : '#1e293b',
-            fontFamily: "'Lexend', sans-serif",
-            fontWeight: 600,
-            fontSize: 13,
-            cursor: routeLoading ? 'not-allowed' : 'pointer',
-            minHeight: 44,
-          }}
-        >
-          {routeLoading && selectedRoute === 'fastest' ? 'Loading...' : '⚡ Fastest'}
-        </button>
-
-        <button
-          onClick={() => {
-            setSelectedRoute('coolest')
-            onCoolestRoute(venue)
-          }}
-          disabled={routeLoading}
-          style={{
-            flex: 1,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 6,
-            backgroundColor: selectedRoute === 'coolest' ? '#16a34a' : routeLoading ? '#f1f5f9' : '#fff',
-            border: selectedRoute === 'coolest' ? 'none' : '1px solid #e2e8f0',
-            borderRadius: 10,
-            padding: '10px 0',
-            color: selectedRoute === 'coolest' ? '#fff' : '#1e293b',
-            fontFamily: "'Lexend', sans-serif",
-            fontWeight: 600,
-            fontSize: 13,
-            cursor: routeLoading ? 'not-allowed' : 'pointer',
-            minHeight: 44,
-          }}
-        >
-          {routeLoading && selectedRoute === 'coolest' ? 'Loading...' : '🌲 Coolest'}
-        </button>
-      </div>
-
-      <button
-        onClick={() => navigate(`/venue/${venue.id}`)}
-        style={{
-          width: '100%',
-          backgroundColor: '#003fa4',
-          color: '#fff',
-          border: 'none',
-          borderRadius: 12,
-          padding: '14px 0',
-          fontSize: 16,
-          fontWeight: 700,
-          fontFamily: "'Public Sans', sans-serif",
-          cursor: 'pointer',
-          minHeight: 44,
-        }}
-      >
-        View Full Details →
-      </button>
-    </div>
-  )
-}
-
+// Tracks the screen position of the selected venue pin and updates on map move/zoom.
 function PinTracker({ venue, onPosition }) {
   const map = useMap()
 
@@ -314,20 +97,80 @@ function hviStyle(feature) {
   }
 }
 
-export default function CoolSpacesMap({ selectedCategory, flyTo, showHVI, openVenueId }) {
+function toRadians(value) {
+  return (value * Math.PI) / 180
+}
+
+function haversineMeters(a, b) {
+  const earthRadiusM = 6371000
+  const dLat = toRadians(b[0] - a[0])
+  const dLng = toRadians(b[1] - a[1])
+  const lat1 = toRadians(a[0])
+  const lat2 = toRadians(b[0])
+  const sinLat = Math.sin(dLat / 2)
+  const sinLng = Math.sin(dLng / 2)
+  const h = sinLat * sinLat + Math.cos(lat1) * Math.cos(lat2) * sinLng * sinLng
+  return 2 * earthRadiusM * Math.asin(Math.sqrt(h))
+}
+
+function getRouteOverlapRatio(routeA, routeB) {
+  if (!routeA?.length || !routeB?.length) return 0
+
+  const sampleStep = Math.max(1, Math.floor(routeA.length / 40))
+  let samples = 0
+  let overlappingSamples = 0
+
+  for (let i = 0; i < routeA.length; i += sampleStep) {
+    samples += 1
+    const point = routeA[i]
+    const overlaps = routeB.some((candidatePoint) => haversineMeters(point, candidatePoint) <= ROUTE_SIMILARITY_DISTANCE_M)
+    if (overlaps) overlappingSamples += 1
+  }
+
+  return samples === 0 ? 0 : overlappingSamples / samples
+}
+
+function routesAreVisuallySimilar(routeA, routeB) {
+  return (
+    getRouteOverlapRatio(routeA, routeB) >= ROUTE_SIMILARITY_THRESHOLD &&
+    getRouteOverlapRatio(routeB, routeA) >= ROUTE_SIMILARITY_THRESHOLD
+  )
+}
+
+function getOffsetWaypoint(start, end) {
+  const midLat = (start.lat + end.lat) / 2
+  const midLng = (start.lng + end.lng) / 2
+  const dLat = end.lat - start.lat
+  const dLng = end.lng - start.lng
+  const magnitude = Math.hypot(dLat, dLng) || 1
+  const offset = 0.0018
+
+  return {
+    lat: midLat - (dLng / magnitude) * offset,
+    lng: midLng + (dLat / magnitude) * offset,
+  }
+}
+
+function getWalkingMinutesFromDistance(distanceM) {
+  if (distanceM == null) return null
+  return Math.max(1, Math.round((distanceM / 1000 / WALKING_SPEED_KMH) * 60))
+}
+
+export default function CoolSpacesMap({ selectedCategories, flyTo, showHVI, openVenueId }) {
   const mapRef = useRef(null)
   const [selectedVenue, setSelectedVenue] = useState(null)
   const [pinPos, setPinPos] = useState(null)
   const [userLocation, setUserLocation] = useState(
     mockLocation.enabled ? { lat: mockLocation.lat, lng: mockLocation.lng } : null
   )
-  const [routeCoords, setRouteCoords] = useState([])
+  const [fastestRouteCoords, setFastestRouteCoords] = useState([])
+  const [coolestRouteCoords, setCoolestRouteCoords] = useState([])
   const [routeLoading, setRouteLoading] = useState(false)
   const [routeError, setRouteError] = useState('')
   const [routeType, setRouteType] = useState('fastest')
   const [routeScore, setRouteScore] = useState(null)
-  const [routeNoticeVisible, setRouteNoticeVisible] = useState(false)
-  const [routeNoticeFading, setRouteNoticeFading] = useState(false)
+  const [fastestDurationMin, setFastestDurationMin] = useState(null)
+  const [mapReady, setMapReady] = useState(false)
 
   useEffect(() => {
     if (flyTo && mapRef.current) {
@@ -335,65 +178,66 @@ export default function CoolSpacesMap({ selectedCategory, flyTo, showHVI, openVe
     }
   }, [flyTo])
 
-  useEffect(() => {
-    if (!routeNoticeVisible || routeLoading) return
-
-    const fadeTimer = setTimeout(() => {
-      setRouteNoticeFading(true)
-    }, 5000)
-
-    const hideTimer = setTimeout(() => {
-      setRouteNoticeVisible(false)
-      setRouteNoticeFading(false)
-    }, 5800)
-
-    return () => {
-      clearTimeout(fadeTimer)
-      clearTimeout(hideTimer)
-    }
-  }, [routeNoticeVisible, routeLoading, routeScore])
-
   const { venues, loading: venuesLoading, error: venuesError } = useCoolSpaces()
   const { fountains, loading: fountainsLoading, error: fountainsError } = useFountains()
   const { hviData } = useHVI()
 
-  const isLoading = venuesLoading || fountainsLoading
-  const error = venuesError || fountainsError
+  const needsFountains = selectedCategories.includes('Fountain')
+  const isLoading = venuesLoading || (needsFountains && fountainsLoading)
+  const error = venuesError || (needsFountains ? fountainsError : null)
 
   const allVenues = [...venues, ...fountains]
   const filtered =
-    selectedCategory === 'All'
-      ? allVenues
-      : allVenues.filter((v) => v.category === selectedCategory)
+    selectedCategories.length === 0
+      ? venues
+      : allVenues.filter((v) => selectedCategories.includes(v.category))
 
+  // Auto-open venue card when arriving from another page.
   useEffect(() => {
-    if (!openVenueId || filtered.length === 0) return
-    const target = filtered.find((v) => String(v.id) === String(openVenueId))
-    if (target) setSelectedVenue(target)
-  }, [openVenueId, filtered.length]) // eslint-disable-line react-hooks/exhaustive-deps
+    if (!openVenueId || filtered.length === 0 || !mapReady) return
+    const target = filtered.find(v => String(v.id) === String(openVenueId))
+    if (target) selectVenue(target)
+  }, [openVenueId, filtered.length, mapReady]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  function keepVenueCardInView(venue) {
+    if (!mapRef.current || !venue) return
+
+    const map = mapRef.current
+    const pin = map.latLngToContainerPoint([venue.lat, venue.lng])
+    const { x: mapW, y: mapH } = map.getSize()
+    const cardW = 340
+    const cardH = 420
+    const gap = 40
+    const pad = 28
+
+    const cardLeft = pin.x - cardW / 2
+    const cardRight = pin.x + cardW / 2
+    const cardTop = pin.y - gap - cardH
+    const cardBottom = pin.y - gap
+
+    const overflowLeft = pad - cardLeft
+    const overflowRight = cardRight - (mapW - pad)
+    const overflowTop = pad - cardTop
+    const overflowBottom = cardBottom - (mapH - pad)
+
+    const panX = overflowRight > 0 ? overflowRight : overflowLeft > 0 ? -overflowLeft : 0
+    const panY = overflowBottom > 0 ? overflowBottom : overflowTop > 0 ? -overflowTop : 0
+
+    if (panX !== 0 || panY !== 0) {
+      map.panBy([panX, panY], { animate: true })
+    }
+  }
 
   function selectVenue(venue) {
     clearRoute()
     setSelectedVenue(venue)
+    keepVenueCardInView(venue)
   }
 
   function closeVenue() {
     setSelectedVenue(null)
     setPinPos(null)
     clearRoute()
-  }
-
-  function clearRoute() {
-    setRouteCoords([])
-    setRouteError('')
-    setRouteScore(null)
-    setRouteNoticeVisible(false)
-    setRouteNoticeFading(false)
-  }
-
-  function showRouteNotice() {
-    setRouteNoticeVisible(true)
-    setRouteNoticeFading(false)
   }
 
   function handleMyLocation() {
@@ -444,13 +288,20 @@ export default function CoolSpacesMap({ selectedCategory, flyTo, showHVI, openVe
     })
   }
 
+  function clearRoute() {
+    setFastestRouteCoords([])
+    setCoolestRouteCoords([])
+    setRouteError('')
+    setRouteScore(null)
+    setFastestDurationMin(null)
+  }
+
   async function handleFastestRoute(venue) {
     try {
       setRouteLoading(true)
       setRouteError('')
       setRouteType('fastest')
       setRouteScore(null)
-      showRouteNotice()
 
       const currentLocation = userLocation || (await getCurrentLocation())
       setUserLocation(currentLocation)
@@ -464,19 +315,112 @@ export default function CoolSpacesMap({ selectedCategory, flyTo, showHVI, openVe
       if (!data.routes || data.routes.length === 0) throw new Error('No route found.')
 
       const coords = data.routes[0].geometry.coordinates.map((point) => [point[1], point[0]])
-      setRouteCoords(coords)
+      setFastestRouteCoords(coords)
+      setCoolestRouteCoords([])
+      setFastestDurationMin(getWalkingMinutesFromDistance(data.routes[0].distance))
 
       if (mapRef.current && coords.length > 0) {
         mapRef.current.fitBounds(L.latLngBounds(coords), {
-          paddingTopLeft: [60, 280],
-          paddingBottomRight: [60, 60],
+          paddingTopLeft: [60, 440],
+          paddingBottomRight: [60, 260],
         })
+        setTimeout(() => keepVenueCardInView(venue), 350)
       }
     } catch (err) {
       setRouteError(err.message)
       window.alert(err.message)
     } finally {
       setRouteLoading(false)
+    }
+  }
+
+  async function buildCoolestRouteResult(venue, currentLocation) {
+    const url =
+      `https://router.project-osrm.org/route/v1/foot/` +
+      `${currentLocation.lng},${currentLocation.lat};` +
+      `${venue.lng},${venue.lat}` +
+      `?overview=full&geometries=geojson&alternatives=true&steps=true`
+
+    const res = await fetch(url)
+    if (!res.ok) throw new Error(`Coolest route request failed: HTTP ${res.status}`)
+
+    const data = await res.json()
+    if (!data.routes || data.routes.length === 0) throw new Error('No coolest route found.')
+
+    const candidateRoutes = data.routes.slice(0, 2).map((route) => ({
+      coords: route.geometry.coordinates.map((point) => [point[1], point[0]]),
+      distance_m: route.distance,
+      steps: route.legs?.[0]?.steps ?? [],
+    }))
+
+    const routesAreSimilar =
+      candidateRoutes.length < 2 ||
+      routesAreVisuallySimilar(candidateRoutes[0].coords, candidateRoutes[1].coords)
+
+    if (routesAreSimilar) {
+      const waypoint = getOffsetWaypoint(currentLocation, venue)
+      const waypointUrl =
+        `https://router.project-osrm.org/route/v1/foot/` +
+        `${currentLocation.lng},${currentLocation.lat};` +
+        `${waypoint.lng},${waypoint.lat};` +
+        `${venue.lng},${venue.lat}` +
+        `?overview=full&geometries=geojson&steps=true`
+
+      const waypointRes = await fetch(waypointUrl)
+      if (waypointRes.ok) {
+        const waypointData = await waypointRes.json()
+        const waypointRoute = waypointData.routes?.[0]
+        if (waypointRoute) {
+          candidateRoutes.push({
+            coords: waypointRoute.geometry.coordinates.map((point) => [point[1], point[0]]),
+            distance_m: waypointRoute.distance,
+            steps: waypointRoute.legs?.flatMap((leg) => leg.steps ?? []) ?? [],
+          })
+        }
+      }
+    }
+
+    const scoreRes = await fetch(`${API_BASE}/api/coolest-route`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ routes: candidateRoutes.slice(0, 3), routes_are_similar: routesAreSimilar }),
+    })
+    if (!scoreRes.ok) throw new Error(`Shade score request failed: HTTP ${scoreRes.status}`)
+
+    const scoreData = await scoreRes.json()
+    const selectedCoords = scoreData.route?.coords ?? candidateRoutes[scoreData.selected_route_index]?.coords
+    const selectedSteps = candidateRoutes[scoreData.selected_route_index]?.steps ?? []
+    if (!selectedCoords || selectedCoords.length === 0) throw new Error('No selected coolest route returned.')
+
+    return {
+      fastestCoords: candidateRoutes[0].coords,
+      coolestCoords: selectedCoords,
+      coolestSteps: selectedSteps,
+      scoreData,
+    }
+  }
+
+  async function prefetchCoolestRoute(venue) {
+    try {
+      const currentLocation = userLocation || (await getCurrentLocation())
+      const cacheKey = getRouteCacheKey(currentLocation, venue)
+
+      if (getCachedRoute(cacheKey)) return
+      if (getRoutePrefetch(cacheKey)) return getRoutePrefetch(cacheKey)
+
+      const prefetchPromise = buildCoolestRouteResult(venue, currentLocation)
+        .then((result) => {
+          setCachedRoute(cacheKey, result)
+          return result
+        })
+        .finally(() => {
+          clearRoutePrefetch(cacheKey)
+        })
+
+      setRoutePrefetch(cacheKey, prefetchPromise)
+      return prefetchPromise
+    } catch {
+      return null
     }
   }
 
@@ -486,68 +430,27 @@ export default function CoolSpacesMap({ selectedCategory, flyTo, showHVI, openVe
       setRouteError('')
       setRouteType('coolest')
       setRouteScore(null)
-      showRouteNotice()
 
       const currentLocation = userLocation || (await getCurrentLocation())
       setUserLocation(currentLocation)
+      const cacheKey = getRouteCacheKey(currentLocation, venue)
 
-      const startLat = currentLocation.lat
-      const startLng = currentLocation.lng
-      const endLat = venue.lat
-      const endLng = venue.lng
+      const result =
+        getCachedRoute(cacheKey) ??
+        (await getRoutePrefetch(cacheKey)) ??
+        (await buildCoolestRouteResult(venue, currentLocation))
 
-      const shadeWaypointLat = -37.8142
-      const shadeWaypointLng = 144.9626
+      setCachedRoute(cacheKey, result)
+      setFastestRouteCoords(result.fastestCoords)
+      setCoolestRouteCoords(result.coolestCoords)
+      setRouteScore(result.scoreData)
 
-      const url =
-        `https://router.project-osrm.org/route/v1/foot/` +
-        `${startLng},${startLat};` +
-        `${shadeWaypointLng},${shadeWaypointLat};` +
-        `${endLng},${endLat}` +
-        `?overview=full&geometries=geojson`
-
-      const res = await fetch(url)
-
-      if (!res.ok) {
-        throw new Error(`Coolest route request failed: HTTP ${res.status}`)
-      }
-
-      const data = await res.json()
-
-      if (!data.routes || data.routes.length === 0) {
-        throw new Error('No coolest route found.')
-      }
-
-      const coords = data.routes[0].geometry.coordinates.map((point) => [
-        point[1],
-        point[0],
-      ])
-
-      setRouteCoords(coords)
-
-      const scoreRes = await fetch(`${API_BASE}/api/coolest-route`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          route_coords: coords,
-        }),
-      })
-
-      if (!scoreRes.ok) {
-        throw new Error(`Coolest route score request failed: HTTP ${scoreRes.status}`)
-      }
-
-      const scoreData = await scoreRes.json()
-      setRouteScore(scoreData)
-      console.log('Coolest route shade coverage:', scoreData)
-
-      if (mapRef.current && coords.length > 0) {
-        mapRef.current.fitBounds(L.latLngBounds(coords), {
-          paddingTopLeft: [60, 280],
-          paddingBottomRight: [60, 60],
+      if (mapRef.current && result.coolestCoords.length > 0) {
+        mapRef.current.fitBounds(L.latLngBounds(result.coolestCoords), {
+          paddingTopLeft: [60, 440],
+          paddingBottomRight: [60, 260],
         })
+        setTimeout(() => keepVenueCardInView(venue), 350)
       }
     } catch (err) {
       setRouteError(err.message)
@@ -557,17 +460,55 @@ export default function CoolSpacesMap({ selectedCategory, flyTo, showHVI, openVe
     }
   }
 
-  const routeColor = routeType === 'coolest' ? '#16a34a' : '#003fa4'
-
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+      <style>{`
+        .cs-map-venue-card {
+          transition: transform 0.18s ease, box-shadow 0.18s ease;
+        }
+        .cs-map-venue-card:hover {
+          box-shadow: 0 24px 70px rgba(0,0,0,0.18) !important;
+        }
+        .cs-map-route-button,
+        .cs-map-primary-action,
+        .cs-map-location-button,
+        .cs-map-icon-action {
+          transition: transform 0.16s ease, box-shadow 0.16s ease, background 0.16s ease, border-color 0.16s ease, color 0.16s ease, filter 0.16s ease;
+        }
+        .cs-map-route-button:not(:disabled):hover,
+        .cs-map-location-button:hover,
+        .cs-map-icon-action:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 6px 16px rgba(34,30,26,0.10);
+        }
+        .cs-map-primary-action:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 8px 20px rgba(24,82,180,0.20);
+          filter: brightness(0.96);
+        }
+        .cs-map-route-button:not(:disabled):active,
+        .cs-map-primary-action:active,
+        .cs-map-location-button:active,
+        .cs-map-icon-action:active {
+          transform: translateY(0) scale(0.99);
+        }
+        .cs-map-route-button:focus-visible,
+        .cs-map-primary-action:focus-visible,
+        .cs-map-location-button:focus-visible,
+        .cs-map-icon-action:focus-visible {
+          outline: 3px solid rgba(24,82,180,0.18);
+          outline-offset: 3px;
+        }
+      `}</style>
+
+      {/* Venue card — positioned above the pin, follows map movement via pinPos */}
       {selectedVenue && pinPos && (
         <div
           style={{
             position: 'absolute',
             left: pinPos.x,
             top: pinPos.y,
-            transform: 'translate(-50%, calc(-100% - 16px))',
+            transform: 'translate(-50%, calc(-100% - 40px))',
             zIndex: 1000,
             pointerEvents: 'auto',
           }}
@@ -576,103 +517,121 @@ export default function CoolSpacesMap({ selectedCategory, flyTo, showHVI, openVe
             key={selectedVenue.id}
             venue={selectedVenue}
             userLocation={userLocation}
+            routeDurationMin={fastestDurationMin}
             onFastestRoute={handleFastestRoute}
             onCoolestRoute={handleCoolestRoute}
+            onPrefetchCoolestRoute={prefetchCoolestRoute}
             routeLoading={routeLoading}
             onClose={closeVenue}
           />
-
-          {routeCoords.length > 0 && routeNoticeVisible && (
-            <div
-              style={{
-                position: 'absolute',
-                left: 'calc(100% + 14px)',
-                top: 0,
-                width: 320,
-                zIndex: 1001,
-                backgroundColor: routeType === 'coolest' ? '#ecfdf5' : '#eff6ff',
-                border: routeType === 'coolest' ? '1px solid #bbf7d0' : '1px solid #bfdbfe',
-                borderRadius: 14,
-                padding: '12px 16px',
-                fontFamily: "'Lexend', sans-serif",
-                fontSize: 13,
-                fontWeight: 600,
-                lineHeight: 1.5,
-                color: routeType === 'coolest' ? '#166534' : '#1d4ed8',
-                boxShadow: '0 12px 30px rgba(0,0,0,0.14)',
-                pointerEvents: 'none',
-                opacity: routeNoticeFading ? 0 : 1,
-                transform: routeNoticeFading ? 'translateX(8px)' : 'translateX(0)',
-                transition: 'opacity 0.8s ease, transform 0.8s ease',
-              }}
-            >
-              {routeType === 'coolest' ? (
-                routeScore && routeScore.route ? (
-                  <span>
-                    Showing Coolest Route
-                    <br />
-                    Shade coverage {routeScore.route.shade_coverage_percent}% · score{' '}
-                    {routeScore.route.shade_score}
-                    <br />
-                    Shaded {routeScore.route.shaded_length_m}m of{' '}
-                    {routeScore.route.total_length_m}m
-                  </span>
-                ) : (
-                  <span>
-                    Showing Coolest Route
-                    <br />
-                    Calculating shade coverage...
-                  </span>
-                )
-              ) : (
-                <span>Showing Fastest Route</span>
-              )}
-            </div>
-          )}
         </div>
       )}
 
+      {/* Non-blocking error notice */}
       {error && (
-        <div
-          style={{
-            position: 'absolute',
-            top: 12,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 1000,
-            backgroundColor: '#fff7ed',
-            border: '1px solid #fed7aa',
-            borderRadius: 8,
-            padding: '6px 14px',
-            fontFamily: "'Lexend', sans-serif",
-            fontSize: 13,
-            color: '#9a3412',
-            pointerEvents: 'none',
-          }}
-        >
+        <div style={{ position: 'absolute', top: 12, left: '50%', transform: 'translateX(-50%)', zIndex: 1000, backgroundColor: '#fff7ed', border: '1px solid #fed7aa', borderRadius: 8, padding: '6px 14px', fontFamily: "var(--font-body)", fontSize: 15, color: '#9a3412', pointerEvents: 'none' }}>
           Some venue data could not be loaded
         </div>
       )}
 
+      {/* Route error notice */}
       {routeError && (
+        <div style={{ position: 'absolute', top: 52, left: '50%', transform: 'translateX(-50%)', zIndex: 1000, backgroundColor: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '6px 14px', fontFamily: "var(--font-body)", fontSize: 15, color: '#991b1b', pointerEvents: 'none' }}>
+          {routeError}
+        </div>
+      )}
+
+      {routeType === 'fastest' && fastestDurationMin != null && selectedVenue && (
         <div
           style={{
             position: 'absolute',
-            top: 52,
+            top: 18,
             left: '50%',
             transform: 'translateX(-50%)',
             zIndex: 1000,
-            backgroundColor: '#fef2f2',
-            border: '1px solid #fecaca',
-            borderRadius: 8,
-            padding: '6px 14px',
-            fontFamily: "'Lexend', sans-serif",
-            fontSize: 13,
-            color: '#991b1b',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 12,
+            flexWrap: 'wrap',
+            maxWidth: 'calc(100% - 32px)',
+            backgroundColor: 'rgba(255, 255, 255, 0.92)',
+            border: '1px solid rgba(24, 82, 180, 0.18)',
+            borderRadius: 999,
+            padding: '10px 16px',
+            boxShadow: '0 10px 28px rgba(24, 82, 180, 0.14)',
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
+            fontFamily: 'var(--font-body)',
+            color: '#1d4ed8',
             pointerEvents: 'none',
           }}
         >
-          {routeError}
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 14, fontWeight: 700, color: '#17304f', whiteSpace: 'nowrap' }}>
+            <span style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#2563eb', boxShadow: '0 0 0 4px rgba(37, 99, 235, 0.14)' }} />
+            Navigating to {selectedVenue.name}
+          </span>
+          <span style={{ width: 1, height: 18, backgroundColor: 'rgba(29, 78, 216, 0.16)' }} />
+          <span style={{ fontSize: 14, fontWeight: 700, whiteSpace: 'nowrap' }}>
+            ⚡ Fastest route
+          </span>
+          <span style={{ width: 1, height: 18, backgroundColor: 'rgba(29, 78, 216, 0.16)' }} />
+          <span style={{ fontSize: 15, fontWeight: 700, whiteSpace: 'nowrap' }}>
+            {fastestDurationMin} min
+          </span>
+        </div>
+      )}
+
+      {routeType === 'coolest' && routeScore?.route && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 18,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 1000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 12,
+            flexWrap: 'wrap',
+            maxWidth: 'calc(100% - 32px)',
+            backgroundColor: 'rgba(255, 255, 255, 0.92)',
+            border: '1px solid rgba(22, 163, 74, 0.18)',
+            borderRadius: 999,
+            padding: '10px 16px',
+            boxShadow: '0 10px 28px rgba(22, 101, 52, 0.14)',
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
+            fontFamily: 'var(--font-body)',
+            color: '#166534',
+            pointerEvents: 'none',
+          }}
+        >
+          {selectedVenue && (
+            <>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 14, fontWeight: 700, color: '#173326', whiteSpace: 'nowrap' }}>
+                <span style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#22c55e', boxShadow: '0 0 0 4px rgba(34, 197, 94, 0.14)' }} />
+                Navigating to {selectedVenue.name}
+              </span>
+              <span style={{ width: 1, height: 18, backgroundColor: 'rgba(22, 101, 52, 0.16)' }} />
+            </>
+          )}
+          <span style={{ fontSize: 14, fontWeight: 700, whiteSpace: 'nowrap' }}>
+            🌿 Coolest route
+          </span>
+          <span style={{ width: 1, height: 18, backgroundColor: 'rgba(22, 101, 52, 0.16)' }} />
+          <span style={{ fontSize: 15, fontWeight: 700, whiteSpace: 'nowrap' }}>
+            {routeScore.route.shade_coverage_percent}% shade
+          </span>
+          <span style={{ fontSize: 14, color: '#15803d', whiteSpace: 'nowrap' }}>
+            {(routeScore.route.shaded_length_m / 1000).toFixed(2)} km shaded
+          </span>
+          {routeScore.same_as_fastest && (
+            <span style={{ fontSize: 13, color: '#4b7f62', whiteSpace: 'nowrap' }}>
+              also fastest
+            </span>
+          )}
         </div>
       )}
 
@@ -681,23 +640,27 @@ export default function CoolSpacesMap({ selectedCategory, flyTo, showHVI, openVe
         zoom={14}
         style={{ width: '100%', height: '100%' }}
         ref={mapRef}
+        whenReady={() => setMapReady(true)}
       >
         <TileLayer
           url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
           attribution="&copy; OpenStreetMap contributors &copy; CARTO"
         />
 
+        {/* Tracks pin screen position so the card overlay follows map movement */}
         <PinTracker venue={selectedVenue} onPosition={setPinPos} />
 
         <Pane name="route" style={{ zIndex: 450 }}>
-          {routeCoords.length > 0 && (
+          {routeType === 'fastest' && fastestRouteCoords.length > 0 && (
             <Polyline
-              positions={routeCoords}
-              pathOptions={{
-                color: routeColor,
-                weight: 6,
-                opacity: 0.85,
-              }}
+              positions={fastestRouteCoords}
+              pathOptions={{ color: '#003fa4', weight: 6, opacity: 0.85 }}
+            />
+          )}
+          {routeType === 'coolest' && coolestRouteCoords.length > 0 && (
+            <Polyline
+              positions={coolestRouteCoords}
+              pathOptions={{ color: '#16a34a', weight: 6, opacity: 0.9 }}
             />
           )}
         </Pane>
@@ -714,12 +677,22 @@ export default function CoolSpacesMap({ selectedCategory, flyTo, showHVI, openVe
             center={[venue.lat, venue.lng]}
             radius={venue.category === 'Fountain' ? 5 : 8}
             pathOptions={{
-              fillColor: CATEGORY_COLORS[venue.category] ?? '#64748b',
+              fillColor: CATEGORY_MARKER_COLORS[venue.category] ?? '#64748b',
               color: 'white',
               weight: 2,
               fillOpacity: 0.9,
             }}
-            eventHandlers={{ click: () => selectVenue(venue) }}
+            eventHandlers={{
+              click: () => selectVenue(venue),
+              mouseover: (e) => {
+                e.target.setRadius(venue.category === 'Fountain' ? 7 : 10)
+                e.target.setStyle({ weight: 3 })
+              },
+              mouseout: (e) => {
+                e.target.setRadius(venue.category === 'Fountain' ? 5 : 8)
+                e.target.setStyle({ weight: 2 })
+              },
+            }}
           />
         ))}
 
@@ -728,60 +701,27 @@ export default function CoolSpacesMap({ selectedCategory, flyTo, showHVI, openVe
         )}
       </MapContainer>
 
+      {/* Loading spinner */}
       {isLoading && (
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: 'rgba(255,255,255,0.6)',
-            zIndex: 1000,
-          }}
-        >
-          <div
-            style={{
-              width: 40,
-              height: 40,
-              border: '4px solid #e2e8f0',
-              borderTopColor: '#003fa4',
-              borderRadius: '50%',
-              animation: 'spin 0.8s linear infinite',
-            }}
-          />
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.6)', zIndex: 1000 }}>
+          <div style={{ width: 40, height: 40, border: '4px solid #e2e8f0', borderTopColor: '#003fa4', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
           <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
         </div>
       )}
 
+      {/* My Location button */}
       <button
         onClick={handleMyLocation}
-        style={{
-          position: 'absolute',
-          bottom: 32,
-          right: 32,
-          zIndex: 1000,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          backgroundColor: '#fff',
-          border: '1px solid #e2e8f0',
-          borderRadius: 12,
-          padding: '12px 20px',
-          boxShadow: '0 10px 40px rgba(0,0,0,0.18)',
-          cursor: 'pointer',
-          fontFamily: "'Lexend', sans-serif",
-          fontWeight: 700,
-          fontSize: 16,
-          color: '#1e293b',
-        }}
+        className="cs-map-location-button"
+        style={{ position: 'absolute', bottom: 32, left: 32, zIndex: 1000, display: 'flex', alignItems: 'center', gap: 8, backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: 12, padding: '12px 20px', boxShadow: '0 10px 40px rgba(0,0,0,0.18)', cursor: 'pointer', fontFamily: "var(--font-body)", fontWeight: 700, fontSize: 16, color: '#1e293b' }}
       >
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#003fa4" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="12" r="4" />
-          <line x1="12" y1="2" x2="12" y2="6" />
-          <line x1="12" y1="18" x2="12" y2="22" />
-          <line x1="2" y1="12" x2="6" y2="12" />
-          <line x1="18" y1="12" x2="22" y2="12" />
+        <svg width="18" height="23" viewBox="0 0 28 36" aria-hidden="true">
+          <path
+            d="M14 0C6.7 0 1 5.7 1 12.8c0 9.5 13 23.2 13 23.2s13-13.7 13-23.2C27 5.7 21.3 0 14 0Z"
+            fill="#003fa4"
+          />
+          <circle cx="14" cy="13" r="6.2" fill="white" />
+          <circle cx="14" cy="13" r="3.4" fill="#003fa4" />
         </svg>
         My Location
       </button>

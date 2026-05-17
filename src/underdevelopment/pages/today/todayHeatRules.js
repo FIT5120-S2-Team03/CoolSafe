@@ -36,11 +36,12 @@ export function aqiBadgeColor(info, fallbackColor = '#6E6358') {
   return '#8B0000'
 }
 
-export function scoreVerdict(score) {
-  if (score >= 75) return 'Stay indoors'
-  if (score >= 55) return 'Take action'
-  if (score >= 30) return 'Be careful'
-  return 'All clear'
+export function scoreVerdict(score, hasMed, band) {
+  if (!hasMed) return heatCopy(band).baseVerdict
+  if (score >= 90 || band === 'extreme') return 'Stay indoors'
+  if (score >= 75) return 'Take action'
+  if (score >= 50) return 'Be careful'
+  return 'Mostly safe'
 }
 
 export function heatBand(maxTemp) {

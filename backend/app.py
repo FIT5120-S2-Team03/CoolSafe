@@ -210,10 +210,9 @@ def calculate_shade_coverage(route_coords):
         nearby_canopies AS (
             SELECT tc.geom
             FROM tree_canopies tc, route
-            WHERE ST_DWithin(
-                tc.geom::geography,
-                route.geom::geography,
-                20
+            WHERE ST_Intersects(
+                tc.geom,
+                ST_Buffer(route.geom::geography, 20)::geometry
             )
         ),
         canopy_stats AS (

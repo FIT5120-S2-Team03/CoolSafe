@@ -35,7 +35,7 @@ GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 # a proper JSON+CORS response instead of letting Gunicorn kill the worker.
 # Google Search-grounded requests can legitimately take ~45s, so leave enough
 # room for a slow-but-successful response while still bounding the request.
-GEMINI_REQUEST_TIMEOUT_SECONDS = int(os.getenv('GEMINI_REQUEST_TIMEOUT_SECONDS', '55'))
+GEMINI_REQUEST_TIMEOUT_SECONDS = int(os.getenv('GEMINI_REQUEST_TIMEOUT_SECONDS', '75'))
 GEMINI_MAX_ATTEMPTS = int(os.getenv('GEMINI_MAX_ATTEMPTS', '1'))
 
 # Cap candidate route count; per-route point count is bounded only by the

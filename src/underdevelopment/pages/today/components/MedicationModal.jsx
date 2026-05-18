@@ -7,11 +7,14 @@ export default function MedicationModal({
   onMedicationsChange,
   onClose,
   onSaved,
+  saveLabel = 'Save & Calculate Risk',
+  savedMessage,
 }) {
   function handleSave() {
     onClose()
     const cnt = selectedMedications.length
-    onSaved(cnt > 0 ? `Score updated — ${cnt} medication${cnt > 1 ? 's' : ''} saved` : 'Medications cleared — showing weather-only score')
+    const message = savedMessage ?? (cnt > 0 ? `Score updated — ${cnt} medication${cnt > 1 ? 's' : ''} saved` : 'Medications cleared — showing weather-only score')
+    onSaved(message)
   }
 
   return (
@@ -37,7 +40,7 @@ export default function MedicationModal({
         </div>
 
         <p style={{ fontFamily: "var(--font-body)", fontSize: 'var(--text-body-sm)', color: '#6B6B6B', marginBottom: 20, lineHeight: 'var(--leading-body)' }}>
-          Select any medications you take regularly. We don't save this data — it's strictly used to calculate your heat risk today.
+          Select any medications you take regularly. This helps tailor your heat risk score and medication notes for today.
         </p>
 
         <MedicationsSection
@@ -61,7 +64,7 @@ export default function MedicationModal({
             onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(15,15,15,0.26)' }}
             onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(15,15,15,0.20)' }}
           >
-            Save & Calculate Risk
+            {saveLabel}
           </button>
         </div>
     </ModalFrame>

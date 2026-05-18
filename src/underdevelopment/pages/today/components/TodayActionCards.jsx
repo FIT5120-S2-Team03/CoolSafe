@@ -23,7 +23,7 @@ export default function TodayActionCards({
   return (
     <SectionContainer innerClassName="cs-today-actions-section">
         <h2 style={headingStyle}>
-          Your {score} today, in three steps.
+          Your {score} — here's how to make the most of it.
         </h2>
         <p style={{ fontFamily: "var(--font-body)", fontSize: 'var(--text-body-sm)', color: MUTED, lineHeight: 'var(--leading-body)', marginBottom: 36, maxWidth: 520 }}>
           Tap a card to see more. Your details stay private.

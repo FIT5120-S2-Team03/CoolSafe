@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 import json
 import logging
 import os
+import socket
 import psycopg2
 import psycopg2.extras
 from psycopg2 import pool as psycopg2_pool
@@ -30,6 +31,8 @@ CORS(app, resources={r"/api/*": {"origins": "*", "methods": ["GET", "POST", "OPT
 
 DATABASE_URL = os.getenv('DATABASE_URL')
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
+GEMINI_REQUEST_TIMEOUT_SECONDS = 60
+GEMINI_MAX_ATTEMPTS = 2
 
 # Cap candidate route count; per-route point count is bounded only by the
 # MAX_CONTENT_LENGTH body limit since legit cross-suburb walks can run into
@@ -258,24 +261,32 @@ def recommend_with_ai():
         method='POST',
     )
 
-    try:
-        with urllib_request.urlopen(upstream_request, timeout=30) as response:
-            response_body = response.read().decode('utf-8')
-            return jsonify(json.loads(response_body))
-    except urllib_error.HTTPError as exc:
+    for attempt in range(GEMINI_MAX_ATTEMPTS):
         try:
-            upstream_body = json.loads(exc.read().decode('utf-8'))
-            upstream_message = upstream_body.get('error', {}).get('message')
-        except (UnicodeDecodeError, json.JSONDecodeError):
-            upstream_message = None
+            with urllib_request.urlopen(
+                upstream_request,
+                timeout=GEMINI_REQUEST_TIMEOUT_SECONDS,
+            ) as response:
+                response_body = response.read().decode('utf-8')
+                return jsonify(json.loads(response_body))
+        except urllib_error.HTTPError as exc:
+            try:
+                upstream_body = json.loads(exc.read().decode('utf-8'))
+                upstream_message = upstream_body.get('error', {}).get('message')
+            except (UnicodeDecodeError, json.JSONDecodeError):
+                upstream_message = None
 
-        return jsonify({
-            'error': upstream_message or f'Gemini API error: {exc.code}'
-        }), 502
-    except (urllib_error.URLError, TimeoutError):
-        return jsonify({'error': 'Unable to reach Gemini API.'}), 502
-    except json.JSONDecodeError:
-        return jsonify({'error': 'Gemini API returned invalid JSON.'}), 502
+            return jsonify({
+                'error': upstream_message or f'Gemini API error: {exc.code}'
+            }), 502
+        except (socket.timeout, TimeoutError):
+            if attempt == GEMINI_MAX_ATTEMPTS - 1:
+                return jsonify({'error': 'Gemini API request timed out.'}), 502
+        except urllib_error.URLError:
+            if attempt == GEMINI_MAX_ATTEMPTS - 1:
+                return jsonify({'error': 'Unable to connect to Gemini API.'}), 502
+        except json.JSONDecodeError:
+            return jsonify({'error': 'Gemini API returned invalid JSON.'}), 502
 
 
 def calculate_shade_coverage(route_coords):

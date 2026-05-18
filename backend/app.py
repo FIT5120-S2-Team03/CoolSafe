@@ -23,6 +23,7 @@ with open(HVI_PATH) as f:
     HVI_DATA = json.load(f)
 
 DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+MAX_ROUTE_POINTS_FOR_SCORING = 250
 
 def get_db():
     if 'db' not in g:
@@ -344,7 +345,11 @@ def calculate_shade_coverage_batch(routes):
         if len(lng_lat_points) < 2:
             continue
 
-        route_line = LineString(lng_lat_points)
+        scoring_points = downsample_route_points(
+            lng_lat_points,
+            MAX_ROUTE_POINTS_FOR_SCORING,
+        )
+        route_line = LineString(scoring_points)
 
         if route_line.is_empty or route_line.length == 0:
             continue
@@ -448,6 +453,20 @@ def calculate_shade_coverage_batch(routes):
     return scored_routes
 
 
+def downsample_route_points(points, max_points):
+    if len(points) <= max_points:
+        return points
+
+    last_index = len(points) - 1
+    sampled_indices = {
+        round(index * last_index / (max_points - 1))
+        for index in range(max_points)
+    }
+    sampled_indices.update({0, last_index})
+
+    return [points[index] for index in sorted(sampled_indices)]
+
+
 def select_coolest_route(scored_routes):
     if not scored_routes:
         return None
@@ -505,7 +524,11 @@ def get_coolest_route():
     if not isinstance(routes, list):
         return jsonify({'error': 'routes must be a list'}), 400
 
-    candidates = calculate_shade_coverage_batch(routes[:3])
+    try:
+        candidates = calculate_shade_coverage_batch(routes[:3])
+    except psycopg2.Error:
+        return jsonify({'error': 'Unable to calculate shade score right now.'}), 503
+
     selected_route_index = select_coolest_route(candidates)
 
     if selected_route_index is None:

@@ -1,3 +1,5 @@
+// useMedicationPreferences — persists the user's selected heat-sensitive
+// medications in localStorage so the safety score survives page reloads.
 import { useEffect, useState } from 'react'
 import { STORAGE_KEYS } from '../constants/storageKeys'
 

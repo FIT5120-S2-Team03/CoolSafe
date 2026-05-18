@@ -1,10 +1,18 @@
+# CoolSafe backend — Flask API serving the map data (cool spaces, fountains,
+# Heat Vulnerability Index) and the PostGIS-powered "coolest route" scoring.
+# All DB access is parameterised; the app connects to Neon Postgres through
+# a min-privilege role and a thread-safe connection pool.
+
 from flask import Flask, jsonify, g, request
 from flask_cors import CORS, cross_origin
+from werkzeug.exceptions import HTTPException
 from dotenv import load_dotenv
 import json
+import logging
 import os
 import psycopg2
 import psycopg2.extras
+from psycopg2 import pool as psycopg2_pool
 from urllib import error as urllib_error
 from urllib import request as urllib_request
 
@@ -13,11 +21,22 @@ from shapely.geometry import LineString
 load_dotenv()
 
 app = Flask(__name__)
+
+# Reject request bodies larger than 2 MB before they reach a route handler.
+# A typical 3-route Clayton→CBD payload is ~200 KB, so this only blocks abuse.
+app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024
+
 CORS(app, resources={r"/api/*": {"origins": "*", "methods": ["GET", "POST", "OPTIONS"], "allow_headers": ["Content-Type"]}})
 
 DATABASE_URL = os.getenv('DATABASE_URL')
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 
+# Cap candidate route count; per-route point count is bounded only by the
+# MAX_CONTENT_LENGTH body limit since legit cross-suburb walks can run into
+# thousands of OSRM points.
+MAX_ROUTES_PER_REQUEST = 3
+
+# HVI choropleth is a ~MB GeoJSON; load it once at startup and serve from RAM.
 HVI_PATH = os.path.join(os.path.dirname(__file__), 'data', 'hvi_melbourne.geojson')
 with open(HVI_PATH) as f:
     HVI_DATA = json.load(f)
@@ -25,17 +44,51 @@ with open(HVI_PATH) as f:
 DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 MAX_ROUTE_POINTS_FOR_SCORING = 250
 
+logging.basicConfig(level=logging.INFO)
+
+# Thread-safe pool reused across requests; avoids paying TLS-handshake cost
+# to Neon on every API call.
+db_pool = psycopg2_pool.ThreadedConnectionPool(
+    minconn=1,
+    maxconn=int(os.getenv('DB_POOL_MAX', '5')),
+    dsn=DATABASE_URL,
+    cursor_factory=psycopg2.extras.RealDictCursor,
+)
+
+
+# Borrow one connection per request from the pool; reuse for sub-queries.
 def get_db():
     if 'db' not in g:
-        g.db = psycopg2.connect(DATABASE_URL, cursor_factory=psycopg2.extras.RealDictCursor)
+        g.db = db_pool.getconn()
     return g.db
 
 
 @app.teardown_appcontext
 def close_db(e=None):
     db = g.pop('db', None)
-    if db is not None:
-        db.close()
+    if db is None:
+        return
+    # If the request raised, the connection may be mid-transaction or broken;
+    # close it instead of returning it to the pool.
+    db_pool.putconn(db, close=e is not None)
+
+
+# DB-specific handler: log the real error server-side, return a generic
+# message to the client so SQL/table details never leak.
+@app.errorhandler(psycopg2.Error)
+def handle_db_error(e):
+    app.logger.exception("Database error")
+    return jsonify({'error': 'Database error'}), 500
+
+
+# Catch-all for anything else; HTTPException (4xx/5xx Flask raises) passes
+# through unchanged so 404s still look like 404s.
+@app.errorhandler(Exception)
+def handle_unexpected_error(e):
+    if isinstance(e, HTTPException):
+        return e
+    app.logger.exception("Unhandled error")
+    return jsonify({'error': 'Internal server error'}), 500
 
 
 def fmt_time(t):
@@ -52,6 +105,7 @@ def day_name(d):
     return str(d)
 
 
+# Collapse rows from the opening_hours join into a {Monday: {open, close}} dict.
 def build_opening_hours(rows):
     hours = {}
     for row in rows:
@@ -63,6 +117,7 @@ def build_opening_hours(rows):
     return hours
 
 
+# Serve the in-memory HVI choropleth with a 24-h browser cache header.
 @app.route('/api/hvi')
 def get_hvi():
     response = jsonify(HVI_DATA)
@@ -70,6 +125,8 @@ def get_hvi():
     return response
 
 
+# Return every active cool space + its weekly opening hours, flattened from
+# the cool_spaces ⋈ opening_hours join into one venue object per row group.
 @app.route('/api/cool-spaces')
 def get_cool_spaces():
     cur = get_db().cursor()
@@ -112,6 +169,7 @@ def get_cool_spaces():
     return jsonify(list(venues.values()))
 
 
+# Return every public drinking fountain with a Fountain category tag.
 @app.route('/api/fountains')
 def get_fountains():
     cur = get_db().cursor()
@@ -131,6 +189,9 @@ def get_fountains():
     ])
 
 
+# Single-venue lookup for the detail page. The <int:> converter guarantees
+# venue_id is an integer before the route runs, plus %s parameter binding
+# below — two layers of protection against any injection attempt.
 @app.route('/api/venue/<int:venue_id>')
 def get_venue(venue_id):
     cur = get_db().cursor()
@@ -320,6 +381,9 @@ def calculate_shade_coverage(route_coords):
     }
 
 
+# Batch variant: scores up to MAX_ROUTES_PER_REQUEST candidate routes in a
+# single PostGIS query using unnest() + WITH ORDINALITY so we only pay the
+# round-trip cost once for the whole batch.
 def calculate_shade_coverage_batch(routes):
     valid_routes = []
 
@@ -467,6 +531,9 @@ def downsample_route_points(points, max_points):
     return [points[index] for index in sorted(sampled_indices)]
 
 
+# From the scored candidates pick the shadiest route whose distance is within
+# 120% of the fastest one — keeps users from being routed kilometres out of
+# their way just to chase a few extra metres of tree canopy.
 def select_coolest_route(scored_routes):
     if not scored_routes:
         return None
@@ -486,6 +553,9 @@ def select_coolest_route(scored_routes):
     return selected_route_index
 
 
+# /api/coolest-route — POST: rerank the candidate routes the frontend gives us
+# by shade coverage and return the selected one. GET: returns a hard-coded
+# sample route handy for quick browser smoke testing.
 @app.route('/api/coolest-route', methods=['GET', 'POST', 'OPTIONS'])
 @cross_origin()
 def get_coolest_route():
@@ -525,7 +595,7 @@ def get_coolest_route():
         return jsonify({'error': 'routes must be a list'}), 400
 
     try:
-        candidates = calculate_shade_coverage_batch(routes[:3])
+        candidates = calculate_shade_coverage_batch(routes[:MAX_ROUTES_PER_REQUEST])
     except psycopg2.Error:
         return jsonify({'error': 'Unable to calculate shade score right now.'}), 503
 

@@ -1,5 +1,9 @@
+// venueDetailUtils — small formatters used by the venue detail page:
+// opening-hours display, turn-by-turn directions, and distance rounding.
+
 export const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
+// Convert a 24-hour "HH:MM" string to a 12-hour "h:MM AM/PM" label.
 export function fmt(time) {
   const [h, m] = time.split(':').map(Number)
   const period = h >= 12 ? 'PM' : 'AM'
@@ -7,6 +11,8 @@ export function fmt(time) {
   return `${hour}:${m.toString().padStart(2, '0')} ${period}`
 }
 
+// Split a venue's opening hours into "today" and the next 6 upcoming days,
+// in display order, for the opening-hours expandable on the detail page.
 export function getHoursDisplay(openingHours) {
   if (!openingHours || Object.keys(openingHours).length === 0) return null
   const todayName = new Date().toLocaleDateString('en-AU', { weekday: 'long' })
@@ -23,6 +29,7 @@ export function getHoursDisplay(openingHours) {
   return { todayName, todayHours, upcoming }
 }
 
+// Pick a Tabler icon name that visually matches an OSRM maneuver step.
 export function maneuverIcon(maneuver) {
   const { type, modifier } = maneuver ?? {}
   if (type === 'arrive') return 'ti-map-pin'
@@ -36,6 +43,8 @@ export function maneuverIcon(maneuver) {
   return 'ti-arrow-up'
 }
 
+// Build the English instruction line shown alongside the maneuver icon
+// (e.g. "Turn right on Collins Street").
 export function maneuverLabel(step) {
   const { type, modifier } = step.maneuver ?? {}
   const street = step.name ? ` on ${step.name}` : ''
@@ -53,6 +62,7 @@ export function maneuverLabel(step) {
   return `Continue${street}`
 }
 
+// Round a distance in metres to a human-friendly label (or null if <50 m).
 export function fmtDist(m) {
   if (m < 50) return null
   if (m < 1000) return `${Math.round(m / 10) * 10} m`

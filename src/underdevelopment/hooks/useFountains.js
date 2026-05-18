@@ -1,3 +1,6 @@
+// useFountains — loads all public drinking fountains from the backend and
+// tags each entry with category='Fountain' so the map renders them with a
+// distinct icon. Cached in sessionStorage for 2 hours.
 import { useState, useEffect } from 'react'
 import { SESSION_CACHE_KEYS } from '../constants/storageKeys'
 

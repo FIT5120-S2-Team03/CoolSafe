@@ -1,3 +1,7 @@
+// useUserLocation — single source of truth for the user's current coords and
+// suburb name. Resolves location from (1) mock config, (2) saved localStorage,
+// (3) browser GPS, or (4) a postcode lookup, and broadcasts updates so other
+// components that mount the hook stay in sync.
 import { useEffect, useState } from 'react'
 import mockLocation from '../mocks/mockLocation.json'
 import { STORAGE_KEYS } from '../constants/storageKeys'
@@ -32,6 +36,7 @@ function locationNameFromAddress(address) {
   )
 }
 
+// Look up the suburb name for given coords via OpenStreetMap Nominatim.
 async function reverseGeocode(lat, lng) {
   try {
     const res = await fetch(
@@ -105,6 +110,7 @@ export function useUserLocation() {
     return () => window.removeEventListener(LOCATION_UPDATED_EVENT, onLocationUpdated)
   }, [])
 
+  // Ask the browser for high-accuracy GPS, then reverse-geocode the result.
   function requestGps() {
     if (mockLocation.enabled) {
       applyLocation({ lat: mockLocation.lat, lng: mockLocation.lng }, mockLocation.suburb)
@@ -148,6 +154,7 @@ export function useUserLocation() {
     )
   }
 
+  // Fallback when GPS is denied: resolve an AU postcode to coords + suburb.
   async function fetchByPostcode(postcode) {
     if (mockLocation.enabled) {
       applyLocation({ lat: mockLocation.lat, lng: mockLocation.lng }, mockLocation.suburb)

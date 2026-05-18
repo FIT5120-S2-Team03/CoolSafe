@@ -1,3 +1,6 @@
+// useVenue — loads a single venue's full detail (including opening hours)
+// from the backend. Hydrates instantly from any list/detail cache present in
+// sessionStorage, then revalidates from the API in the background.
 import { useState, useEffect, useCallback } from 'react'
 import { SESSION_CACHE_KEYS } from '../constants/storageKeys'
 
@@ -30,6 +33,8 @@ function writeDetailCache(id, data) {
   }
 }
 
+// Try to satisfy a detail request from the cool-spaces or fountains list cache
+// before falling back to a /api/venue/:id round-trip.
 function findCachedVenue(id) {
   for (const key of LIST_CACHE_KEYS) {
     const cached = readJson(key)

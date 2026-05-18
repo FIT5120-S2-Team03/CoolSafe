@@ -1,3 +1,6 @@
+// useAirQuality — fetches the current-hour European AQI for the given
+// coordinates from Open-Meteo, with a 30-minute sessionStorage cache so we
+// don't refetch on every component re-render.
 import { useState, useEffect } from 'react'
 import mockWeather from '../mocks/mockWeather.json'
 import { SESSION_CACHE_KEYS } from '../constants/storageKeys'
@@ -5,6 +8,7 @@ import { SESSION_CACHE_KEYS } from '../constants/storageKeys'
 const CACHE_KEY = SESSION_CACHE_KEYS.airQuality
 const CACHE_TTL_MS = 30 * 60 * 1000 // 30 minutes
 
+// Return cached AQI only when both the coords and the timestamp still match.
 function readAqiCache(lat, lng) {
   try {
     const raw = sessionStorage.getItem(CACHE_KEY)

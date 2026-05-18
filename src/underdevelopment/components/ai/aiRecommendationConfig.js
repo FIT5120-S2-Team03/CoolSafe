@@ -8,15 +8,15 @@ export const INTENT_LABELS = {
 
 export const INTENT_INSTRUCTIONS = {
   cool_down:
-    'Search specifically for venues with confirmed strong air conditioning — shopping centres, libraries, or indoor pools. Do NOT recommend outdoor parks or gardens.',
+    'Prioritise indoor venues likely to offer strong cooling — libraries, galleries, shopping centres, or indoor recreation spaces. Do NOT recommend outdoor parks or gardens.',
   something_to_do:
-    'Search specifically for a real event, class, exhibition or community program running TODAY that elderly people aged 65+ can attend — e.g. art exhibition opening, gentle yoga, craft workshop, morning tea. Do NOT recommend venues based on permanent features alone.',
+    'Recommend venues that are suitable for a gentle outing today, such as galleries, libraries, cinemas, or indoor recreation spaces with a clear activity or feature.',
   free_nearby:
-    'Search specifically for venues that are completely free to enter with no booking required — libraries, free galleries, public gardens with shade. Exclude any venue with an entry fee.',
+    'Prioritise venues that are likely to be free to enter, such as libraries, free galleries, or public gardens with shade. Exclude venue types that are usually paid.',
   easy_walk:
     'Only recommend venues under 10 minutes walk. Rank strictly by walking_minutes — closest first. Exclude any venue over 10 min walk even if it matches other criteria.',
   quiet_sit:
-    'Search specifically for quiet, calm indoor spaces — libraries reading rooms, botanical gardens conservatories, quiet gallery wings. Exclude shopping centres, markets, and any noisy or crowded venues.',
+    'Prioritise quiet, calm spaces such as libraries, reading rooms, conservatories, or quiet gallery areas. Exclude shopping centres, markets, and noisy venues.',
 }
 
 export const INDOOR_SUBTYPES = [

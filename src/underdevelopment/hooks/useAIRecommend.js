@@ -52,9 +52,10 @@ function buildPrompt({ intent, extraNote, userLat, userLng, venues, suburb, weat
 ${extraNote ? `- Extra note from user: ${extraNote}\n` : ''}- Forecast (feels-like): ${weatherForecast}
 
 ## Your task
-1. Use Google Search to check TODAY'S (${fullDate}) status for the 5 venues below.
-2. Specifically find ONE senior-friendly activity or feature for each (e.g., "Air-conditioned reading room," "Gentle exercise class at 10 AM," or "Opening hours").
-3. Return the 3 best as JSON.
+1. Use ONLY the venue list, walking time, weather, and user need provided below.
+2. Choose the 3 best venues for an elderly resident today.
+3. For each venue, write ONE concise senior-friendly reason based on the venue type or likely permanent feature (e.g. "Air-conditioned reading room", "Quiet gallery visit", or "Shaded garden seating").
+4. Return the 3 best as JSON.
 
 ## Available venues
 ${venueList}
@@ -68,7 +69,7 @@ Return ONLY a raw JSON object (no markdown, no prose, nothing outside the braces
     {
       "venue_id": "<id from list>",
       "venue": "<exact name from list>",
-      "activity": "<specific event, class, or heat-relief feature found via search>",
+      "activity": "<specific senior-friendly reason based on the venue type or likely permanent feature>",
       "address": "<exact address from list>",
       "is_free": true or false,
       "cost": "<Free / $X / Free with Seniors Card>",
@@ -83,26 +84,30 @@ Return ONLY a raw JSON object (no markdown, no prose, nothing outside the braces
 - ELDERLY SUITABILITY: Only recommend activities appropriate for people aged 65+. Exclude events targeting children, teenagers, or young adults — e.g. workshops for under-18s, youth programs, school holiday activities, high-intensity fitness classes.
 - The user's need is "${INTENT_LABELS[intent]}". Every recommended venue MUST directly satisfy this specific need. Exclude venues that do not clearly match even if nearby.
 - ALWAYS return exactly 3 events, each from a DIFFERENT venue. Never return fewer than 3 — if strict criteria cannot be met, relax them and use the venue's best permanent feature instead.
-- For "Something to do today": prefer venues with a confirmed event today, but if fewer than 3 have confirmed events, fill the remaining slots with strong permanent features (e.g. free exhibition, air-conditioned reading room).
+- For "Something to do today": recommend venues suited to a gentle outing today, using a clear permanent feature or activity type.
 - For "Close enough to walk": do NOT recommend any venue with walking_minutes greater than 10.
-- Prioritise: (1) a real event or class confirmed running today, (2) if none found, a specific permanent feature e.g. "Free air-conditioned reading room open until 8 PM". Never use vague descriptions like "visit the venue".
+- Prioritise specific, plausible permanent features over vague descriptions like "visit the venue".
 - Use id, name, address, and walking_minutes EXACTLY as given in the list above.
 - Prefer venues that are closer (lower walking_minutes) when quality is equal.
 - All text fields must be under 20 words.
-- Prefer open venues, but only exclude a venue if you have explicitly confirmed it is closed today.`
+- Do not claim live opening status, confirmed events, or real-time facts that are not present in the input data.`
 }
 
 export function useAIRecommend() {
   const [results, setResults] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError]     = useState(null)
+  const [candidateCount, setCandidateCount] = useState(0)
+  const [usedFallbackCandidates, setUsedFallbackCandidates] = useState(false)
 
-  // Pre-filter venues by intent and distance, send the shortlist to Gemini
-  // (with Google Search tool enabled), then parse the JSON object back out.
+  // Pre-filter venues by intent and distance, send the shortlist to Gemini,
+  // then parse the JSON object back out.
   const recommend = useCallback(async ({ intent, extraNote, userLat, userLng, venues, weatherData, excludeIds = [] }) => {
     setLoading(true)
     setError(null)
     setResults(null)
+    setCandidateCount(0)
+    setUsedFallbackCandidates(false)
 
     try {
       const lat = userLat ?? MELBOURNE_LAT
@@ -111,7 +116,7 @@ export function useAIRecommend() {
       
       const excludeSet = new Set(excludeIds.map(String))
 
-      const allVenues = (venues ?? [])
+      const eligibleVenues = (venues ?? [])
         .filter(v => {
           if (excludeSet.has(String(v.id))) return false;
 
@@ -150,7 +155,26 @@ export function useAIRecommend() {
           walking_minutes: getWalkingMinutes(lat, lng, v.lat, v.lng)
         }))
         .sort((a, b) => a._km - b._km)
-        .slice(0, 10);
+
+      const fallbackVenues = (venues ?? [])
+        .filter(v => {
+          if (excludeSet.has(String(v.id))) return false
+          const cat = (v.category || '').toLowerCase()
+          const sub = (v.sub_theme || '').toLowerCase()
+          return cat !== 'fountain' && !sub.includes('drinking fountain') && v.lat && v.lng
+        })
+        .map(v => ({
+          ...v,
+          _km: haversineKm(lat, lng, v.lat, v.lng),
+          walking_minutes: getWalkingMinutes(lat, lng, v.lat, v.lng),
+        }))
+        .sort((a, b) => a._km - b._km)
+
+      const shouldUseFallback = eligibleVenues.length < 3
+      const allVenues = (shouldUseFallback ? fallbackVenues : eligibleVenues).slice(0, 10)
+
+      setCandidateCount(allVenues.length)
+      setUsedFallbackCandidates(shouldUseFallback && allVenues.length > 0)
 
       const prompt = buildPrompt({
         intent,
@@ -189,5 +213,5 @@ export function useAIRecommend() {
     }
   }, [])
 
-  return { recommend, results, loading, error }
+  return { recommend, results, loading, error, candidateCount, usedFallbackCandidates }
 }

@@ -21,7 +21,7 @@ export default function AIFinderButton() {
 
   const { lat, lng, hourly, locationName } = useWeatherData()
   const { venues }                         = useCoolSpaces()
-  const { recommend, results, error }      = useAIRecommend()
+  const { recommend, results, error, candidateCount, usedFallbackCandidates } = useAIRecommend()
 
   useEffect(() => {
     function onToggleAIFinder() {
@@ -146,6 +146,8 @@ export default function AIFinderButton() {
           onRefine={handleRefine}
           results={results}
           error={error}
+          candidateCount={candidateCount}
+          usedFallbackCandidates={usedFallbackCandidates}
         />
       )}
     </>

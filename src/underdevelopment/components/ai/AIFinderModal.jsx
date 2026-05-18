@@ -162,7 +162,7 @@ export default function AIFinderModal({
   selectedIntent, onSelectIntent,
   extraNote, onExtraNote,
   onFind, onShowDifferent, onRefine,
-  results, error,
+  results, error, candidateCount, usedFallbackCandidates,
 }) {
   const navigate = useNavigate()
   const events = results?.events ?? []
@@ -323,7 +323,14 @@ export default function AIFinderModal({
               )}
               {!error && events.length === 0 && (
                 <div style={{ padding: 20, textAlign: 'center', fontSize: 'var(--text-body-sm)', color: C.textMuted, fontFamily: SANS }}>
-                  No results found nearby — try a different preference.
+                  {candidateCount === 0
+                    ? 'No nearby places match this choice — try another preference.'
+                    : 'I found nearby places, but could not make a confident pick this time. Please try again.'}
+                </div>
+              )}
+              {!error && events.length > 0 && usedFallbackCandidates && (
+                <div style={{ padding: '4px 4px 2px', textAlign: 'center', fontSize: 'var(--text-label)', color: C.textMuted, fontFamily: SANS }}>
+                  Showing the closest suitable alternatives nearby.
                 </div>
               )}
               {!error && events.slice(0, 4).map((event, i) => (

@@ -33,8 +33,8 @@ DATABASE_URL = os.getenv('DATABASE_URL')
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 # Keep the upstream timeout below Gunicorn's worker timeout so Flask can return
 # a proper JSON+CORS response instead of letting Gunicorn kill the worker.
-# Google Search-grounded requests can legitimately take ~45s, so leave enough
-# room for a slow-but-successful response while still bounding the request.
+# Leave room for a slow-but-successful model response while still bounding the
+# request below Gunicorn's worker timeout.
 GEMINI_REQUEST_TIMEOUT_SECONDS = int(os.getenv('GEMINI_REQUEST_TIMEOUT_SECONDS', '75'))
 GEMINI_MAX_ATTEMPTS = int(os.getenv('GEMINI_MAX_ATTEMPTS', '1'))
 
@@ -254,7 +254,6 @@ def recommend_with_ai():
     )
     payload = json.dumps({
         'contents': [{'role': 'user', 'parts': [{'text': prompt}]}],
-        'tools': [{'google_search': {}}],
         'generationConfig': {'temperature': 0.5},
     }).encode('utf-8')
 

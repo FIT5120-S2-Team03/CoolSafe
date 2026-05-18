@@ -5,6 +5,8 @@ import json
 import os
 import psycopg2
 import psycopg2.extras
+from urllib import error as urllib_error
+from urllib import request as urllib_request
 
 from shapely.geometry import LineString
 
@@ -14,6 +16,7 @@ app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "*", "methods": ["GET", "POST", "OPTIONS"], "allow_headers": ["Content-Type"]}})
 
 DATABASE_URL = os.getenv('DATABASE_URL')
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 
 HVI_PATH = os.path.join(os.path.dirname(__file__), 'data', 'hvi_melbourne.geojson')
 with open(HVI_PATH) as f:
@@ -159,6 +162,58 @@ def get_venue(venue_id):
     }
 
     return jsonify(venue)
+
+
+@app.route('/api/ai/recommend', methods=['POST', 'OPTIONS'])
+@cross_origin()
+def recommend_with_ai():
+    if request.method == 'OPTIONS':
+        return '', 200
+
+    if not GEMINI_API_KEY:
+        return jsonify({'error': 'Gemini API key not configured.'}), 500
+
+    data = request.get_json(silent=True) or {}
+    prompt = data.get('prompt')
+
+    if not isinstance(prompt, str) or not prompt.strip():
+        return jsonify({'error': 'prompt must be a non-empty string'}), 400
+
+    endpoint = (
+        'https://generativelanguage.googleapis.com/v1beta/models/'
+        f'gemini-2.5-flash:generateContent?key={GEMINI_API_KEY}'
+    )
+    payload = json.dumps({
+        'contents': [{'role': 'user', 'parts': [{'text': prompt}]}],
+        'tools': [{'google_search': {}}],
+        'generationConfig': {'temperature': 0.5},
+    }).encode('utf-8')
+
+    upstream_request = urllib_request.Request(
+        endpoint,
+        data=payload,
+        headers={'Content-Type': 'application/json'},
+        method='POST',
+    )
+
+    try:
+        with urllib_request.urlopen(upstream_request, timeout=30) as response:
+            response_body = response.read().decode('utf-8')
+            return jsonify(json.loads(response_body))
+    except urllib_error.HTTPError as exc:
+        try:
+            upstream_body = json.loads(exc.read().decode('utf-8'))
+            upstream_message = upstream_body.get('error', {}).get('message')
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            upstream_message = None
+
+        return jsonify({
+            'error': upstream_message or f'Gemini API error: {exc.code}'
+        }), 502
+    except (urllib_error.URLError, TimeoutError):
+        return jsonify({'error': 'Unable to reach Gemini API.'}), 502
+    except json.JSONDecodeError:
+        return jsonify({'error': 'Gemini API returned invalid JSON.'}), 502
 
 
 def calculate_shade_coverage(route_coords):

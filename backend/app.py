@@ -13,6 +13,8 @@ import os
 import psycopg2
 import psycopg2.extras
 from psycopg2 import pool as psycopg2_pool
+from urllib import error as urllib_error
+from urllib import request as urllib_request
 
 from shapely.geometry import LineString
 
@@ -27,6 +29,7 @@ app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024
 CORS(app, resources={r"/api/*": {"origins": "*", "methods": ["GET", "POST", "OPTIONS"], "allow_headers": ["Content-Type"]}})
 
 DATABASE_URL = os.getenv('DATABASE_URL')
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 
 # Cap candidate route count; per-route point count is bounded only by the
 # MAX_CONTENT_LENGTH body limit since legit cross-suburb walks can run into
@@ -39,6 +42,7 @@ with open(HVI_PATH) as f:
     HVI_DATA = json.load(f)
 
 DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+MAX_ROUTE_POINTS_FOR_SCORING = 250
 
 logging.basicConfig(level=logging.INFO)
 
@@ -222,6 +226,58 @@ def get_venue(venue_id):
     return jsonify(venue)
 
 
+@app.route('/api/ai/recommend', methods=['POST', 'OPTIONS'])
+@cross_origin()
+def recommend_with_ai():
+    if request.method == 'OPTIONS':
+        return '', 200
+
+    if not GEMINI_API_KEY:
+        return jsonify({'error': 'Gemini API key not configured.'}), 500
+
+    data = request.get_json(silent=True) or {}
+    prompt = data.get('prompt')
+
+    if not isinstance(prompt, str) or not prompt.strip():
+        return jsonify({'error': 'prompt must be a non-empty string'}), 400
+
+    endpoint = (
+        'https://generativelanguage.googleapis.com/v1beta/models/'
+        f'gemini-2.5-flash:generateContent?key={GEMINI_API_KEY}'
+    )
+    payload = json.dumps({
+        'contents': [{'role': 'user', 'parts': [{'text': prompt}]}],
+        'tools': [{'google_search': {}}],
+        'generationConfig': {'temperature': 0.5},
+    }).encode('utf-8')
+
+    upstream_request = urllib_request.Request(
+        endpoint,
+        data=payload,
+        headers={'Content-Type': 'application/json'},
+        method='POST',
+    )
+
+    try:
+        with urllib_request.urlopen(upstream_request, timeout=30) as response:
+            response_body = response.read().decode('utf-8')
+            return jsonify(json.loads(response_body))
+    except urllib_error.HTTPError as exc:
+        try:
+            upstream_body = json.loads(exc.read().decode('utf-8'))
+            upstream_message = upstream_body.get('error', {}).get('message')
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            upstream_message = None
+
+        return jsonify({
+            'error': upstream_message or f'Gemini API error: {exc.code}'
+        }), 502
+    except (urllib_error.URLError, TimeoutError):
+        return jsonify({'error': 'Unable to reach Gemini API.'}), 502
+    except json.JSONDecodeError:
+        return jsonify({'error': 'Gemini API returned invalid JSON.'}), 502
+
+
 def calculate_shade_coverage(route_coords):
     """
     Calculate route shade coverage using Shapely.
@@ -353,7 +409,11 @@ def calculate_shade_coverage_batch(routes):
         if len(lng_lat_points) < 2:
             continue
 
-        route_line = LineString(lng_lat_points)
+        scoring_points = downsample_route_points(
+            lng_lat_points,
+            MAX_ROUTE_POINTS_FOR_SCORING,
+        )
+        route_line = LineString(scoring_points)
 
         if route_line.is_empty or route_line.length == 0:
             continue
@@ -457,6 +517,20 @@ def calculate_shade_coverage_batch(routes):
     return scored_routes
 
 
+def downsample_route_points(points, max_points):
+    if len(points) <= max_points:
+        return points
+
+    last_index = len(points) - 1
+    sampled_indices = {
+        round(index * last_index / (max_points - 1))
+        for index in range(max_points)
+    }
+    sampled_indices.update({0, last_index})
+
+    return [points[index] for index in sorted(sampled_indices)]
+
+
 # From the scored candidates pick the shadiest route whose distance is within
 # 120% of the fastest one — keeps users from being routed kilometres out of
 # their way just to chase a few extra metres of tree canopy.
@@ -520,7 +594,11 @@ def get_coolest_route():
     if not isinstance(routes, list):
         return jsonify({'error': 'routes must be a list'}), 400
 
-    candidates = calculate_shade_coverage_batch(routes[:MAX_ROUTES_PER_REQUEST])
+    try:
+        candidates = calculate_shade_coverage_batch(routes[:MAX_ROUTES_PER_REQUEST])
+    except psycopg2.Error:
+        return jsonify({'error': 'Unable to calculate shade score right now.'}), 503
+
     selected_route_index = select_coolest_route(candidates)
 
     if selected_route_index is None:

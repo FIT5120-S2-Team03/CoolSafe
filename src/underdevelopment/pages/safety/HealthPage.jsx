@@ -1,14 +1,16 @@
 import { useMemo, useState } from 'react'
 import { useWeatherData } from '../../hooks/useWeatherData'
+import { useMedicationPreferences } from '../../hooks/useMedicationPreferences'
 import Navbar from '../../components/layout/Navbar'
 import MedicationPanel from './components/MedicationPanel'
+import MedicationModal from '../today/components/MedicationModal'
 import SafetyQuickLinks from './components/SafetyQuickLinks'
 import SafetyResponsePanel from './components/SafetyResponsePanel'
 import SafetyShareModal from './components/SafetyShareModal'
 import SymptomGroup from './components/SymptomGroup'
 import { EARLY, RESPONSE, SYMPTOMS, URGENT } from './safetyContent'
 import { buildSafetyShareText } from '../../utils/safetyShare'
-import { INK, MUTED, PAPER } from '../../styles/colors'
+import { INK, MUTED, PAPER, RULE } from '../../styles/colors'
 import { STORAGE_KEYS } from '../../constants/storageKeys'
 
 // Amber palette for early signs (caution, not safe)
@@ -19,12 +21,9 @@ export default function HealthPage() {
   const { locationName: weatherLocationName } = useWeatherData()
   const [selectedSymptoms, setSelectedSymptoms] = useState([])
   const [shareModalOpen, setShareModalOpen] = useState(false)
+  const [showMedModal, setShowMedModal] = useState(false)
   const [shareText, setShareText] = useState('')
-
-  const [selectedMedications] = useState(() => {
-    try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.medications) || '[]') }
-    catch { return [] }
-  })
+  const [selectedMedications, setSelectedMedications] = useMedicationPreferences()
 
   const maxSeverity = useMemo(() => {
     let top = null
@@ -88,6 +87,8 @@ export default function HealthPage() {
         .cs-med-expand { overflow: hidden; transition: max-height 0.32s ease, opacity 0.28s ease; }
         .cs-med-tab { transition: background 0.18s ease, color 0.18s ease; }
         .cs-med-tab:hover { opacity: 0.85; }
+        .cs-health-med-button { transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease; }
+        .cs-health-med-button:hover { transform: translateY(-1px); box-shadow: 0 12px 24px rgba(34,30,26,0.10) !important; }
       `}</style>
 
       <Navbar />
@@ -99,6 +100,17 @@ export default function HealthPage() {
         maxSeverity={maxSeverity}
       />
 
+      {showMedModal && (
+        <MedicationModal
+          selectedMedications={selectedMedications}
+          onMedicationsChange={setSelectedMedications}
+          onClose={() => setShowMedModal(false)}
+          onSaved={() => {}}
+          saveLabel="Save medications"
+          savedMessage="Medication notes updated"
+        />
+      )}
+
       <main className="cs-health-main" style={{ maxWidth: 'var(--content-width)', margin: '0 auto', padding: 'clamp(100px,12vh,130px) var(--content-gutter) clamp(64px,8vw,100px)' }}>
         <div style={{ marginBottom: 32 }}>
           <h1 style={{ fontFamily: 'var(--font-title)', fontSize: 'var(--text-page-title)', fontWeight: 700, letterSpacing: 'var(--tracking-display)', lineHeight: 'var(--leading-display)', color: INK, marginBottom: 14 }}>
@@ -107,6 +119,30 @@ export default function HealthPage() {
           <p style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-body)', color: MUTED, lineHeight: 'var(--leading-body)', margin: 0 }}>
             Select any symptoms you're feeling right now. Medication notes appear below if you've added any.
           </p>
+          <button
+            className="cs-health-med-button"
+            onClick={() => setShowMedModal(true)}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 8,
+              minHeight: 44,
+              marginTop: 18,
+              padding: '0.72rem 1.1rem',
+              borderRadius: 999,
+              border: `1px solid ${RULE}`,
+              background: '#fff',
+              color: INK,
+              fontFamily: 'var(--sans)',
+              fontWeight: 700,
+              fontSize: 'var(--text-button)',
+              cursor: 'pointer',
+              boxShadow: 'var(--shadow-soft)',
+            }}
+          >
+            Review or edit medications
+            <i className="ti ti-arrow-right" style={{ fontSize: 16 }} />
+          </button>
         </div>
 
         <div style={{ display: 'grid', gap: 18 }}>

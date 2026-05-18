@@ -14,6 +14,7 @@ import {
 
 const MELBOURNE_LAT = -37.8136
 const MELBOURNE_LNG = 144.9631
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'https://coolsafe.onrender.com'
 
 // Format the next 8 hours of "feels-like" temperature into a short text line
 // the Gemini prompt can reason about.
@@ -99,9 +100,6 @@ export function useAIRecommend() {
   // Pre-filter venues by intent and distance, send the shortlist to Gemini
   // (with Google Search tool enabled), then parse the JSON object back out.
   const recommend = useCallback(async ({ intent, extraNote, userLat, userLng, venues, weatherData, excludeIds = [] }) => {
-    const apiKey = import.meta.env.VITE_GEMINI_API_KEY
-    if (!apiKey) { setError('Gemini API key not configured.'); return }
-
     setLoading(true)
     setError(null)
     setResults(null)
@@ -164,20 +162,16 @@ export function useAIRecommend() {
         weatherForecast: buildWeatherForecast(weatherData?.hourly),
       })
 
-      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`
-      const res = await fetch(endpoint, {
+      const res = await fetch(`${API_BASE}/api/ai/recommend`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ role: 'user', parts: [{ text: prompt }] }],
-          tools: [{ google_search: {} }],
-          generationConfig: {
-            temperature: 0.5
-          }
-        }),
+        body: JSON.stringify({ prompt }),
       })
 
-      if (!res.ok) throw new Error(`Gemini API error: ${res.status}`)
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => null)
+        throw new Error(errorData?.error || `Gemini API error: ${res.status}`)
+      }
 
       const data  = await res.json()
       const text  = (data.candidates?.[0]?.content?.parts ?? []).map(p => p.text ?? '').join('')

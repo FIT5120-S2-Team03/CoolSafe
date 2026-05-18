@@ -184,16 +184,26 @@ export async function buildCoolestRouteResult(venue, currentLocation) {
     }
   }
 
-  const scoreRes = await fetch(`${API_BASE}/api/coolest-route`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ routes: candidateRoutes.slice(0, 3), routes_are_similar: routesAreSimilar }),
-  })
-  if (!scoreRes.ok) throw new Error(`Shade score request failed: HTTP ${scoreRes.status}`)
+  let scoreData = null
 
-  const scoreData = await scoreRes.json()
-  const selectedCoords = scoreData.route?.coords ?? candidateRoutes[scoreData.selected_route_index]?.coords
-  const selectedSteps = candidateRoutes[scoreData.selected_route_index]?.steps ?? []
+  try {
+    const scoreRes = await fetch(`${API_BASE}/api/coolest-route`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ routes: candidateRoutes.slice(0, 3), routes_are_similar: routesAreSimilar }),
+    })
+
+    if (scoreRes.ok) {
+      scoreData = await scoreRes.json()
+    }
+  } catch {
+    scoreData = null
+  }
+
+  const fallbackRouteIndex = candidateRoutes.length > 1 ? 1 : 0
+  const selectedRouteIndex = scoreData?.selected_route_index ?? fallbackRouteIndex
+  const selectedCoords = scoreData?.route?.coords ?? candidateRoutes[selectedRouteIndex]?.coords
+  const selectedSteps = candidateRoutes[selectedRouteIndex]?.steps ?? []
   if (!selectedCoords || selectedCoords.length === 0) throw new Error('No selected coolest route returned.')
 
   return {
@@ -201,5 +211,6 @@ export async function buildCoolestRouteResult(venue, currentLocation) {
     coolestCoords: selectedCoords,
     coolestSteps: selectedSteps,
     scoreData,
+    isScored: Boolean(scoreData?.route),
   }
 }

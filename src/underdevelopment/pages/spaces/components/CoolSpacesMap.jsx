@@ -98,6 +98,7 @@ export default function CoolSpacesMap({ selectedCategories, flyTo, showHVI, open
   const [routeError, setRouteError] = useState('')
   const [routeType, setRouteType] = useState('fastest')
   const [routeScore, setRouteScore] = useState(null)
+  const [routeIsScored, setRouteIsScored] = useState(false)
   const [fastestDurationMin, setFastestDurationMin] = useState(null)
   const [mapReady, setMapReady] = useState(false)
 
@@ -222,6 +223,7 @@ export default function CoolSpacesMap({ selectedCategories, flyTo, showHVI, open
     setCoolestRouteCoords([])
     setRouteError('')
     setRouteScore(null)
+    setRouteIsScored(false)
     setFastestDurationMin(null)
   }
 
@@ -231,6 +233,7 @@ export default function CoolSpacesMap({ selectedCategories, flyTo, showHVI, open
       setRouteError('')
       setRouteType('fastest')
       setRouteScore(null)
+      setRouteIsScored(false)
 
       const currentLocation = userLocation || (await getCurrentLocation())
       setUserLocation(currentLocation)
@@ -265,9 +268,10 @@ export default function CoolSpacesMap({ selectedCategories, flyTo, showHVI, open
 
       const prefetchPromise = buildCoolestRouteResult(venue, currentLocation)
         .then((result) => {
-          setCachedRoute(cacheKey, result)
+          if (result) setCachedRoute(cacheKey, result)
           return result
         })
+        .catch(() => null)
         .finally(() => {
           clearRoutePrefetch(cacheKey)
         })
@@ -299,6 +303,7 @@ export default function CoolSpacesMap({ selectedCategories, flyTo, showHVI, open
       setFastestRouteCoords(result.fastestCoords)
       setCoolestRouteCoords(result.coolestCoords)
       setRouteScore(result.scoreData)
+      setRouteIsScored(result.isScored)
 
       if (mapRef.current && result.coolestCoords.length > 0) {
         mapRef.current.fitBounds(L.latLngBounds(result.coolestCoords), {
@@ -437,7 +442,7 @@ export default function CoolSpacesMap({ selectedCategories, flyTo, showHVI, open
         </div>
       )}
 
-      {routeType === 'coolest' && routeScore?.route && (
+      {routeType === 'coolest' && coolestRouteCoords.length > 0 && (
         <div
           style={{
             position: 'absolute',
@@ -473,19 +478,25 @@ export default function CoolSpacesMap({ selectedCategories, flyTo, showHVI, open
             </>
           )}
           <span style={{ fontSize: 14, fontWeight: 700, whiteSpace: 'nowrap' }}>
-            🌿 Coolest route
+            {routeIsScored ? '🌿 Coolest route' : '🌿 Cool route candidate'}
           </span>
-          <span style={{ width: 1, height: 18, backgroundColor: 'rgba(22, 101, 52, 0.16)' }} />
-          <span style={{ fontSize: 15, fontWeight: 700, whiteSpace: 'nowrap' }}>
-            {routeScore.route.shade_coverage_percent}% shade
-          </span>
-          <span style={{ fontSize: 14, color: '#15803d', whiteSpace: 'nowrap' }}>
-            {(routeScore.route.shaded_length_m / 1000).toFixed(2)} km shaded
-          </span>
-          {routeScore.same_as_fastest && (
-            <span style={{ fontSize: 13, color: '#4b7f62', whiteSpace: 'nowrap' }}>
-              also fastest
-            </span>
+          {routeIsScored ? (
+            <>
+              <span style={{ width: 1, height: 18, backgroundColor: 'rgba(22, 101, 52, 0.16)' }} />
+              <span style={{ fontSize: 15, fontWeight: 700, whiteSpace: 'nowrap' }}>
+                {routeScore.route.shade_coverage_percent}% shade
+              </span>
+              <span style={{ fontSize: 14, color: '#15803d', whiteSpace: 'nowrap' }}>
+                {(routeScore.route.shaded_length_m / 1000).toFixed(2)} km shaded
+              </span>
+              {routeScore.same_as_fastest && (
+                <span style={{ fontSize: 13, color: '#4b7f62', whiteSpace: 'nowrap' }}>
+                  also fastest
+                </span>
+              )}
+            </>
+          ) : (
+            null
           )}
         </div>
       )}

@@ -31,8 +31,12 @@ CORS(app, resources={r"/api/*": {"origins": "*", "methods": ["GET", "POST", "OPT
 
 DATABASE_URL = os.getenv('DATABASE_URL')
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
-GEMINI_REQUEST_TIMEOUT_SECONDS = 60
-GEMINI_MAX_ATTEMPTS = 2
+# Keep the upstream timeout below Gunicorn's worker timeout so Flask can return
+# a proper JSON+CORS response instead of letting Gunicorn kill the worker.
+# Google Search-grounded requests can legitimately take ~45s, so leave enough
+# room for a slow-but-successful response while still bounding the request.
+GEMINI_REQUEST_TIMEOUT_SECONDS = int(os.getenv('GEMINI_REQUEST_TIMEOUT_SECONDS', '55'))
+GEMINI_MAX_ATTEMPTS = int(os.getenv('GEMINI_MAX_ATTEMPTS', '1'))
 
 # Cap candidate route count; per-route point count is bounded only by the
 # MAX_CONTENT_LENGTH body limit since legit cross-suburb walks can run into
@@ -281,7 +285,7 @@ def recommend_with_ai():
             }), 502
         except (socket.timeout, TimeoutError):
             if attempt == GEMINI_MAX_ATTEMPTS - 1:
-                return jsonify({'error': 'Gemini API request timed out.'}), 502
+                return jsonify({'error': 'Gemini API request timed out. Please try again.'}), 504
         except urllib_error.URLError:
             if attempt == GEMINI_MAX_ATTEMPTS - 1:
                 return jsonify({'error': 'Unable to connect to Gemini API.'}), 502

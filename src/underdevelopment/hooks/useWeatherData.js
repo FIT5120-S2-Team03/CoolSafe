@@ -1,3 +1,6 @@
+// useWeatherData — wraps useUserLocation and Open-Meteo's forecast API to
+// expose current temp / hourly feels-like / today & tomorrow peak. Refreshes
+// every 30 minutes and falls back to mockWeather.json when enabled.
 import { useEffect, useState } from 'react'
 import mockWeather from '../mocks/mockWeather.json'
 import mockLocation from '../mocks/mockLocation.json'
@@ -68,6 +71,7 @@ export function useWeatherData() {
 
   const coords = location.coords
 
+  // Fetch current + hourly + daily forecast for the given coords, then cache it.
   async function fetchWeather(lat, lng) {
     const nextCoords = { lat, lng }
     setWeatherLoading(true)

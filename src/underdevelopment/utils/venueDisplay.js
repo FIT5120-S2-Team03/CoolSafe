@@ -1,3 +1,6 @@
+// venueDisplay — turns raw venue records into the labels, colours, and pill
+// styles the UI renders. Centralises the messy heuristics that map the
+// dataset's many sub_theme strings into our 5 display categories.
 import {
   CATEGORY_MARKER_COLORS,
   CATEGORY_UI_BACKGROUNDS,
@@ -20,6 +23,8 @@ export const VENUE_KIND_PILL = {
   default: { background: '#F0EDE8', color: '#5A5048' },
 }
 
+// Accept either a venue object or a raw type string, and return a single
+// searchable string combining all type-like fields.
 export function venueTypeSource(venueOrType = '') {
   if (typeof venueOrType === 'string') return venueOrType
   return [
@@ -36,6 +41,9 @@ export function isFountainVenue(venue) {
   return venueTypeSource(venue).toLowerCase().includes('fountain')
 }
 
+// Resolve which of the 5 categories ('Arts & Culture', 'Recreation', etc.)
+// a venue belongs to. Tries explicit category first, then sub_theme mapping,
+// then keyword matching against the combined type string.
 export function venueTypeKind(venueOrType = '') {
   const t = venueTypeSource(venueOrType).toLowerCase()
   if (typeof venueOrType === 'object' && venueOrType !== null) {
@@ -51,6 +59,7 @@ export function venueTypeKind(venueOrType = '') {
   return 'default'
 }
 
+// Human-readable label to show on the venue card / pill.
 export function venueTypeLabel(venueOrType = '') {
   const source = venueTypeSource(venueOrType)
   const kind = venueTypeKind(venueOrType)
@@ -61,6 +70,8 @@ export function venueTypeLabel(venueOrType = '') {
   return kind === 'default' ? (source || 'Public space') : kind
 }
 
+// Local haversine implementation (duplicated from utils/routing/haversine.js
+// to avoid an import cycle with map components that pull this file early).
 export function getDistanceKm(lat1, lng1, lat2, lng2) {
   if (lat1 == null || lng1 == null || lat2 == null || lng2 == null) return null
   const R = 6371

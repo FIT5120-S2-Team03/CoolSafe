@@ -1,3 +1,6 @@
+// useCoolSpaces — loads the full list of indoor "cool spaces" (libraries,
+// galleries, public buildings…) from the backend, cached in sessionStorage
+// for 2 hours so map navigation stays instant.
 import { useState, useEffect } from 'react'
 import { SESSION_CACHE_KEYS } from '../constants/storageKeys'
 

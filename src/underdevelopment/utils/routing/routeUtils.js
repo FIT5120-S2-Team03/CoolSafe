@@ -1,8 +1,14 @@
+// routeUtils — talks to the public OSRM foot router for walking directions,
+// and to our own /api/coolest-route endpoint for shade-aware re-ranking of the
+// candidate paths. Includes a polyline decoder and similarity helpers used to
+// detect when two "alternative" routes are basically the same.
+
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'https://coolsafe.onrender.com'
 const ROUTE_SIMILARITY_DISTANCE_M = 15
 const ROUTE_SIMILARITY_THRESHOLD = 0.8
 const WALKING_SPEED_KMH = 4.5
 
+// Decode Google's "encoded polyline" string into [lat, lng] pairs.
 export function decodePolyline(str) {
   const coords = []
   let index = 0
@@ -68,6 +74,8 @@ function haversineMeters(a, b) {
   return 2 * earthRadiusM * Math.asin(Math.sqrt(h))
 }
 
+// Sample ~40 evenly-spaced points along routeA; report the fraction that have
+// any point of routeB within 15 m. Cheap O(n) overlap proxy.
 function getRouteOverlapRatio(routeA, routeB) {
   if (!routeA?.length || !routeB?.length) return 0
 
@@ -92,6 +100,8 @@ function routesAreVisuallySimilar(routeA, routeB) {
   )
 }
 
+// Build a perpendicular waypoint offset ~200 m from the midpoint, used to
+// nudge OSRM into producing a genuinely different alternative route.
 function getOffsetWaypoint(start, end) {
   const midLat = (start.lat + end.lat) / 2
   const midLng = (start.lng + end.lng) / 2
@@ -106,6 +116,8 @@ function getOffsetWaypoint(start, end) {
   }
 }
 
+// Single OSRM call that returns the single fastest walking route, distance,
+// duration, and (optionally) the turn-by-turn steps for the directions panel.
 export async function fetchFastestRoute(from, venue, { includeSteps = false } = {}) {
   const stepsQuery = includeSteps ? '&steps=true' : ''
   const url = `https://router.project-osrm.org/route/v1/foot/${from.lng},${from.lat};${venue.lng},${venue.lat}?overview=full&geometries=geojson${stepsQuery}`
@@ -125,6 +137,12 @@ export async function fetchFastestRoute(from, venue, { includeSteps = false } = 
   }
 }
 
+// End-to-end "coolest route" pipeline:
+//   1. Ask OSRM for up to 2 alternative walking routes.
+//   2. If the alternatives are visually too similar, fetch a 3rd one biased
+//      through an offset waypoint to give the shade ranker a real choice.
+//   3. POST the candidates to /api/coolest-route, which scores each by tree
+//      canopy coverage and returns the selected coords + steps.
 export async function buildCoolestRouteResult(venue, currentLocation) {
   const url =
     `https://router.project-osrm.org/route/v1/foot/` +

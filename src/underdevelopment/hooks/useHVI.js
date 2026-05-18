@@ -1,3 +1,6 @@
+// useHVI — fetches the Melbourne Heat Vulnerability Index GeoJSON used to
+// paint the choropleth on the map. Cached for 24 h to match the backend's
+// Cache-Control header.
 import { useState, useEffect } from 'react'
 import { SESSION_CACHE_KEYS } from '../constants/storageKeys'
 

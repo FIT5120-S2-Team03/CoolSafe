@@ -1,3 +1,6 @@
+// useAIRecommend — calls the Gemini API to recommend 3 cool venues tailored to
+// an elderly user's intent (cool down, free, quiet, walkable, etc.) using
+// today's weather forecast and a pre-filtered candidate list.
 import { useState, useCallback } from 'react'
 import { haversineKm, getWalkingMinutes } from '../utils/routing/haversine'
 import {
@@ -12,6 +15,8 @@ import {
 const MELBOURNE_LAT = -37.8136
 const MELBOURNE_LNG = 144.9631
 
+// Format the next 8 hours of "feels-like" temperature into a short text line
+// the Gemini prompt can reason about.
 function buildWeatherForecast(hourly) {
   if (!hourly?.time || !hourly?.apparent_temperature) return 'Forecast unavailable'
   const now = new Date()
@@ -26,6 +31,8 @@ function buildWeatherForecast(hourly) {
   return lines.join(', ') || 'Forecast unavailable'
 }
 
+// Assemble the full prompt sent to Gemini: context + venue shortlist + strict
+// JSON-only output contract so the response is machine-parseable.
 function buildPrompt({ intent, extraNote, userLat, userLng, venues, suburb, weatherForecast }) {
   const now      = new Date()
   const time     = now.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit', hour12: true })
@@ -89,6 +96,8 @@ export function useAIRecommend() {
   const [loading, setLoading] = useState(false)
   const [error, setError]     = useState(null)
 
+  // Pre-filter venues by intent and distance, send the shortlist to Gemini
+  // (with Google Search tool enabled), then parse the JSON object back out.
   const recommend = useCallback(async ({ intent, extraNote, userLat, userLng, venues, weatherData, excludeIds = [] }) => {
     const apiKey = import.meta.env.VITE_GEMINI_API_KEY
     if (!apiKey) { setError('Gemini API key not configured.'); return }

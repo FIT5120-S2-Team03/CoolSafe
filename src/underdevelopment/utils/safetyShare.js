@@ -1,5 +1,9 @@
+// safetyShare — formats a plain-text message the user can SMS/share with a
+// carer when they feel unwell, embedding location, symptoms, and medications.
 import { STORAGE_KEYS } from '../constants/storageKeys'
 
+// Output differs by severity: '000' triggers an urgent-help message with a
+// "call 000" instruction; anything else produces a softer check-on-me request.
 export function buildSafetyShareText({ maxSeverity, selectedMedications, selectedSymptoms, symptoms, gpsCoords, locationName: locationNameProp }) {
   const locationName = locationNameProp || localStorage.getItem(STORAGE_KEYS.locationName) || ''
   const symptomLabels = selectedSymptoms

@@ -1,3 +1,6 @@
+// useNearestVenues — given a venue list and the user's coords, returns the N
+// closest non-fountain venues, each annotated with straight-line distance and
+// estimated walking minutes. Memoised so re-renders don't resort.
 import { useMemo } from 'react'
 import { getWalkingMinutes } from '../utils/routing/haversine'
 import { getDistanceKm, isFountainVenue } from '../utils/venueDisplay'

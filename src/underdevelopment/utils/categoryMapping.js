@@ -1,3 +1,8 @@
+// categoryMapping — single source of truth that collapses raw "sub_theme"
+// strings from the venue dataset into the 5 user-facing categories, and
+// defines the marker / UI / background colours each category uses.
+
+// Maps the raw sub_theme values from the dataset to one of our 5 categories.
 const SUB_THEME_MAP = {
   'Art Gallery/Museum':                              'Arts & Culture',
   'Theatre Live':                                    'Arts & Culture',
@@ -22,6 +27,7 @@ export function getCategoryFromSubTheme(sub_theme) {
   return SUB_THEME_MAP[sub_theme] ?? null
 }
 
+// Bright, saturated colours used on map markers so categories stand out.
 export const CATEGORY_MARKER_COLORS = {
   'Arts & Culture':    '#D85A3A',
   'Recreation':        '#2FA86E',
@@ -31,6 +37,7 @@ export const CATEGORY_MARKER_COLORS = {
   'Fountain':          '#36AEDD',
 }
 
+// Muted variants for text and pill outlines in the UI.
 export const CATEGORY_UI_COLORS = {
   'Arts & Culture':    '#A85F4D',
   'Recreation':        '#5F8E75',
@@ -40,6 +47,7 @@ export const CATEGORY_UI_COLORS = {
   'Fountain':          '#5F97B0',
 }
 
+// Pastel backgrounds for category chip / pill backgrounds.
 export const CATEGORY_UI_BACKGROUNDS = {
   'Arts & Culture':    '#F7E6E0',
   'Recreation':        '#E5F2EA',

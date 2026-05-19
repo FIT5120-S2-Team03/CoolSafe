@@ -12,6 +12,13 @@ const headingStyle = {
   marginBottom: 10,
 }
 
+function actionHeading(score) {
+  if (score >= 75) return 'Extreme heat risk'
+  if (score >= 55) return 'High heat risk'
+  if (score >= 30) return 'Moderate heat risk'
+  return 'Low heat risk'
+}
+
 export default function TodayActionCards({
   medicationCount,
   onGoSafety,
@@ -23,7 +30,7 @@ export default function TodayActionCards({
   return (
     <SectionContainer innerClassName="cs-today-actions-section">
         <h2 style={headingStyle}>
-          Your {score} — here's how to make the most of it.
+          {actionHeading(score)} — here's how to make the most of it.
         </h2>
         <p style={{ fontFamily: "var(--font-body)", fontSize: 'var(--text-body-sm)', color: MUTED, lineHeight: 'var(--leading-body)', marginBottom: 36, maxWidth: 520 }}>
           Tap a card to see more. Your details stay private.

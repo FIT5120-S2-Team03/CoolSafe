@@ -262,7 +262,7 @@ export default function LandingPage() {
                 }}
                 {...hoverShift({ enterBg: 'var(--color-brick)', leaveBg: 'var(--color-terracotta-deep)' })}
               >
-                See today's outlook
+                Check today's heat risk
                 <i className="ti ti-arrow-right" style={{ fontSize: 16 }} />
               </button>
             </div>

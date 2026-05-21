@@ -7,16 +7,15 @@ Usage:
     python seed_spatial.py
 """
 
+import os
+
 import geopandas as gpd
 import psycopg2
 from psycopg2.extras import execute_values
 from shapely.geometry import mapping
 import json
 
-# ============================================================
-# 🔧 CHANGE THIS to your Neon connection string
-# ============================================================
-DATABASE_URL = "postgresql://neondb_owner:npg_JOqe1RiXHc9Y@ep-dry-cloud-a7136g4i-pooler.ap-southeast-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
+DATABASE_URL = os.environ["DATABASE_URL"]  # set via: export DATABASE_URL="postgresql://..."
 
 # ============================================================
 # File paths (relative to this script)

@@ -8,15 +8,14 @@ Requirements:
     pip3 install requests psycopg2-binary
 """
 
+import os
+
 import requests
 import psycopg2
 from psycopg2.extras import execute_values
 from datetime import date
 
-# ============================================================
-# 🔧 CHANGE THIS to your Neon connection string
-# ============================================================
-DATABASE_URL = "postgresql://neondb_owner:npg_JOqe1RiXHc9Y@ep-dry-cloud-a7136g4i-pooler.ap-southeast-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
+DATABASE_URL = os.environ["DATABASE_URL"]  # set via: export DATABASE_URL="postgresql://..."
 
 API_URL = "https://data.melbourne.vic.gov.au/api/v2/catalog/datasets/drinking-fountains/exports/geojson"
 

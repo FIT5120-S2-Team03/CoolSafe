@@ -1,6 +1,8 @@
+import os
+
 import psycopg2
 
-DATABASE_URL = "postgresql://neondb_owner:npg_JOqe1RiXHc9Y@ep-dry-cloud-a7136g4i-pooler.ap-southeast-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
+DATABASE_URL = os.environ["DATABASE_URL"]  # set via: export DATABASE_URL="postgresql://..."
 
 POSTCODE_SUBURBS = {
     "3000": "Melbourne CBD",
